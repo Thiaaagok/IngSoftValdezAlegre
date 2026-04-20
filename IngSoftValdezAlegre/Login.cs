@@ -10,6 +10,7 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre
 {
+    //Restante por hacer en fecha: 21/04
     public partial class Login : Form
     {
         public Login()
