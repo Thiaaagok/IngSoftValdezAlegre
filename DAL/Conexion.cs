@@ -9,7 +9,6 @@ namespace DAL
 {
     public class Conexion
     {
-        // Prueba de pusheo en github
         private static Conexion _Instancia;
         public string connectionString = "Server=.;DataBase=IngSoftValdezAlegre;Integrated Security=true";
 
@@ -18,13 +17,16 @@ namespace DAL
 
         }
 
-        public static Conexion Instancia()
+        public static Conexion Instancia
         {
-            if (_Instancia == null)
+            get
             {
-                _Instancia = new Conexion();
+                if (_Instancia == null)
+                {
+                    _Instancia = new Conexion();
+                }
+                return _Instancia;
             }
-            return _Instancia;
         }
 
         public SqlConnection ObtenerConexion()

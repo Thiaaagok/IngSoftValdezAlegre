@@ -42,9 +42,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GestorUsuarios06AV.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Usuario.cs" />
-    <Compile Include="UsuarioSesion.cs" />
+    <Compile Include="Usuario06AV.cs" />
+    <Compile Include="UsuarioSesion06AV.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BE\BE.csproj">
+      <Project>{b2d14455-f2ec-4381-b7fe-a9e5496f593c}</Project>
+      <Name>BE</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MPP\MPP.csproj">
+      <Project>{d1a2e3fd-8297-40ec-9a1f-b7f5c9a59317}</Project>
+      <Name>MPP</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

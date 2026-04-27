@@ -6,18 +6,19 @@ using System.Threading.Tasks;
 
 namespace BE
 {
-    public class Usuario
+    public class Usuario06AV
     {
 
-        public Guid Id { get; set; }
         public string Login { get; set; }
-        // Falta pasar por proceso de encriptación
         public string Contrasenia { get; set; }
+        public string Dni { get; set; }
         public string Nombre { get; set; }
         public string Apellido { get; set; }
-        public bool Bloqueado { get; set; }
+        public string Email { get; set; }
         public string Idioma { get; set; }
-        public Guid Rol { get; set; }
+        public string Rol { get; set; }
+        public bool Bloqueado { get; set; }
+        public bool Activo { get; set; }
 
     }
 }
