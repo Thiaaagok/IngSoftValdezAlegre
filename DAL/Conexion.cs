@@ -9,6 +9,7 @@ namespace DAL
 {
     public class Conexion
     {
+        // Prueba de pusheo en github
         private static Conexion _Instancia;
         public string connectionString = "Server=.;DataBase=IngSoftValdezAlegre;Integrated Security=true";
 
