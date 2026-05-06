@@ -48,13 +48,13 @@
     <Compile Include="UsuarioSesion06AV.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BE\BE.csproj">
+    <ProjectReference Include="..\BE\BE_06AV.csproj">
       <Project>{b2d14455-f2ec-4381-b7fe-a9e5496f593c}</Project>
-      <Name>BE</Name>
+      <Name>BE_06AV</Name>
     </ProjectReference>
-    <ProjectReference Include="..\MPP\MPP.csproj">
+    <ProjectReference Include="..\MPP\MPP_06AV.csproj">
       <Project>{d1a2e3fd-8297-40ec-9a1f-b7f5c9a59317}</Project>
-      <Name>MPP</Name>
+      <Name>MPP_06AV</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
