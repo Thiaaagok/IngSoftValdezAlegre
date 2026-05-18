@@ -42,8 +42,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BitacoraDAL06AV.cs" />
     <Compile Include="Conexion.cs" />
-    <Compile Include="DAL_Usuarios.cs" />
+    <Compile Include="RolesDAL06AV.cs" />
+    <Compile Include="UsuariosDAL06AV.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -1,19 +1,20 @@
-﻿using System;
+﻿using BE;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using BE;
 
 
 namespace MPP
 {
-    public class MPP_Usuarios
+    public class UsuariosMPP06AV
     {
-        //D AL dal = new DAL();
-        DAL_Usuarios UsuariosDAL = new DAL_Usuarios();
+        UsuariosDAL06AV UsuariosDAL = new UsuariosDAL06AV();
 
+        #region Obtener
         public List<Usuario06AV> ObtenerTodos()
         {
             DataTable tabla = UsuariosDAL.ObtenerTodos(new Dictionary<string, object>());
@@ -44,6 +45,23 @@ namespace MPP
             return MapearUsuario(tabla.Rows[0]);
         }
 
+        public Usuario06AV ObtenerPorLogin(string login)
+        {
+            var parametros = new Dictionary<string, object>
+            {
+                { "@login", login }
+            };
+
+            DataTable tabla = UsuariosDAL.ObtenerPorLogin(parametros);
+
+            if (tabla.Rows.Count == 0)
+                return null;
+
+            return MapearUsuario(tabla.Rows[0]);
+        }
+        #endregion
+
+        #region Alta, Modificacion y Eliminar
         public bool CrearUsuario(Usuario06AV usuario)
         {
             var parametros = new Dictionary<string, object>
@@ -86,6 +104,10 @@ namespace MPP
 
             return UsuariosDAL.EliminarUsuario(parametros);
         }
+
+        #endregion
+
+        #region Acciones sobre un usuario
 
         public bool ReactivarUsuario(string dni)
         {
@@ -133,7 +155,9 @@ namespace MPP
             return UsuariosDAL.CambiarContraseña(parametros);
         }
 
-        // 🔹 Mapper clave
+        #endregion
+
+        #region Mapper
         private Usuario06AV MapearUsuario(DataRow row)
         {
             return new Usuario06AV
@@ -149,5 +173,7 @@ namespace MPP
                 Contrasenia = row["Contrasenia"].ToString()
             };
         }
+
+        #endregion
     }
 }

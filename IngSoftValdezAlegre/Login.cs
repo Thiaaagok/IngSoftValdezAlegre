@@ -1,4 +1,6 @@
-﻿using System;
+﻿using SER;
+using SER.Excepciones;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -10,7 +12,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre
 {
-    //Restante por hacer en fecha: 21/04
     public partial class Login : Form
     {
         public Login()
@@ -21,6 +22,50 @@ namespace IngSoftValdezAlegre
         private void Login_Load(object sender, EventArgs e)
         {
 
+        }
+
+        private void IniciarSesionBTN_Click(object sender, EventArgs e)
+        {
+            string login = LoginTextBox.Text;
+            string contrasenia = ContraseniaTextBox.Text;
+
+            try
+            {
+                UsuariosSER06AV SER = new UsuariosSER06AV();
+                SER.Login(login, contrasenia);
+                MainForm formPrincipal = new MainForm();
+                formPrincipal.Show();
+                this.Hide();
+            }
+            catch (UsuarioValidacionException ex)
+            {
+                MessageBox.Show(ex.Message, "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            catch (UsuarioNoEncontradoException)
+            {
+                MessageBox.Show("Login o contraseña incorrectos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (ContraseniaInvalidaException)
+            {
+                MessageBox.Show("Login o contraseña incorrectos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (UsuarioEstadoInvalidoException ex) when (ex.EstadoActual == "Bloqueado")
+            {
+                MessageBox.Show("El usuario esta bloqueado. Contacte a un administrador.", "Acceso denegado", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (UsuarioEstadoInvalidoException ex) when (ex.EstadoActual == "Inactivo")
+            {
+                MessageBox.Show("El usuario esta inactivo. Contacte a un administrador.", "Acceso denegado", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (UsuarioAccesoDatosException)
+            {
+                MessageBox.Show("Error de conexion. Intenta mas tarde.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void CerrarBTN_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
     }
 }

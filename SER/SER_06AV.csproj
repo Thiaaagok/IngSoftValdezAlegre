@@ -42,9 +42,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GestorUsuarios06AV.cs" />
+    <Compile Include="BitacoraSER06AV.cs" />
+    <Compile Include="Encriptador\EncriptacionSER06AV.cs" />
+    <Compile Include="Excepciones\ExcepcionesBitacora.cs" />
+    <Compile Include="Excepciones\ExcepcionesUsuario.cs" />
+    <Compile Include="RolesSER06AV.cs" />
+    <Compile Include="UsuariosSER06AV.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Usuario06AV.cs" />
     <Compile Include="UsuarioSesion06AV.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -4,13 +4,16 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 
-public class DAL_Usuarios
+public class UsuariosDAL06AV
 {
+    #region Obtener
+
     public DataTable ObtenerTodos(Dictionary<string, object> parametros)
     {
         string query = "SELECT * FROM Usuarios";
 
         SqlConnection conn = Conexion.Instancia.ObtenerConexion();
+
         SqlCommand cmd = new SqlCommand(query, conn);
 
         DataTable tabla = new DataTable();
@@ -28,6 +31,30 @@ public class DAL_Usuarios
         string query = "SELECT * FROM Usuarios WHERE Dni = @dni";
 
         SqlConnection conn = Conexion.Instancia.ObtenerConexion();
+
+        SqlCommand cmd = new SqlCommand(query, conn);
+
+        foreach (var p in parametros)
+        {
+            cmd.Parameters.AddWithValue( p.Key, p.Value );
+        }
+
+        DataTable tabla = new DataTable();
+
+        conn.Open();
+        SqlDataAdapter da = new SqlDataAdapter(cmd);
+        da.Fill(tabla);
+        conn.Close();
+
+        return tabla;
+    }
+
+    public DataTable ObtenerPorLogin(Dictionary<string, object> parametros)
+    {
+        string query = "SELECT * FROM Usuarios WHERE Login = @login";
+
+        SqlConnection conn = Conexion.Instancia.ObtenerConexion();
+
         SqlCommand cmd = new SqlCommand(query, conn);
 
         foreach (var p in parametros)
@@ -45,100 +72,84 @@ public class DAL_Usuarios
         return tabla;
     }
 
+    #endregion
+
+    #region Crear
+
     public bool CrearUsuario(Dictionary<string, object> parametros)
     {
-        string query = @"INSERT INTO Usuarios
-                        (Dni, Nombre, Apellido, Email, Rol, Activo, Bloqueado, Login, Contrasenia)
-                        VALUES
-                        (@dni, @nombre, @apellido, @email, @rol, @activo, @bloqueado, @login, @contrasenia)";
+        string query = @"INSERT INTO Usuarios (Dni,Nombre,Apellido,Email,Rol,Activo,Bloqueado,Login, Contrasenia)
+            VALUES
+            ( @dni,@nombre, @apellido, @email, @rol, 
+              @activo, @bloqueado, @login, @contrasenia
+            )";
 
         return Ejecutar(query, parametros);
     }
+
+    #endregion
+
+    #region Modificar
 
     public bool EditarUsuario(Dictionary<string, object> parametros)
     {
-        string query = @"UPDATE Usuarios SET
-                        Nombre = @nombre,
-                        Apellido = @apellido,
-                        Email = @email,
-                        Rol = @rol
-                        WHERE Dni = @dni";
+        string query = @"UPDATE Usuarios SET Nombre = @nombre, Apellido = @apellido, Email = @email, Rol = @rol WHERE Dni = @dni";
 
-        return Ejecutar(query, parametros);
-    }
-
-    public bool EliminarUsuario(Dictionary<string, object> parametros)
-    {
-        string query = "DELETE FROM Usuarios WHERE Dni = @dni";
         return Ejecutar(query, parametros);
     }
 
     public bool ReactivarUsuario(Dictionary<string, object> parametros)
     {
         string query = "UPDATE Usuarios SET Activo = 1 WHERE Dni = @dni";
+
         return Ejecutar(query, parametros);
     }
 
     public bool BloquearUsuario(Dictionary<string, object> parametros)
     {
         string query = "UPDATE Usuarios SET Bloqueado = 1 WHERE Dni = @dni";
+
         return Ejecutar(query, parametros);
     }
 
     public bool DesbloquearUsuario(Dictionary<string, object> parametros)
     {
         string query = "UPDATE Usuarios SET Bloqueado = 0 WHERE Dni = @dni";
+
         return Ejecutar(query, parametros);
     }
 
     public bool CambiarContraseña(Dictionary<string, object> parametros)
     {
-        string query = @"UPDATE Usuarios 
-                        SET Contrasenia = @nueva 
-                        WHERE Dni = @dni AND Contrasenia = @actual";
+        string query = @" UPDATE Usuarios SET Contrasenia = @nueva WHERE Dni = @dni AND Contrasenia = @actual";
 
         return Ejecutar(query, parametros);
     }
-    public DataTable ObtenerContraseniaPorLogin(Dictionary<string, object> parametros)
+
+    #endregion
+
+    #region Eliminar
+
+    public bool EliminarUsuario(Dictionary<string, object> parametros)
     {
-        string query = "SELECT Contrasenia FROM Usuarios WHERE Login = @login";
+        string query = "DELETE FROM Usuarios WHERE Dni = @dni";
 
-        SqlConnection conn = Conexion.Instancia.ObtenerConexion();
-        SqlCommand cmd = new SqlCommand(query, conn);
-
-        foreach (var p in parametros)
-        {
-            cmd.Parameters.AddWithValue(p.Key, p.Value);
-        }
-
-        DataTable tabla = new DataTable();
-
-        conn.Open();
-        SqlDataAdapter da = new SqlDataAdapter(cmd);
-        da.Fill(tabla);
-        conn.Close();
-
-        return tabla;
+        return Ejecutar(query, parametros);
     }
 
-    //public DataTable ObtenerUsuarioPorLogin(Dictionary<string, object> parametros)
-    //{
-    //    string query = "SELECT * FROM Usuarios WHERE Login = @login";
+    #endregion
 
-    //    SqlConnection conn = 
+    #region Ejecutar
 
-    //}
-
-
-
-    private bool Ejecutar(string query, Dictionary<string, object> parametros)
+    private bool Ejecutar( string query, Dictionary<string, object> parametros)
     {
         SqlConnection conn = Conexion.Instancia.ObtenerConexion();
+
         SqlCommand cmd = new SqlCommand(query, conn);
 
         foreach (var p in parametros)
         {
-            cmd.Parameters.AddWithValue(p.Key, p.Value ?? DBNull.Value);
+            cmd.Parameters.AddWithValue( p.Key, p.Value ?? DBNull.Value );
         }
 
         conn.Open();
@@ -148,5 +159,5 @@ public class DAL_Usuarios
         return filas > 0;
     }
 
-
+    #endregion
 }

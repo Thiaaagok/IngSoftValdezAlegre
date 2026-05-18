@@ -42,7 +42,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MPP_Usuarios.cs" />
+    <Compile Include="BitacoraMPP06AV.cs" />
+    <Compile Include="RolesMPP06AV.cs" />
+    <Compile Include="UsuariosMPP06AV.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -1,0 +1,471 @@
+﻿using BE;
+using MPP;
+using SER.Encriptador;
+using SER.Excepciones;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Threading.Tasks;
+namespace SER
+{
+    public class UsuariosSER06AV
+    {
+        #region Login
+
+        public Usuario06AV Login(string login, string contrasenia)
+        {
+            if (string.IsNullOrWhiteSpace(login))
+                throw new UsuarioValidacionException("login", "El login no puede estar vacío.");
+
+            if (string.IsNullOrWhiteSpace(contrasenia))
+                throw new UsuarioValidacionException("contrasenia", "La contraseña no puede estar vacía.");
+
+            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            EncriptacionSER06AV enc = new EncriptacionSER06AV();
+
+            try
+            {
+                UsuariosMPP06AV MPP = new UsuariosMPP06AV();
+
+                // Obtenemos el usuario completo
+                var usuario = MPP.ObtenerPorLogin(login);
+
+                // Chequeamos si esta bloqueado o si esta desactivado
+                if (usuario.Bloqueado)
+                {
+                    throw new UsuarioEstadoInvalidoException(usuario.Dni, "Bloqueado", "Login");
+                }
+
+                if (!usuario.Activo)
+                {
+                    throw new UsuarioEstadoInvalidoException(usuario.Dni, "Inactivo", "Login");
+                }
+
+                // Comparamos contraseñas
+                string contraseniaHasheada = enc.Encriptar(contrasenia);
+                if (contraseniaHasheada != usuario.Contrasenia)
+                {
+                    // Contamos intentos fallidos en las últimas 3 horas
+                    var intentosFallidos = bitacora.ObtenerEventosPorUsuario(usuario.Dni)
+                        .Where(e => e.Categoria == (int)CategoriaBitacora.LoginFallido
+                                 && e.Fecha >= DateTime.Now.AddHours(-3))
+                        .ToList();
+
+                    if (intentosFallidos.Count >= 2)
+                    {
+                        // Paso los 3 intentos de login
+                        MPP.BloquearUsuario(usuario.Dni);
+                        bitacora.LoginFallido(usuario.Dni);
+                        throw new UsuarioEstadoInvalidoException(usuario.Dni, "Bloqueado", "Login");
+                    }
+
+                    bitacora.LoginFallido(usuario.Dni);
+                    throw new ContraseniaInvalidaException(usuario.Dni);
+                }
+
+                // Obtenemos su rol y iniciamos sesión en su singleton
+                RolesMPP06AV RolesMPP = new RolesMPP06AV();
+                Rol06AV rol = RolesMPP.ObtenerPorId(usuario.Rol);
+
+                UsuarioSesion06AV.Instancia().IniciarSesion(usuario, rol);
+                bitacora.LoginExitoso(usuario.Dni);
+
+                return usuario;
+            }
+            catch (UsuarioException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                bitacora.Error($"Error en Login: {ex.Message}", ModuloBitacora.Autenticacion, login);
+                throw new UsuarioAccesoDatosException($"Login({login})", ex);
+            }
+        }
+
+        public void Logout()
+        {
+            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+
+            try
+            {
+                var usuario = UsuarioSesion06AV.Instancia().UsuarioActual;
+
+                if (usuario == null)
+                    throw new UsuarioValidacionException("sesion", "No hay una sesión activa.");
+
+                string dni = usuario.Dni;
+                UsuarioSesion06AV.Instancia().CerrarSesion();
+                bitacora.Logout(dni);
+            }
+            catch (UsuarioException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                bitacora.Error($"Error en Logout: {ex.Message}", ModuloBitacora.Autenticacion);
+                throw new UsuarioAccesoDatosException("Logout", ex);
+            }
+        }
+
+        #endregion
+
+        #region Obtener
+        public List<Usuario06AV> ObtenerTodos()
+        {
+            try
+            {
+                UsuariosMPP06AV MPP = new UsuariosMPP06AV();
+                return MPP.ObtenerTodos();
+            }
+            catch (UsuarioException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new UsuarioAccesoDatosException("ObtenerTodos", ex);
+            }
+        }
+
+        public Usuario06AV ObtenerPorDni(string dni)
+        {
+            ValidarDni(dni);
+
+            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+
+            try
+            {
+                UsuariosMPP06AV MPP = new UsuariosMPP06AV();
+                var usuario = MPP.ObtenerPorDni(dni);
+
+                if (usuario == null)
+                    throw new UsuarioNoEncontradoException(dni);
+
+                return usuario;
+            }
+            catch (UsuarioException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                bitacora.Error($"Error obteniendo un usuario: {ex.Message}", ModuloBitacora.Usuarios, dni);
+                throw new UsuarioAccesoDatosException($"ObtenerPorDni({dni})", ex);
+            }
+        }
+
+        #endregion
+
+        #region Alta
+        public bool CrearUsuario(string dni, string nombre, string apellido, string email, string rol)
+        {
+            ValidarDni(dni);
+            ValidarNombre(nombre, "Nombre");
+            ValidarNombre(apellido, "Apellido");
+            ValidarEmail(email);
+            ValidarRol(rol);
+            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            try
+            {
+                UsuariosMPP06AV MPP = new UsuariosMPP06AV();
+
+                // Verificar duplicado antes de insertar
+                var existente = MPP.ObtenerPorDni(dni);
+                if (existente != null)
+                    throw new UsuarioDuplicadoException(dni);
+
+                var usuario = new Usuario06AV
+                {
+                    Dni = dni,
+                    Nombre = nombre,
+                    Apellido = apellido,
+                    Email = email,
+                    Rol = rol,
+                    Activo = true,
+                    Bloqueado = false,
+                    Login = SetearLogin(dni, nombre),
+                    Contrasenia = SetearContrasenia(dni, apellido)
+                };
+
+                bool resultado = MPP.CrearUsuario(usuario);
+                bitacora.Alta($"Usuario: {dni}", ModuloBitacora.Usuarios, dni);
+                return resultado;
+            }
+            catch (UsuarioDuplicadoException ex)
+            {
+                bitacora.Error(ex.Message, ModuloBitacora.Usuarios, dni);
+                throw;
+            }
+            catch (UsuarioException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                bitacora.Error($"Error creando un usuario: {ex.Message}", ModuloBitacora.Usuarios, dni);
+                throw new UsuarioAccesoDatosException($"CrearUsuario({dni})", ex);
+            }
+        }
+
+        #endregion
+
+        #region Modificaciones y baja
+        public bool EditarUsuario(Usuario06AV usuario, string dniOperador)
+        {
+            if (usuario == null)
+                throw new UsuarioValidacionException("usuario", "El objeto usuario no puede ser nulo.");
+
+            ValidarDni(usuario.Dni);
+            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            try
+            {
+                UsuariosMPP06AV MPP = new UsuariosMPP06AV();
+
+                var existente = MPP.ObtenerPorDni(usuario.Dni);
+                if (existente == null)
+                    throw new UsuarioNoEncontradoException(usuario.Dni);
+
+                bool resultado = MPP.EditarUsuario(usuario);
+                bitacora.Modificacion($"Usuario: {usuario.Dni}", ModuloBitacora.Usuarios, dniOperador);
+                return resultado;
+            }
+            catch (UsuarioException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                bitacora.Error($"Error editando usuario: {usuario.Dni}", ModuloBitacora.Usuarios, dniOperador);
+                throw new UsuarioAccesoDatosException($"EditarUsuario({usuario.Dni})", ex);
+            }
+        }
+
+        public bool EliminarUsuario(string dni, string dniOperador)
+        {
+            ValidarDni(dni);
+            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            try
+            {
+                UsuariosMPP06AV MPP = new UsuariosMPP06AV();
+
+                var usuario = MPP.ObtenerPorDni(dni);
+                if (usuario == null)
+                    throw new UsuarioNoEncontradoException(dni);
+
+                if (!usuario.Activo)
+                    throw new UsuarioEstadoInvalidoException(dni, "Inactivo", "EliminarUsuario");
+
+                bool resultado = MPP.EliminarUsuario(dni);
+                bitacora.Baja($"Usuario: {dni}", ModuloBitacora.Usuarios, dniOperador);
+                return resultado;
+            }
+            catch (UsuarioException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                bitacora.Error($"Error eliminando usuario: {dni}", ModuloBitacora.Usuarios, dniOperador);
+                throw new UsuarioAccesoDatosException($"EliminarUsuario({dni})", ex);
+            }
+        }
+
+        public bool ReactivarUsuario(string dni, string dniOperador)
+        {
+            ValidarDni(dni);
+            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            try
+            {
+                UsuariosMPP06AV MPP = new UsuariosMPP06AV();
+
+                var usuario = MPP.ObtenerPorDni(dni);
+                if (usuario == null)
+                    throw new UsuarioNoEncontradoException(dni);
+
+                if (usuario.Activo)
+                    throw new UsuarioEstadoInvalidoException(dni, "Activo", "ReactivarUsuario");
+
+                bool resultado = MPP.ReactivarUsuario(dni);
+                bitacora.Modificacion($"Usuario: {dni} reactivado", ModuloBitacora.Usuarios, dniOperador);
+                return resultado;
+            }
+            catch (UsuarioException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                bitacora.Error($"Error reactivando usuario: {dni}", ModuloBitacora.Usuarios, dniOperador);
+                throw new UsuarioAccesoDatosException($"ReactivarUsuario({dni})", ex);
+            }
+        }
+
+        public bool BloquearUsuario(string dni, string dniOperador)
+        {
+            ValidarDni(dni);
+            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            try
+            {
+                UsuariosMPP06AV MPP = new UsuariosMPP06AV();
+
+                var usuario = MPP.ObtenerPorDni(dni);
+                if (usuario == null)
+                    throw new UsuarioNoEncontradoException(dni);
+
+                if (usuario.Bloqueado)
+                    throw new UsuarioEstadoInvalidoException(dni, "Bloqueado", "BloquearUsuario");
+
+                if (!usuario.Activo)
+                    throw new UsuarioEstadoInvalidoException(dni, "Inactivo", "BloquearUsuario");
+
+                bool resultado = MPP.BloquearUsuario(dni);
+                bitacora.Modificacion($"Usuario: {dni} bloqueado", ModuloBitacora.Usuarios, dniOperador);
+                return resultado;
+            }
+            catch (UsuarioException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                bitacora.Error($"Error bloqueando usuario: {dni}", ModuloBitacora.Usuarios, dniOperador);
+                throw new UsuarioAccesoDatosException($"BloquearUsuario({dni})", ex);
+            }
+        }
+
+        public bool DesbloquearUsuario(string dni, string dniOperador)
+        {
+            ValidarDni(dni);
+            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            try
+            {
+                UsuariosMPP06AV MPP = new UsuariosMPP06AV();
+
+                var usuario = MPP.ObtenerPorDni(dni);
+                if (usuario == null)
+                    throw new UsuarioNoEncontradoException(dni);
+
+                if (!usuario.Bloqueado)
+                    throw new UsuarioEstadoInvalidoException(dni, "Desbloqueado", "DesbloquearUsuario");
+
+                bool resultado = MPP.DesbloquearUsuario(dni);
+                bitacora.Modificacion($"Usuario: {dni} desbloqueado", ModuloBitacora.Usuarios, dniOperador);
+                return resultado;
+            }
+            catch (UsuarioException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                bitacora.Error($"Error desbloqueando usuario: {dni}", ModuloBitacora.Usuarios, dniOperador);
+                throw new UsuarioAccesoDatosException($"DesbloquearUsuario({dni})", ex);
+            }
+        }
+
+        public bool CambiarContraseña(string dni, string contraseniaActual, string contraseniaNueva)
+        {
+            ValidarDni(dni);
+
+            if (string.IsNullOrWhiteSpace(contraseniaActual))
+                throw new UsuarioValidacionException("contrasenia actual", "La contraseña actual no puede estar vacía.");
+
+            if (string.IsNullOrWhiteSpace(contraseniaNueva))
+                throw new UsuarioValidacionException("contrasenia nueva", "La contraseña nueva no puede estar vacía.");
+
+            if (contraseniaActual == contraseniaNueva)
+                throw new UsuarioValidacionException("contrasenia nueva", "La nueva contraseña debe ser distinta a la actual.");
+
+            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            try
+            {
+                UsuariosMPP06AV MPP = new UsuariosMPP06AV();
+
+                var usuario = MPP.ObtenerPorDni(dni);
+                if (usuario == null)
+                    throw new UsuarioNoEncontradoException(dni);
+
+                if (usuario.Bloqueado)
+                    throw new UsuarioEstadoInvalidoException(dni, "Bloqueado", "CambiarContraseña");
+
+                // Acá validarías con el encriptador real
+                if (usuario.Contrasenia != contraseniaActual)
+                    throw new ContraseniaInvalidaException(dni);
+
+
+                bool resultado = MPP.CambiarContraseña(dni, contraseniaActual, contraseniaNueva);
+                bitacora.Modificacion($"Usuario: {dni} cambio contraseña", ModuloBitacora.Usuarios, dni);
+                return resultado;
+            }
+            catch (UsuarioException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                bitacora.Error($"Error cambiando contraseña: {dni}", ModuloBitacora.Usuarios, dni);
+                throw new UsuarioAccesoDatosException($"CambiarContraseña({dni})", ex);
+            }
+        }
+
+        #endregion
+
+        #region Validaciones
+
+        private static void ValidarDni(string dni)
+        {
+            if (string.IsNullOrWhiteSpace(dni))
+                throw new UsuarioValidacionException("dni", "El DNI no puede estar vacío.");
+
+            if (!dni.All(char.IsDigit))
+                throw new UsuarioValidacionException("dni", $"El DNI '{dni}' solo debe contener dígitos.");
+
+            if (dni.Length < 7 || dni.Length > 8)
+                throw new UsuarioValidacionException("dni", $"El DNI '{dni}' debe tener entre 7 y 8 dígitos.");
+        }
+
+        private static void ValidarNombre(string valor, string campo)
+        {
+            if (string.IsNullOrWhiteSpace(valor))
+                throw new UsuarioValidacionException(campo, $"El campo '{campo}' no puede estar vacío.");
+        }
+
+        private static void ValidarEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                throw new UsuarioValidacionException("email", "El email no puede estar vacío.");
+
+            if (!email.Contains('@') || !email.Contains('.'))
+                throw new UsuarioValidacionException("email", $"El email '{email}' no tiene un formato válido.");
+        }
+
+        private static void ValidarRol(string rol)
+        {
+            var rolesValidos = new HashSet<string> { "Admin", "Operador", "Consulta" };
+            if (!rolesValidos.Contains(rol))
+                throw new UsuarioValidacionException("rol", $"El rol '{rol}' no es válido. Opciones: {string.Join(", ", rolesValidos)}.");
+        }
+
+        #endregion
+
+        #region Seteadores
+        public string SetearLogin(string dni, string nombre)
+        {
+            // ultimos 3 digitos del dni
+            return $"{nombre}";
+        }
+
+        public string SetearContrasenia(string dni, string apellido)
+        {
+            EncriptacionSER06AV Encriptacion = new EncriptacionSER06AV();
+            string contraseniaNoHasheada = $"{dni}{apellido}";
+            return Encriptacion.Encriptar(contraseniaNoHasheada);
+        }
+
+        #endregion
+    }
+}
