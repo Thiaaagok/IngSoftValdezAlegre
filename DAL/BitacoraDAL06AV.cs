@@ -74,6 +74,22 @@ namespace DAL
             return tabla;
         }
 
+        public string ObtenerSiguienteCodigo()
+        {
+            string query = @"SELECT ISNULL(MAX(CAST(SUBSTRING(Codigo, 5, 6) AS INT)), 0) + 1 FROM Bitacora";
+
+            SqlConnection conn = Conexion.Instancia.ObtenerConexion();
+
+            SqlCommand cmd = new SqlCommand(query, conn);
+
+            conn.Open();
+            object resultado = cmd.ExecuteScalar();
+            conn.Close();
+            int numero = Convert.ToInt32(resultado);
+
+            return $"BIT-{numero:D6}";
+        }
+
         public DataTable ObtenerPorUsuario(Dictionary<string, object> parametros)
         {
             string query = "SELECT * FROM Bitacora WHERE UsuarioDni = @usuarioDni";
@@ -140,8 +156,7 @@ namespace DAL
             return tabla;
         }
 
-        public DataTable ObtenerEntreFechas(
-            Dictionary<string, object> parametros)
+        public DataTable ObtenerEntreFechas(Dictionary<string, object> parametros)
         {
             string query = @"SELECT * FROM Bitacora WHERE Fecha BETWEEN @desde AND @hasta";
 
@@ -164,16 +179,14 @@ namespace DAL
             return tabla;
         }
 
-
         public bool Guardar(Dictionary<string, object> parametros)
         {
-            string query = @"INSERT INTO Bitacora ( Categoria, Criticidad, Descripcion, Fecha, Id, Modulo, UsuarioDni)
+            string query = @"INSERT INTO Bitacora ( Categoria, Codigo, Criticidad, Descripcion, Fecha, Id, Modulo, UsuarioDni)
                 VALUES
-                ( @categoria, @criticidad, @descripcion, @fecha, @id, @modulo, @usuarioDni )";
+                ( @categoria, @codigo, @criticidad, @descripcion, @fecha, @id, @modulo, @usuarioDni )";
 
             return Ejecutar(query, parametros);
         }
-
 
         private bool Ejecutar( string query, Dictionary<string, object> parametros)
         {

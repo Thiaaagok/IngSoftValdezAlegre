@@ -20,6 +20,7 @@ namespace MPP
             var parametros = new Dictionary<string, object>
             {
                 { "@categoria",   bitacora.Categoria },
+                { "@codigo", bitacora.Codigo },
                 { "@criticidad",  bitacora.Criticidad },
                 { "@descripcion", bitacora.Descripcion },
                 { "@fecha",       bitacora.Fecha },
@@ -92,6 +93,11 @@ namespace MPP
             return tabla.AsEnumerable().Select(row => MapearBitacora(row)).ToList();
         }
 
+        public string ObtenerSiguienteCodigo()
+        {
+            return BitacoraDAL.ObtenerSiguienteCodigo();
+        }
+
         #endregion
 
         #region Mapper
@@ -100,12 +106,12 @@ namespace MPP
         {
             return new Bitacora06AV
             {
-                Codigo = Convert.ToInt32(row["Codigo"]),
+                Codigo = row["Codigo"].ToString(),
                 Categoria = Convert.ToInt32(row["Categoria"]),
                 Criticidad = row["Criticidad"].ToString(),
                 Descripcion = row["Descripcion"].ToString(),
                 Fecha = Convert.ToDateTime(row["Fecha"]),
-                Id = Guid.Parse(row["Id"].ToString()),
+                Id = row["Id"].ToString(),
                 Modulo = row["Modulo"].ToString(),
                 UsuarioDni = row["UsuarioDni"] == DBNull.Value ? null : row["UsuarioDni"].ToString()
             };

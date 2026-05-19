@@ -53,7 +53,7 @@ namespace DAL
 
         public DataTable ObtenerPermisosPorRol(Dictionary<string, object> parametros)
         {
-            string query = "SELECT Permiso FROM RolesPermisos WHERE RolId = @id";
+            string query = "SELECT Permiso FROM RolesPermisos WHERE IdRol = @id";
 
             SqlConnection conn = Conexion.Instancia.ObtenerConexion();
             SqlCommand cmd = new SqlCommand(query, conn);

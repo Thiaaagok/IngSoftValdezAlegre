@@ -70,7 +70,7 @@ namespace MPP
                 { "@nombre", usuario.Nombre },
                 { "@apellido", usuario.Apellido },
                 { "@email", usuario.Email },
-                { "@rol", usuario.Rol },
+                { "@IdRol", usuario.IdRol },
                 { "@activo", usuario.Activo },
                 { "@bloqueado", usuario.Bloqueado },
                 { "@login", usuario.Login },
@@ -84,11 +84,9 @@ namespace MPP
         {
             var parametros = new Dictionary<string, object>
             {
-                { "@dni", usuario.Dni },
-                { "@nombre", usuario.Nombre },
-                { "@apellido", usuario.Apellido },
                 { "@email", usuario.Email },
-                { "@rol", usuario.Rol }
+                { "@rol", usuario.IdRol},
+                { "@dni", usuario.Dni }
             };
 
             return UsuariosDAL.EditarUsuario(parametros);
@@ -118,6 +116,17 @@ namespace MPP
             };
 
             return UsuariosDAL.ReactivarUsuario(parametros);
+        }
+
+        public bool DesactivarUsuario(string dni)
+        {
+
+            var parametros = new Dictionary<string, object>
+            {
+                { "@dni", dni }
+            };
+
+            return UsuariosDAL.DesactivarUsuario(parametros);
         }
 
         public bool BloquearUsuario(string dni)
@@ -166,7 +175,7 @@ namespace MPP
                 Nombre = row["Nombre"].ToString(),
                 Apellido = row["Apellido"].ToString(),
                 Email = row["Email"].ToString(),
-                Rol = row["Rol"].ToString(),
+                IdRol = row["IdRol"].ToString(),
                 Activo = Convert.ToBoolean(row["Activo"]),
                 Bloqueado = Convert.ToBoolean(row["Bloqueado"]),
                 Login = row["Login"].ToString(),

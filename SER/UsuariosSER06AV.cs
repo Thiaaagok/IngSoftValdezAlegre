@@ -47,15 +47,25 @@ namespace SER
                 string contraseniaHasheada = enc.Encriptar(contrasenia);
                 if (contraseniaHasheada != usuario.Contrasenia)
                 {
-                    // Contamos intentos fallidos en las últimas 3 horas
-                    var intentosFallidos = bitacora.ObtenerEventosPorUsuario(usuario.Dni)
+                    var eventosUsuario = bitacora.ObtenerEventosPorUsuario(usuario.Dni);
+                    var eventosModificacion = bitacora.ObtenerEventosPorCategoria(CategoriaBitacora.Modificacion);
+
+                    DateTime fechaUltimoDesbloqueo = eventosModificacion
+                        .Where(e => e.Categoria == (int)CategoriaBitacora.Modificacion
+                                 && e.Descripcion.Contains(usuario.Dni)
+                                 && e.Descripcion.Contains("desbloqueado"))
+                        .Select(e => (DateTime?)e.Fecha)
+                        .DefaultIfEmpty(null)
+                        .Max() ?? DateTime.MinValue;
+
+                    var intentosFallidos = eventosUsuario
                         .Where(e => e.Categoria == (int)CategoriaBitacora.LoginFallido
+                                 && e.Fecha > fechaUltimoDesbloqueo
                                  && e.Fecha >= DateTime.Now.AddHours(-3))
                         .ToList();
 
                     if (intentosFallidos.Count >= 2)
                     {
-                        // Paso los 3 intentos de login
                         MPP.BloquearUsuario(usuario.Dni);
                         bitacora.LoginFallido(usuario.Dni);
                         throw new UsuarioEstadoInvalidoException(usuario.Dni, "Bloqueado", "Login");
@@ -67,7 +77,7 @@ namespace SER
 
                 // Obtenemos su rol y iniciamos sesión en su singleton
                 RolesMPP06AV RolesMPP = new RolesMPP06AV();
-                Rol06AV rol = RolesMPP.ObtenerPorId(usuario.Rol);
+                Rol06AV rol = RolesMPP.ObtenerPorId(usuario.IdRol);
 
                 UsuarioSesion06AV.Instancia().IniciarSesion(usuario, rol);
                 bitacora.LoginExitoso(usuario.Dni);
@@ -161,13 +171,12 @@ namespace SER
         #endregion
 
         #region Alta
-        public bool CrearUsuario(string dni, string nombre, string apellido, string email, string rol)
+        public bool CrearUsuario(string dni, string nombre, string apellido, string email, string rol, string dniOperador)
         {
             ValidarDni(dni);
             ValidarNombre(nombre, "Nombre");
             ValidarNombre(apellido, "Apellido");
             ValidarEmail(email);
-            ValidarRol(rol);
             BitacoraSER06AV bitacora = new BitacoraSER06AV();
             try
             {
@@ -184,7 +193,7 @@ namespace SER
                     Nombre = nombre,
                     Apellido = apellido,
                     Email = email,
-                    Rol = rol,
+                    IdRol = rol,
                     Activo = true,
                     Bloqueado = false,
                     Login = SetearLogin(dni, nombre),
@@ -192,12 +201,12 @@ namespace SER
                 };
 
                 bool resultado = MPP.CrearUsuario(usuario);
-                bitacora.Alta($"Usuario: {dni}", ModuloBitacora.Usuarios, dni);
+                bitacora.Alta($"Usuario: {dni}", ModuloBitacora.Usuarios, dniOperador);
                 return resultado;
             }
             catch (UsuarioDuplicadoException ex)
             {
-                bitacora.Error(ex.Message, ModuloBitacora.Usuarios, dni);
+                bitacora.Error(ex.Message, ModuloBitacora.Usuarios, dniOperador);
                 throw;
             }
             catch (UsuarioException)
@@ -206,7 +215,7 @@ namespace SER
             }
             catch (Exception ex)
             {
-                bitacora.Error($"Error creando un usuario: {ex.Message}", ModuloBitacora.Usuarios, dni);
+                bitacora.Error($"Error creando un usuario: {ex.Message}", ModuloBitacora.Usuarios, dniOperador);
                 throw new UsuarioAccesoDatosException($"CrearUsuario({dni})", ex);
             }
         }
@@ -304,6 +313,36 @@ namespace SER
             }
         }
 
+        public bool DesactivarUsuario(string dni, string dniOperador)
+        {
+            ValidarDni(dni);
+            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            try
+            {
+                UsuariosMPP06AV MPP = new UsuariosMPP06AV();
+
+                var usuario = MPP.ObtenerPorDni(dni);
+                if (usuario == null)
+                    throw new UsuarioNoEncontradoException(dni);
+
+                if (!usuario.Activo)
+                    throw new UsuarioEstadoInvalidoException(dni, "Inactivo", "DesactivarUsuario");
+
+                bool resultado = MPP.DesactivarUsuario(dni);
+                bitacora.Baja($"Usuario: {dni} desactivado", ModuloBitacora.Usuarios, dniOperador);
+                return resultado;
+            }
+            catch (UsuarioException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                bitacora.Error($"Error desactivando usuario: {dni}", ModuloBitacora.Usuarios, dniOperador);
+                throw new UsuarioAccesoDatosException($"DesactivarUsuario({dni})", ex);
+            }
+        }
+
         public bool BloquearUsuario(string dni, string dniOperador)
         {
             ValidarDni(dni);
@@ -392,12 +431,17 @@ namespace SER
                 if (usuario.Bloqueado)
                     throw new UsuarioEstadoInvalidoException(dni, "Bloqueado", "CambiarContraseña");
 
-                // Acá validarías con el encriptador real
-                if (usuario.Contrasenia != contraseniaActual)
+                // Hasheamos la contraseña actual ingresada y la comparamos contra la que está
+                // almacenada (también hasheada).
+                EncriptacionSER06AV enc = new EncriptacionSER06AV();
+                string contraseniaActualHash = enc.Encriptar(contraseniaActual);
+                string contraseniaNuevaHash = enc.Encriptar(contraseniaNueva);
+
+                if (usuario.Contrasenia != contraseniaActualHash)
                     throw new ContraseniaInvalidaException(dni);
 
 
-                bool resultado = MPP.CambiarContraseña(dni, contraseniaActual, contraseniaNueva);
+                bool resultado = MPP.CambiarContraseña(dni, contraseniaActualHash, contraseniaNuevaHash);
                 bitacora.Modificacion($"Usuario: {dni} cambio contraseña", ModuloBitacora.Usuarios, dni);
                 return resultado;
             }
@@ -443,20 +487,12 @@ namespace SER
                 throw new UsuarioValidacionException("email", $"El email '{email}' no tiene un formato válido.");
         }
 
-        private static void ValidarRol(string rol)
-        {
-            var rolesValidos = new HashSet<string> { "Admin", "Operador", "Consulta" };
-            if (!rolesValidos.Contains(rol))
-                throw new UsuarioValidacionException("rol", $"El rol '{rol}' no es válido. Opciones: {string.Join(", ", rolesValidos)}.");
-        }
-
         #endregion
 
         #region Seteadores
         public string SetearLogin(string dni, string nombre)
         {
-            // ultimos 3 digitos del dni
-            return $"{nombre}";
+            return $"{dni}{nombre}";
         }
 
         public string SetearContrasenia(string dni, string apellido)

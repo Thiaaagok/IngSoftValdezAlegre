@@ -35,6 +35,9 @@
             this.ContraseniaTextBox = new System.Windows.Forms.TextBox();
             this.IniciarSesionBTN = new System.Windows.Forms.Button();
             this.CerrarBTN = new System.Windows.Forms.Button();
+            this.logo = new System.Windows.Forms.PictureBox();
+            this.panel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.logo)).BeginInit();
             this.SuspendLayout();
             // 
             // materialLabel2
@@ -56,7 +59,7 @@
             this.Usuario.BackColor = System.Drawing.Color.RoyalBlue;
             this.Usuario.Depth = 0;
             this.Usuario.Font = new System.Drawing.Font("Roboto", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
-            this.Usuario.Location = new System.Drawing.Point(301, 85);
+            this.Usuario.Location = new System.Drawing.Point(301, 95);
             this.Usuario.MouseState = ReaLTaiizor.Helper.MaterialDrawHelper.MaterialMouseState.HOVER;
             this.Usuario.Name = "Usuario";
             this.Usuario.Size = new System.Drawing.Size(66, 19);
@@ -66,6 +69,7 @@
             // panel1
             // 
             this.panel1.BackColor = System.Drawing.Color.RoyalBlue;
+            this.panel1.Controls.Add(this.logo);
             this.panel1.Location = new System.Drawing.Point(0, -7);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(295, 419);
@@ -73,18 +77,21 @@
             // 
             // LoginTextBox
             // 
-            this.LoginTextBox.Location = new System.Drawing.Point(301, 107);
+            this.LoginTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.LoginTextBox.Location = new System.Drawing.Point(301, 117);
             this.LoginTextBox.Multiline = true;
             this.LoginTextBox.Name = "LoginTextBox";
-            this.LoginTextBox.Size = new System.Drawing.Size(387, 39);
+            this.LoginTextBox.Size = new System.Drawing.Size(387, 29);
             this.LoginTextBox.TabIndex = 10;
             // 
             // ContraseniaTextBox
             // 
+            this.ContraseniaTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ContraseniaTextBox.Location = new System.Drawing.Point(301, 180);
             this.ContraseniaTextBox.Multiline = true;
             this.ContraseniaTextBox.Name = "ContraseniaTextBox";
-            this.ContraseniaTextBox.Size = new System.Drawing.Size(387, 39);
+            this.ContraseniaTextBox.PasswordChar = '*';
+            this.ContraseniaTextBox.Size = new System.Drawing.Size(387, 28);
             this.ContraseniaTextBox.TabIndex = 11;
             // 
             // IniciarSesionBTN
@@ -107,6 +114,15 @@
             this.CerrarBTN.UseVisualStyleBackColor = true;
             this.CerrarBTN.Click += new System.EventHandler(this.CerrarBTN_Click);
             // 
+            // logo
+            // 
+            this.logo.Image = global::IngSoftValdezAlegre.Properties.Resources.pcforge_logo1;
+            this.logo.Location = new System.Drawing.Point(12, 79);
+            this.logo.Name = "logo";
+            this.logo.Size = new System.Drawing.Size(264, 214);
+            this.logo.TabIndex = 14;
+            this.logo.TabStop = false;
+            // 
             // Login
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -127,6 +143,8 @@
             this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.Load += new System.EventHandler(this.Login_Load);
+            this.panel1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.logo)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -140,5 +158,6 @@
         private System.Windows.Forms.TextBox ContraseniaTextBox;
         private System.Windows.Forms.Button IniciarSesionBTN;
         private System.Windows.Forms.Button CerrarBTN;
+        private System.Windows.Forms.PictureBox logo;
     }
 }

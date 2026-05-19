@@ -16,7 +16,8 @@ namespace BE
         public string Apellido { get; set; }
         public string Email { get; set; }
         public string Idioma { get; set; }
-        public string Rol { get; set; }
+        public string IdRol { get; set; }
+        public string RolDescripcion { get; set; }
         public bool Bloqueado { get; set; }
         public bool Activo { get; set; }
 

@@ -52,6 +52,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controles\BitacoraControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\BitacoraControl.Designer.cs">
+      <DependentUpon>BitacoraControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\UsuariosControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\UsuariosControl.Designer.cs">
+      <DependentUpon>UsuariosControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Login.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -65,7 +77,20 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
+    <Compile Include="Tema.cs" />
+    <Compile Include="Controles\CambiarContraseniaForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Controles\CambiarContraseniaForm.Designer.cs">
+      <DependentUpon>CambiarContraseniaForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Controles\BitacoraControl.resx">
+      <DependentUpon>BitacoraControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\UsuariosControl.resx">
+      <DependentUpon>UsuariosControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Login.resx">
       <DependentUpon>Login.cs</DependentUpon>
     </EmbeddedResource>
@@ -114,6 +139,9 @@
       <Project>{82b0c5f6-0e96-4e40-acc9-7847e8196eeb}</Project>
       <Name>SER_06AV</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\pcforge-logo.jpg" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

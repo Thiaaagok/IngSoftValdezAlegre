@@ -33,7 +33,22 @@ namespace IngSoftValdezAlegre
             {
                 UsuariosSER06AV SER = new UsuariosSER06AV();
                 SER.Login(login, contrasenia);
+
                 MainForm formPrincipal = new MainForm();
+                formPrincipal.FormClosed += (s, args) =>
+                {
+                    //if (formPrincipal.CerrarSesionSolicitado)
+                    //{
+                    //    LoginTextBox.Text = string.Empty;
+                    //    ContraseniaTextBox.Text = string.Empty;
+                    //    LoginTextBox.Focus();
+                    //    this.Show();
+                    //}
+                    //else
+                    //{
+                    //    this.Close();
+                    //}
+                };
                 formPrincipal.Show();
                 this.Hide();
             }
@@ -66,6 +81,8 @@ namespace IngSoftValdezAlegre
         private void CerrarBTN_Click(object sender, EventArgs e)
         {
             this.Close();
+            Application.Exit();
         }
+
     }
 }

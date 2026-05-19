@@ -1,6 +1,7 @@
 ﻿using BE;
 using MPP;
 using SER.Excepciones;
+using SER.Generador;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,21 +18,26 @@ namespace SER
         {
             try
             {
+                BitacoraMPP06AV MPP_Bitacora = new BitacoraMPP06AV();
                 if (string.IsNullOrWhiteSpace(descripcion))
                     throw new BitacoraValidacionException("descripcion", "La descripción no puede estar vacía.");
+                GeneradorID gid = new GeneradorID();
+                string id = gid.GenerarId();
+
+                string codigo = MPP_Bitacora.ObtenerSiguienteCodigo();
 
                 Bitacora06AV bitacora = new Bitacora06AV
                 {
                     Categoria = (int)categoria,
+                    Codigo = codigo,
                     Criticidad = criticidad.ToString(),
                     Descripcion = descripcion,
                     Fecha = DateTime.Now,
-                    Id = Guid.NewGuid(),
+                    Id = id,
                     Modulo = modulo.ToString(),
                     UsuarioDni = usuarioDni
                 };
 
-                BitacoraMPP06AV MPP_Bitacora = new BitacoraMPP06AV();
                 return MPP_Bitacora.Guardar(bitacora);
             }
             catch (BitacoraException) { throw; }

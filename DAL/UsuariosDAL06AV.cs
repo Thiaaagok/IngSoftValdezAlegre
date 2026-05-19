@@ -78,9 +78,9 @@ public class UsuariosDAL06AV
 
     public bool CrearUsuario(Dictionary<string, object> parametros)
     {
-        string query = @"INSERT INTO Usuarios (Dni,Nombre,Apellido,Email,Rol,Activo,Bloqueado,Login, Contrasenia)
+        string query = @"INSERT INTO Usuarios (Dni,Nombre,Apellido,Email,IdRol,Activo,Bloqueado,Login, Contrasenia)
             VALUES
-            ( @dni,@nombre, @apellido, @email, @rol, 
+            ( @dni,@nombre, @apellido, @email, @IdRol,
               @activo, @bloqueado, @login, @contrasenia
             )";
 
@@ -93,7 +93,7 @@ public class UsuariosDAL06AV
 
     public bool EditarUsuario(Dictionary<string, object> parametros)
     {
-        string query = @"UPDATE Usuarios SET Nombre = @nombre, Apellido = @apellido, Email = @email, Rol = @rol WHERE Dni = @dni";
+        string query = @"UPDATE Usuarios SET Email = @email, IdRol = @rol WHERE Dni = @dni";
 
         return Ejecutar(query, parametros);
     }
@@ -101,6 +101,13 @@ public class UsuariosDAL06AV
     public bool ReactivarUsuario(Dictionary<string, object> parametros)
     {
         string query = "UPDATE Usuarios SET Activo = 1 WHERE Dni = @dni";
+
+        return Ejecutar(query, parametros);
+    }
+
+    public bool DesactivarUsuario(Dictionary<string, object> parametros)
+    {
+        string query = "UPDATE Usuarios SET Activo = 0 WHERE Dni = @dni";
 
         return Ejecutar(query, parametros);
     }

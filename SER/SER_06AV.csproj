@@ -34,6 +34,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -46,6 +47,9 @@
     <Compile Include="Encriptador\EncriptacionSER06AV.cs" />
     <Compile Include="Excepciones\ExcepcionesBitacora.cs" />
     <Compile Include="Excepciones\ExcepcionesUsuario.cs" />
+    <Compile Include="Exportacion\ExportacionEXCEL.cs" />
+    <Compile Include="Exportacion\ExportacionPDF.cs" />
+    <Compile Include="Generador\GeneradorID.cs" />
     <Compile Include="RolesSER06AV.cs" />
     <Compile Include="UsuariosSER06AV.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
