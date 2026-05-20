@@ -54,7 +54,7 @@ namespace MPP
             return MapearBitacora(tabla.Rows[0]);
         }
 
-        public List<Bitacora06AV> ObtenerPorCategoria(int categoria)
+        public List<Bitacora06AV> ObtenerPorCategoria(string categoria)
         {
             var parametros = new Dictionary<string, object> { { "@categoria", categoria } };
             DataTable tabla = BitacoraDAL.ObtenerPorCategoria(parametros);
@@ -107,7 +107,7 @@ namespace MPP
             return new Bitacora06AV
             {
                 Codigo = row["Codigo"].ToString(),
-                Categoria = Convert.ToInt32(row["Categoria"]),
+                Categoria = row["Categoria"].ToString(),
                 Criticidad = row["Criticidad"].ToString(),
                 Descripcion = row["Descripcion"].ToString(),
                 Fecha = Convert.ToDateTime(row["Fecha"]),

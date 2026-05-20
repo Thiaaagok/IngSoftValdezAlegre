@@ -28,7 +28,7 @@ namespace SER
 
                 Bitacora06AV bitacora = new Bitacora06AV
                 {
-                    Categoria = (int)categoria,
+                    Categoria = categoria.ToString(),
                     Codigo = codigo,
                     Criticidad = criticidad.ToString(),
                     Descripcion = descripcion,
@@ -85,7 +85,7 @@ namespace SER
             try
             {
                 BitacoraMPP06AV MPP_Bitacora = new BitacoraMPP06AV();
-                return MPP_Bitacora.ObtenerPorCategoria((int)categoria);
+                return MPP_Bitacora.ObtenerPorCategoria(categoria.ToString());
             }
             catch (BitacoraException) 
             { 

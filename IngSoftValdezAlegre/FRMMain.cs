@@ -1,4 +1,5 @@
 ﻿using BE;
+using IngSoftValdezAlegre.Common;
 using IngSoftValdezAlegre.Controles;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre
 {
-    public partial class MainForm : Form
+    public partial class FRMMain : Form
     {
         private const int SidebarAnchoExpandido = 220;
         private const int SidebarAnchoColapsado = 60;
@@ -20,18 +21,16 @@ namespace IngSoftValdezAlegre
 
         public Usuario06AV Usuario = new Usuario06AV();
 
-        public MainForm()
+        public FRMMain()
         {
             InitializeComponent();
             ConfigurarBotonesDelDesigner();
             Usuario = UsuarioSesion06AV.Instancia().UsuarioActual;
+            lblUsuario.Text = Usuario.Nombre + " " + Usuario.Apellido;
         }
-
-        // ============ NAVEGACIÓN ============
 
         private void MostrarControl(UserControl control)
         {
-            // Liberar el control anterior si había uno
             foreach (Control c in panelPrincipal.Controls)
                 c.Dispose();
 
@@ -50,12 +49,8 @@ namespace IngSoftValdezAlegre
             MostrarControl(new UsuariosControl());
         }
 
-        // ============ SIDEBAR ============
-
         private void ConfigurarBotonesDelDesigner()
         {
-            // Asigna Tag a los botones creados desde el designer
-            // para que el toggle pueda mostrar/ocultar texto
             AsignarTag(usuariosBTN, "Usuarios");
             AsignarTag(bitacoraBTN, "Bitácora");
         }
@@ -100,7 +95,7 @@ namespace IngSoftValdezAlegre
 
         private void cambiarContraseñaToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            using (var f = new CambiarContraseniaForm(Usuario.Dni))
+            using (var f = new FRMCambiarContrasenia(Usuario.Dni))
             {
                 f.ShowDialog(this);
             }
@@ -108,12 +103,18 @@ namespace IngSoftValdezAlegre
 
         private void cerrarSesiónToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var r = MessageBox.Show("¿Cerrar sesión?", "Confirmar",
-            MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (r != DialogResult.Yes) return;
+            bool confirmado = ConfirmacionForm.Mostrar(
+                mensaje: "¿Estás seguro que querés cerrar sesión?",
+                titulo: "Cerrar sesión",
+                textoSi: "Sí, cerrar",
+                textoNo: "Cancelar",
+                owner: this);
+
+            if (!confirmado) return;
 
             this.Hide();
-            var login = new Login();
+            UsuarioSesion06AV.Instancia().CerrarSesion();
+            var login = new FRMLogin();
             login.FormClosed += (s, args) => this.Close();
             login.Show();
         }

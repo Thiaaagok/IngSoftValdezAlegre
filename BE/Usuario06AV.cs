@@ -18,6 +18,7 @@ namespace BE
         public string Idioma { get; set; }
         public string IdRol { get; set; }
         public string RolDescripcion { get; set; }
+        public bool DebeCambiarContrasenia { get; set; }
         public bool Bloqueado { get; set; }
         public bool Activo { get; set; }
 

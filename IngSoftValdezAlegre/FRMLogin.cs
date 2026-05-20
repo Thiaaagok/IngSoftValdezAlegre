@@ -1,4 +1,7 @@
-﻿using SER;
+﻿using BE;
+using IngSoftValdezAlegre.Common;
+using IngSoftValdezAlegre.Controles;
+using SER;
 using SER.Excepciones;
 using System;
 using System.Collections.Generic;
@@ -12,9 +15,9 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre
 {
-    public partial class Login : Form
+    public partial class FRMLogin : Form
     {
-        public Login()
+        public FRMLogin()
         {
             InitializeComponent();
         }
@@ -32,23 +35,36 @@ namespace IngSoftValdezAlegre
             try
             {
                 UsuariosSER06AV SER = new UsuariosSER06AV();
-                SER.Login(login, contrasenia);
+                Usuario06AV usuario = SER.Login(login, contrasenia);
 
-                MainForm formPrincipal = new MainForm();
-                formPrincipal.FormClosed += (s, args) =>
+                // Si tiene que cambiar contraseña (primer login o post-desbloqueo)
+                if (usuario.DebeCambiarContrasenia)
                 {
-                    //if (formPrincipal.CerrarSesionSolicitado)
-                    //{
-                    //    LoginTextBox.Text = string.Empty;
-                    //    ContraseniaTextBox.Text = string.Empty;
-                    //    LoginTextBox.Focus();
-                    //    this.Show();
-                    //}
-                    //else
-                    //{
-                    //    this.Close();
-                    //}
-                };
+                    ConfirmacionForm.MostrarInfo(
+                        "Por seguridad, debés cambiar tu contraseña antes de continuar.",
+                        titulo: "Cambio de contraseña requerido",
+                        tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
+                        owner: this);
+
+                    using (var f = new FRMCambiarContrasenia(usuario.Dni, esObligatorio: true))
+                    {
+                        f.ShowDialog(this);
+
+                        if (!f.ContraseniaCambiada)
+                        {
+                            // No cambió → no lo dejamos entrar
+                            UsuarioSesion06AV.Instancia().CerrarSesion();
+                            ConfirmacionForm.MostrarInfo(
+                                "Debés cambiar tu contraseña para poder ingresar al sistema.",
+                                titulo: "Acceso denegado",
+                                tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
+                                owner: this);
+                            return;
+                        }
+                    }
+                }
+
+                FRMMain formPrincipal = new FRMMain();
                 formPrincipal.Show();
                 this.Hide();
             }

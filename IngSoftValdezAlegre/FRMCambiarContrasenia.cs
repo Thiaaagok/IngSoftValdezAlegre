@@ -1,18 +1,33 @@
-﻿using SER;
+﻿using BE;
+using SER;
 using SER.Excepciones;
 using System;
 using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    public partial class CambiarContraseniaForm : Form
+    public partial class FRMCambiarContrasenia : Form
     {
         private readonly string _dni;
+        private readonly bool _esObligatorio;
 
-        public CambiarContraseniaForm(string dni)
+        public bool ContraseniaCambiada { get; private set; } = false;
+
+        public FRMCambiarContrasenia(string dni, bool esObligatorio = false)
         {
             InitializeComponent();
             _dni = dni;
+            _esObligatorio = esObligatorio;
+
+            if (_esObligatorio)
+            {
+                btnCancelar.Visible = false;
+                this.ControlBox = false;
+                this.Text = "Cambio de contraseña obligatorio";
+
+                lblMensaje.ForeColor = Tema.Peligro;
+                lblMensaje.Text = "Por seguridad, debés cambiar tu contraseña antes de continuar.";
+            }
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
@@ -57,8 +72,22 @@ namespace IngSoftValdezAlegre.Controles
 
                 if (ok)
                 {
-                    MessageBox.Show("Contraseña actualizada correctamente.",
-                        "Listo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    ContraseniaCambiada = true;
+
+                    if (_esObligatorio)
+                    {
+                        MessageBox.Show(
+                            "Contraseña actualizada correctamente.\nYa podés ingresar al sistema.",
+                            "Listo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show(
+                            "Contraseña actualizada correctamente.\nDebés iniciar sesión nuevamente.",
+                            "Listo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        UsuarioSesion06AV.Instancia().CerrarSesion();
+                    }
+
                     this.DialogResult = DialogResult.OK;
                     this.Close();
                 }

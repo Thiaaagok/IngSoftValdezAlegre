@@ -141,8 +141,8 @@ namespace IngSoftValdezAlegre.Controles
 
                 if (cmbEvento.SelectedItem != null && cmbEvento.SelectedItem.ToString() != OPCION_TODOS)
                 {
-                    var cat = (CategoriaBitacora)Enum.Parse(typeof(CategoriaBitacora), cmbEvento.SelectedItem.ToString());
-                    filtrados = filtrados.Where(ev => ev.Categoria == (int)cat);
+                    string cat = cmbEvento.SelectedItem.ToString();
+                    filtrados = filtrados.Where(ev => string.Equals(ev.Categoria, cat, StringComparison.OrdinalIgnoreCase));
                 }
 
                 if (cmbCriticidad.SelectedItem != null && cmbCriticidad.SelectedItem.ToString() != OPCION_TODOS)

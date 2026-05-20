@@ -52,6 +52,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\ConfirmacionForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Common\ConfirmacionForm.Designer.cs">
+      <DependentUpon>ConfirmacionForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controles\BitacoraControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -64,38 +70,44 @@
     <Compile Include="Controles\UsuariosControl.Designer.cs">
       <DependentUpon>UsuariosControl.cs</DependentUpon>
     </Compile>
-    <Compile Include="Login.cs">
+    <Compile Include="FRMLogin.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Login.Designer.cs">
-      <DependentUpon>Login.cs</DependentUpon>
+    <Compile Include="FRMLogin.Designer.cs">
+      <DependentUpon>FRMLogin.cs</DependentUpon>
     </Compile>
-    <Compile Include="MainForm.cs">
+    <Compile Include="FRMMain.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MainForm.Designer.cs">
-      <DependentUpon>MainForm.cs</DependentUpon>
+    <Compile Include="FRMMain.Designer.cs">
+      <DependentUpon>FRMMain.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Tema.cs" />
-    <Compile Include="Controles\CambiarContraseniaForm.cs">
+    <Compile Include="FRMCambiarContrasenia.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Controles\CambiarContraseniaForm.Designer.cs">
-      <DependentUpon>CambiarContraseniaForm.cs</DependentUpon>
+    <Compile Include="FRMCambiarContrasenia.Designer.cs">
+      <DependentUpon>FRMCambiarContrasenia.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Common\ConfirmacionForm.resx">
+      <DependentUpon>ConfirmacionForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controles\BitacoraControl.resx">
       <DependentUpon>BitacoraControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FRMCambiarContrasenia.resx">
+      <DependentUpon>FRMCambiarContrasenia.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controles\UsuariosControl.resx">
       <DependentUpon>UsuariosControl.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Login.resx">
-      <DependentUpon>Login.cs</DependentUpon>
+    <EmbeddedResource Include="FRMLogin.resx">
+      <DependentUpon>FRMLogin.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="MainForm.resx">
-      <DependentUpon>MainForm.cs</DependentUpon>
+    <EmbeddedResource Include="FRMMain.resx">
+      <DependentUpon>FRMMain.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

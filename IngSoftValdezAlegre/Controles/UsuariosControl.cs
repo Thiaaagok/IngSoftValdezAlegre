@@ -1,4 +1,5 @@
 ﻿using BE;
+using IngSoftValdezAlegre.Common;
 using Microsoft.VisualBasic;
 using SER;
 using SER.Excepciones;
@@ -38,7 +39,6 @@ namespace IngSoftValdezAlegre.Controles
             ConfigurarColumnas();
         }
 
-        // -------------------- Carga inicial --------------------
 
         private void ConfigurarColumnas()
         {
@@ -62,18 +62,19 @@ namespace IngSoftValdezAlegre.Controles
                 var roles = _rolesSer.ObtenerTodos();
 
                 cmbRol.DataSource = roles;
-
                 cmbRol.DisplayMember = "Descripcion";
-
                 cmbRol.ValueMember = "Id";
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                ConfirmacionForm.MostrarInfo(
+                    ex.Message,
+                    titulo: "Error al cargar roles",
+                    tipo: ConfirmacionForm.TipoConfirmacion.Error,
+                    owner: this.FindForm());
             }
         }
 
-        // -------------------- Manejo de modos --------------------
 
         private void CambiarModo(Modo nuevo)
         {
@@ -83,10 +84,11 @@ namespace IngSoftValdezAlegre.Controles
             {
                 case Modo.Consulta:
                     SetMensaje("Modo Consulta",
-                        "Unicamente para manera de ver");
+                        "Unicamente para ver los usuario");
                     SetBotones(crear: true, desbloq: true, modif: true, actDesact: true,
                                aplicar: true, cancelar: false, radios: true);
                     SetFormularioEditable(false, incluirEstado: false);
+                    grilla.Enabled = true;
                     break;
 
                 case Modo.Anadir:
@@ -101,10 +103,13 @@ namespace IngSoftValdezAlegre.Controles
                     break;
 
                 case Modo.Modificar:
-
                     SetMensaje(
                         "Modo Modificar",
                         "Solo se puede modificar el Email y el Rol del usuario.");
+
+                    bool esAdmin = UsuarioSesion06AV.Instancia().TieneRol("Administrador");
+                    var seleccionado = ObtenerUsuarioSeleccionado();
+                    bool esMiPropioUsuario = seleccionado?.Dni == UsuarioSesion06AV.Instancia().UsuarioActual.Dni;
 
                     SetBotones(crear: false, desbloq: false, modif: false, actDesact: false,
                         aplicar: true, cancelar: true, radios: false);
@@ -114,16 +119,29 @@ namespace IngSoftValdezAlegre.Controles
                     txtNombre.ReadOnly = true;
                     txtLogin.ReadOnly = true;
 
-                    txtEmail.ReadOnly = false;
-                    cmbRol.Enabled = true;
+                    if (esAdmin)
+                    {
+                        txtEmail.ReadOnly = false;
+                        cmbRol.Enabled = true;
+                    }
+                    else if (esMiPropioUsuario)
+                    {
+                        txtEmail.ReadOnly = false;
+                        cmbRol.Enabled = false;
+                    }
+                    else
+                    {
+                        txtEmail.ReadOnly = true;
+                        cmbRol.Enabled = false;
+                    }
 
                     chkActivo.Enabled = false;
                     chkBloqueado.Enabled = false;
-
+                    grilla.Enabled = false;
                     break;
 
                 case Modo.ActivarDesactivar:
-                    SetMensaje("Modo Eliminar",
+                    SetMensaje("Modo Activar/Desactivar",
                         "Vas a alternar el estado Activo/Inactivo del usuario seleccionado. " +
                         "Presioná Aplicar para confirmar.");
                     SetBotones(crear: false, desbloq: false, modif: false, actDesact: false,
@@ -171,7 +189,7 @@ namespace IngSoftValdezAlegre.Controles
             txtApellido.ReadOnly = !editable;
             txtNombre.ReadOnly = !editable;
             txtEmail.ReadOnly = !editable;
-            txtLogin.ReadOnly = !editable; 
+            txtLogin.ReadOnly = !editable;
             cmbRol.Enabled = editable;
             chkBloqueado.Enabled = incluirEstado;
             chkActivo.Enabled = incluirEstado;
@@ -189,14 +207,11 @@ namespace IngSoftValdezAlegre.Controles
             chkActivo.Checked = true;
         }
 
-        // -------------------- Carga de grilla --------------------
-
         private void RecargarGrilla()
         {
             try
             {
-                var todos = _usuariosSer.ObtenerTodos()
-                             ?? new List<Usuario06AV>();
+                var todos = _usuariosSer.ObtenerTodos() ?? new List<Usuario06AV>();
 
                 var roles = _rolesSer.ObtenerTodos();
 
@@ -229,11 +244,11 @@ namespace IngSoftValdezAlegre.Controles
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                ConfirmacionForm.MostrarInfo(
                     "No se pudo cargar la lista de usuarios.\n" + ex.Message,
-                    "Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                    titulo: "Error",
+                    tipo: ConfirmacionForm.TipoConfirmacion.Error,
+                    owner: this.FindForm());
             }
         }
 
@@ -268,21 +283,31 @@ namespace IngSoftValdezAlegre.Controles
 
                 if (ok)
                 {
-                    MessageBox.Show("Usuario creado.", "Listo",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    ConfirmacionForm.MostrarInfo(
+                        "Usuario creado correctamente.",
+                        titulo: "Listo",
+                        owner: this.FindForm());
+
                     LimpiarFormulario();
                     CambiarModo(Modo.Consulta);
                     RecargarGrilla();
                 }
                 else
                 {
-                    MessageBox.Show("No se pudo crear el usuario.", "Aviso",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    ConfirmacionForm.MostrarInfo(
+                        "No se pudo crear el usuario.",
+                        titulo: "Aviso",
+                        tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
+                        owner: this.FindForm());
                 }
             }
             catch (UsuarioException ex)
             {
-                MessageBox.Show(ex.Message, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ConfirmacionForm.MostrarInfo(
+                    ex.Message,
+                    titulo: "Aviso",
+                    tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
+                    owner: this.FindForm());
             }
         }
 
@@ -290,9 +315,6 @@ namespace IngSoftValdezAlegre.Controles
         {
             var seleccionado = ObtenerUsuarioSeleccionado();
             if (seleccionado == null) return;
-
-            seleccionado.Nombre = txtNombre.Text.Trim();
-            seleccionado.Apellido = txtApellido.Text.Trim();
             seleccionado.Email = txtEmail.Text.Trim();
             seleccionado.IdRol = cmbRol.SelectedValue?.ToString();
 
@@ -301,20 +323,30 @@ namespace IngSoftValdezAlegre.Controles
                 bool ok = _usuariosSer.EditarUsuario(seleccionado, DniOperador());
                 if (ok)
                 {
-                    MessageBox.Show("Usuario modificado.", "Listo",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    ConfirmacionForm.MostrarInfo(
+                        "Usuario modificado correctamente.",
+                        titulo: "Listo",
+                        owner: this.FindForm());
+
                     CambiarModo(Modo.Consulta);
                     RecargarGrilla();
                 }
                 else
                 {
-                    MessageBox.Show("No se pudo modificar el usuario.", "Aviso",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    ConfirmacionForm.MostrarInfo(
+                        "No se pudo modificar el usuario.",
+                        titulo: "Aviso",
+                        tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
+                        owner: this.FindForm());
                 }
             }
             catch (UsuarioException ex)
             {
-                MessageBox.Show(ex.Message, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ConfirmacionForm.MostrarInfo(
+                    ex.Message,
+                    titulo: "Aviso",
+                    tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
+                    owner: this.FindForm());
             }
         }
 
@@ -324,10 +356,24 @@ namespace IngSoftValdezAlegre.Controles
             if (u == null) return;
 
             string accion = u.Activo ? "desactivar" : "reactivar";
-            var resp = MessageBox.Show($"¿Confirmás {accion} al usuario {u.Apellido}, {u.Nombre}?",
-                "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-            if (resp != DialogResult.Yes) return;
+            bool confirmado = ConfirmacionForm.Mostrar(
+                mensaje: $"¿Confirmás {accion} al usuario {u.Apellido}, {u.Nombre}?",
+                titulo: "Confirmar",
+                tipo: u.Activo
+                    ? ConfirmacionForm.TipoConfirmacion.Advertencia
+                    : ConfirmacionForm.TipoConfirmacion.Pregunta,
+                textoSi: u.Activo ? "Sí, desactivar" : "Sí, reactivar",
+                textoNo: "Cancelar",
+                owner: this.FindForm());
+
+            if (!confirmado) return;
+
+            if(u.Dni == UsuarioSesion06AV.Instancia().UsuarioActual.Dni)
+            {
+                ConfirmacionForm.MostrarInfo("No se puede desactivar a uno mismo");
+                return;
+            }
 
             try
             {
@@ -337,15 +383,22 @@ namespace IngSoftValdezAlegre.Controles
 
                 if (ok)
                 {
-                    MessageBox.Show("Listo.", "OK",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    ConfirmacionForm.MostrarInfo(
+                        "Operación realizada correctamente.",
+                        titulo: "Listo",
+                        owner: this.FindForm());
+
                     CambiarModo(Modo.Consulta);
                     RecargarGrilla();
                 }
             }
             catch (UsuarioException ex)
             {
-                MessageBox.Show(ex.Message, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ConfirmacionForm.MostrarInfo(
+                    ex.Message,
+                    titulo: "Aviso",
+                    tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
+                    owner: this.FindForm());
             }
         }
 
@@ -354,24 +407,36 @@ namespace IngSoftValdezAlegre.Controles
             var u = ObtenerUsuarioSeleccionado();
             if (u == null) return;
 
-            var resp = MessageBox.Show($"¿Desbloquear al usuario {u.Apellido}, {u.Nombre}?",
-                "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (resp != DialogResult.Yes) return;
+            bool confirmado = ConfirmacionForm.Mostrar(
+                mensaje: $"¿Desbloquear al usuario {u.Apellido}, {u.Nombre}?",
+                titulo: "Confirmar desbloqueo",
+                textoSi: "Sí, desbloquear",
+                textoNo: "Cancelar",
+                owner: this.FindForm());
+
+            if (!confirmado) return;
 
             try
             {
                 bool ok = _usuariosSer.DesbloquearUsuario(u.Dni, DniOperador());
                 if (ok)
                 {
-                    MessageBox.Show("Usuario desbloqueado.", "Listo",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    ConfirmacionForm.MostrarInfo(
+                        "Usuario desbloqueado correctamente.",
+                        titulo: "Listo",
+                        owner: this.FindForm());
+
                     CambiarModo(Modo.Consulta);
                     RecargarGrilla();
                 }
             }
             catch (UsuarioException ex)
             {
-                MessageBox.Show(ex.Message, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ConfirmacionForm.MostrarInfo(
+                    ex.Message,
+                    titulo: "Aviso",
+                    tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
+                    owner: this.FindForm());
             }
         }
 
@@ -402,7 +467,7 @@ namespace IngSoftValdezAlegre.Controles
 
         private void grilla_SelectionChanged(object sender, EventArgs e)
         {
-            if (_modo == Modo.Anadir) return; // en alta no queremos sobrescribir lo que está escribiendo
+            if (_modo == Modo.Anadir) return;
             var usuario = ObtenerUsuarioSeleccionado();
             if (usuario == null) return;
 
@@ -426,12 +491,29 @@ namespace IngSoftValdezAlegre.Controles
 
         private void btnModificar_Click(object sender, EventArgs e)
         {
-            if (ObtenerUsuarioSeleccionado() == null)
+            var seleccionado = ObtenerUsuarioSeleccionado();
+            if (seleccionado == null)
             {
-                MessageBox.Show("Seleccioná un usuario en la grilla.", "Aviso",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ConfirmacionForm.MostrarInfo(
+                    "Seleccioná un usuario en la grilla.",
+                    titulo: "Aviso",
+                    owner: this.FindForm());
                 return;
             }
+
+            bool esAdmin = UsuarioSesion06AV.Instancia().TieneRol("Administrador");
+            bool esMiPropioUsuario = seleccionado.Dni == UsuarioSesion06AV.Instancia().UsuarioActual.Dni;
+
+            if (!esAdmin && !esMiPropioUsuario)
+            {
+                ConfirmacionForm.MostrarInfo(
+                    "No tenés permisos para modificar a otros usuarios.\nSolo podés modificar tu propio email.",
+                    titulo: "Permiso denegado",
+                    tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
+                    owner: this.FindForm());
+                return;
+            }
+
             CambiarModo(Modo.Modificar);
         }
 
@@ -439,8 +521,10 @@ namespace IngSoftValdezAlegre.Controles
         {
             if (ObtenerUsuarioSeleccionado() == null)
             {
-                MessageBox.Show("Seleccioná un usuario en la grilla.", "Aviso",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ConfirmacionForm.MostrarInfo(
+                    "Seleccioná un usuario en la grilla.",
+                    titulo: "Aviso",
+                    owner: this.FindForm());
                 return;
             }
             CambiarModo(Modo.ActivarDesactivar);
@@ -451,14 +535,18 @@ namespace IngSoftValdezAlegre.Controles
             var u = ObtenerUsuarioSeleccionado();
             if (u == null)
             {
-                MessageBox.Show("Seleccioná un usuario en la grilla.", "Aviso",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ConfirmacionForm.MostrarInfo(
+                    "Seleccioná un usuario en la grilla.",
+                    titulo: "Aviso",
+                    owner: this.FindForm());
                 return;
             }
             if (!u.Bloqueado)
             {
-                MessageBox.Show("El usuario seleccionado no está bloqueado.",
-                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ConfirmacionForm.MostrarInfo(
+                    "El usuario seleccionado no está bloqueado.",
+                    titulo: "Aviso",
+                    owner: this.FindForm());
                 return;
             }
             CambiarModo(Modo.Desbloquear);

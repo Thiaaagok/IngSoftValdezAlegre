@@ -2,6 +2,7 @@
 using MPP;
 using SER.Encriptador;
 using SER.Excepciones;
+using SER.Generador;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,77 +25,61 @@ namespace SER
 
             BitacoraSER06AV bitacora = new BitacoraSER06AV();
             EncriptacionSER06AV enc = new EncriptacionSER06AV();
+            UsuariosMPP06AV UsuariosMPP = new UsuariosMPP06AV();
+            GeneradorID gid = new GeneradorID();
+
+            const int MAX_INTENTOS = 3;
+            const int VENTANA_HORAS = 3;
 
             try
             {
-                UsuariosMPP06AV MPP = new UsuariosMPP06AV();
+                var usuario = UsuariosMPP.ObtenerPorLogin(login);
 
-                // Obtenemos el usuario completo
-                var usuario = MPP.ObtenerPorLogin(login);
+                if (usuario == null)
+                    throw new UsuarioNoEncontradoException(login);
 
-                // Chequeamos si esta bloqueado o si esta desactivado
                 if (usuario.Bloqueado)
-                {
                     throw new UsuarioEstadoInvalidoException(usuario.Dni, "Bloqueado", "Login");
-                }
 
                 if (!usuario.Activo)
-                {
                     throw new UsuarioEstadoInvalidoException(usuario.Dni, "Inactivo", "Login");
-                }
 
-                // Comparamos contraseñas
+                string IdIntento = gid.GenerarId();
+
                 string contraseniaHasheada = enc.Encriptar(contrasenia);
                 if (contraseniaHasheada != usuario.Contrasenia)
                 {
-                    var eventosUsuario = bitacora.ObtenerEventosPorUsuario(usuario.Dni);
-                    var eventosModificacion = bitacora.ObtenerEventosPorCategoria(CategoriaBitacora.Modificacion);
+                    UsuariosMPP.RegistrarIntento(IdIntento,usuario.Dni, exitoso: false);
+                    bitacora.LoginFallido(usuario.Dni);
+                    int fallidos = UsuariosMPP.ContarFallidosRecientes(usuario.Dni, VENTANA_HORAS);
 
-                    DateTime fechaUltimoDesbloqueo = eventosModificacion
-                        .Where(e => e.Categoria == (int)CategoriaBitacora.Modificacion
-                                 && e.Descripcion.Contains(usuario.Dni)
-                                 && e.Descripcion.Contains("desbloqueado"))
-                        .Select(e => (DateTime?)e.Fecha)
-                        .DefaultIfEmpty(null)
-                        .Max() ?? DateTime.MinValue;
-
-                    var intentosFallidos = eventosUsuario
-                        .Where(e => e.Categoria == (int)CategoriaBitacora.LoginFallido
-                                 && e.Fecha > fechaUltimoDesbloqueo
-                                 && e.Fecha >= DateTime.Now.AddHours(-3))
-                        .ToList();
-
-                    if (intentosFallidos.Count >= 2)
+                    if (fallidos >= MAX_INTENTOS)
                     {
-                        MPP.BloquearUsuario(usuario.Dni);
-                        bitacora.LoginFallido(usuario.Dni);
+                        UsuariosMPP.BloquearUsuario(usuario.Dni);
                         throw new UsuarioEstadoInvalidoException(usuario.Dni, "Bloqueado", "Login");
                     }
 
-                    bitacora.LoginFallido(usuario.Dni);
                     throw new ContraseniaInvalidaException(usuario.Dni);
                 }
 
-                // Obtenemos su rol y iniciamos sesión en su singleton
+                UsuariosMPP.RegistrarIntento(IdIntento,usuario.Dni, exitoso: true);
+
                 RolesMPP06AV RolesMPP = new RolesMPP06AV();
                 Rol06AV rol = RolesMPP.ObtenerPorId(usuario.IdRol);
 
+                usuario.Email = enc.DesencriptarReversible(usuario.Email);
                 UsuarioSesion06AV.Instancia().IniciarSesion(usuario, rol);
                 bitacora.LoginExitoso(usuario.Dni);
 
                 return usuario;
             }
-            catch (UsuarioException)
-            {
-                throw;
-            }
+            catch (UsuarioException) { throw; }
             catch (Exception ex)
             {
                 bitacora.Error($"Error en Login: {ex.Message}", ModuloBitacora.Autenticacion, login);
                 throw new UsuarioAccesoDatosException($"Login({login})", ex);
             }
         }
-
         public void Logout()
         {
             BitacoraSER06AV bitacora = new BitacoraSER06AV();
@@ -129,7 +114,13 @@ namespace SER
             try
             {
                 UsuariosMPP06AV MPP = new UsuariosMPP06AV();
-                return MPP.ObtenerTodos();
+                EncriptacionSER06AV enc = new EncriptacionSER06AV();
+
+                var usuarios = MPP.ObtenerTodos();
+
+                foreach (var u in usuarios) u.Email = enc.DesencriptarReversible(u.Email);
+
+                return usuarios;
             }
             catch (UsuarioException)
             {
@@ -150,10 +141,13 @@ namespace SER
             try
             {
                 UsuariosMPP06AV MPP = new UsuariosMPP06AV();
+                EncriptacionSER06AV enc = new EncriptacionSER06AV();
+
                 var usuario = MPP.ObtenerPorDni(dni);
 
                 if (usuario == null)
                     throw new UsuarioNoEncontradoException(dni);
+                usuario.Email = enc.DesencriptarReversible(usuario.Email);
 
                 return usuario;
             }
@@ -181,8 +175,8 @@ namespace SER
             try
             {
                 UsuariosMPP06AV MPP = new UsuariosMPP06AV();
+                EncriptacionSER06AV enc = new EncriptacionSER06AV();
 
-                // Verificar duplicado antes de insertar
                 var existente = MPP.ObtenerPorDni(dni);
                 if (existente != null)
                     throw new UsuarioDuplicadoException(dni);
@@ -192,7 +186,7 @@ namespace SER
                     Dni = dni,
                     Nombre = nombre,
                     Apellido = apellido,
-                    Email = email,
+                    Email = enc.EncriptarReversible(email),
                     IdRol = rol,
                     Activo = true,
                     Bloqueado = false,
@@ -229,14 +223,18 @@ namespace SER
                 throw new UsuarioValidacionException("usuario", "El objeto usuario no puede ser nulo.");
 
             ValidarDni(usuario.Dni);
+            ValidarEmail(usuario.Email);
+
             BitacoraSER06AV bitacora = new BitacoraSER06AV();
             try
             {
                 UsuariosMPP06AV MPP = new UsuariosMPP06AV();
+                EncriptacionSER06AV enc = new EncriptacionSER06AV();
 
                 var existente = MPP.ObtenerPorDni(usuario.Dni);
                 if (existente == null)
                     throw new UsuarioNoEncontradoException(usuario.Dni);
+                usuario.Email = enc.EncriptarReversible(usuario.Email);
 
                 bool resultado = MPP.EditarUsuario(usuario);
                 bitacora.Modificacion($"Usuario: {usuario.Dni}", ModuloBitacora.Usuarios, dniOperador);
@@ -392,13 +390,14 @@ namespace SER
                     throw new UsuarioEstadoInvalidoException(dni, "Desbloqueado", "DesbloquearUsuario");
 
                 bool resultado = MPP.DesbloquearUsuario(dni);
-                bitacora.Modificacion($"Usuario: {dni} desbloqueado", ModuloBitacora.Usuarios, dniOperador);
+                MPP.LimpiarIntentosFallidos(dni);
+                bitacora.Modificacion(
+                    $"Usuario: {dni} desbloqueado. Se le requerirá cambiar contraseña.",
+                    ModuloBitacora.Usuarios,
+                    dniOperador);
                 return resultado;
             }
-            catch (UsuarioException)
-            {
-                throw;
-            }
+            catch (UsuarioException) { throw; }
             catch (Exception ex)
             {
                 bitacora.Error($"Error desbloqueando usuario: {dni}", ModuloBitacora.Usuarios, dniOperador);
@@ -425,14 +424,8 @@ namespace SER
                 UsuariosMPP06AV MPP = new UsuariosMPP06AV();
 
                 var usuario = MPP.ObtenerPorDni(dni);
-                if (usuario == null)
-                    throw new UsuarioNoEncontradoException(dni);
 
-                if (usuario.Bloqueado)
-                    throw new UsuarioEstadoInvalidoException(dni, "Bloqueado", "CambiarContraseña");
-
-                // Hasheamos la contraseña actual ingresada y la comparamos contra la que está
-                // almacenada (también hasheada).
+                // Hasheamos la contraseña actual ingresada y la comparamos contra la que está almacenada(también hasheada).
                 EncriptacionSER06AV enc = new EncriptacionSER06AV();
                 string contraseniaActualHash = enc.Encriptar(contraseniaActual);
                 string contraseniaNuevaHash = enc.Encriptar(contraseniaNueva);
@@ -442,6 +435,7 @@ namespace SER
 
 
                 bool resultado = MPP.CambiarContraseña(dni, contraseniaActualHash, contraseniaNuevaHash);
+                MPP.LimpiarIntentosFallidos(dni);
                 bitacora.Modificacion($"Usuario: {dni} cambio contraseña", ModuloBitacora.Usuarios, dni);
                 return resultado;
             }

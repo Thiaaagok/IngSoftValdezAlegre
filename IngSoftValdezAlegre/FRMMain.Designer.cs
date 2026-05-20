@@ -1,6 +1,6 @@
 ﻿namespace IngSoftValdezAlegre
 {
-    partial class MainForm
+    partial class FRMMain
     {
         /// <summary>
         /// Required designer variable.
@@ -51,9 +51,9 @@
             // 
             // panelPrincipal
             // 
-            this.panelPrincipal.Location = new System.Drawing.Point(131, 38);
+            this.panelPrincipal.Location = new System.Drawing.Point(133, 38);
             this.panelPrincipal.Name = "panelPrincipal";
-            this.panelPrincipal.Size = new System.Drawing.Size(1304, 577);
+            this.panelPrincipal.Size = new System.Drawing.Size(1302, 579);
             this.panelPrincipal.TabIndex = 1;
             // 
             // usuariosBTN
@@ -91,9 +91,9 @@
             // 
             this.panel4.Controls.Add(this.lblUsuario);
             this.panel4.Controls.Add(this.opcionesUsuarioBTN);
-            this.panel4.Location = new System.Drawing.Point(1294, 3);
+            this.panel4.Location = new System.Drawing.Point(1220, 3);
             this.panel4.Name = "panel4";
-            this.panel4.Size = new System.Drawing.Size(134, 37);
+            this.panel4.Size = new System.Drawing.Size(208, 37);
             this.panel4.TabIndex = 1;
             // 
             // lblUsuario
@@ -109,7 +109,7 @@
             // 
             // opcionesUsuarioBTN
             // 
-            this.opcionesUsuarioBTN.Location = new System.Drawing.Point(108, 5);
+            this.opcionesUsuarioBTN.Location = new System.Drawing.Point(181, 5);
             this.opcionesUsuarioBTN.Name = "opcionesUsuarioBTN";
             this.opcionesUsuarioBTN.Size = new System.Drawing.Size(23, 27);
             this.opcionesUsuarioBTN.TabIndex = 0;

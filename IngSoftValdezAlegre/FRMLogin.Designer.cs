@@ -1,6 +1,6 @@
 ﻿namespace IngSoftValdezAlegre
 {
-    partial class Login
+    partial class FRMLogin
     {
         /// <summary>
         /// Required designer variable.

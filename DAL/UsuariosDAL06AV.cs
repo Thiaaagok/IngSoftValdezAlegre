@@ -78,11 +78,11 @@ public class UsuariosDAL06AV
 
     public bool CrearUsuario(Dictionary<string, object> parametros)
     {
-        string query = @"INSERT INTO Usuarios (Dni,Nombre,Apellido,Email,IdRol,Activo,Bloqueado,Login, Contrasenia)
-            VALUES
-            ( @dni,@nombre, @apellido, @email, @IdRol,
-              @activo, @bloqueado, @login, @contrasenia
-            )";
+        string query = @"INSERT INTO Usuarios 
+        (Dni, Nombre, Apellido, Email, IdRol, Activo, Bloqueado, Login, Contrasenia, DebeCambiarContrasenia)
+        VALUES
+        (@dni, @nombre, @apellido, @email, @IdRol,
+         @activo, @bloqueado, @login, @contrasenia, @debeCambiarContrasenia)";
 
         return Ejecutar(query, parametros);
     }
@@ -121,15 +121,17 @@ public class UsuariosDAL06AV
 
     public bool DesbloquearUsuario(Dictionary<string, object> parametros)
     {
-        string query = "UPDATE Usuarios SET Bloqueado = 0 WHERE Dni = @dni";
-
+        string query = @"UPDATE Usuarios 
+                     SET Bloqueado = 0, DebeCambiarContrasenia = 1 
+                     WHERE Dni = @dni";
         return Ejecutar(query, parametros);
     }
 
     public bool CambiarContraseña(Dictionary<string, object> parametros)
     {
-        string query = @" UPDATE Usuarios SET Contrasenia = @nueva WHERE Dni = @dni AND Contrasenia = @actual";
-
+        string query = @"UPDATE Usuarios 
+                     SET Contrasenia = @nueva, DebeCambiarContrasenia = 0 
+                     WHERE Dni = @dni AND Contrasenia = @actual";
         return Ejecutar(query, parametros);
     }
 
@@ -164,6 +166,75 @@ public class UsuariosDAL06AV
         conn.Close();
 
         return filas > 0;
+    }
+
+    #endregion
+
+    #region Intentos Login
+
+    public bool RegistrarIntentoSesion(Dictionary<string, object> parametros)
+    {
+        string query = @"
+            INSERT INTO IntentosLogin (Id, UsuarioDni, Fecha, Exitoso)
+            VALUES (@id, @dni, GETDATE(), @exitoso)";
+
+        SqlConnection conn = Conexion.Instancia.ObtenerConexion();
+        SqlCommand cmd = new SqlCommand(query, conn);
+
+        foreach (var p in parametros)
+        {
+            cmd.Parameters.AddWithValue(p.Key, p.Value ?? DBNull.Value);
+        }
+
+        conn.Open();
+        int filas = cmd.ExecuteNonQuery();
+        conn.Close();
+
+        return filas > 0;
+    }
+
+    public int ObtenerIntentosFallidosRecientes(Dictionary<string, object> parametros)
+    {
+        string query = @"
+            SELECT COUNT(*) 
+            FROM IntentosLogin
+            WHERE UsuarioDni = @dni
+              AND Exitoso = 0
+              AND Fecha >= @desde
+              AND Fecha > ISNULL(
+                  (SELECT MAX(Fecha) FROM IntentosLogin 
+                   WHERE UsuarioDni = @dni AND Exitoso = 1),
+                  '1900-01-01'
+              )";
+
+        SqlConnection conn = Conexion.Instancia.ObtenerConexion();
+        SqlCommand cmd = new SqlCommand(query, conn);
+
+        foreach (var p in parametros)
+        {
+            cmd.Parameters.AddWithValue(p.Key, p.Value ?? DBNull.Value);
+        }
+
+        conn.Open();
+        object resultado = cmd.ExecuteScalar();
+        conn.Close();
+
+        return resultado != null ? Convert.ToInt32(resultado) : 0;
+    }
+
+    public bool LimpiarIntentosFallidos(Dictionary<string, object> parametros)
+    {
+        string query = "DELETE FROM IntentosLogin WHERE Dni = @dni AND Exitoso = 0";
+
+        SqlConnection conn = Conexion.Instancia.ObtenerConexion();
+        SqlCommand cmd = new SqlCommand(query, conn);
+        foreach (var p in parametros)
+            cmd.Parameters.AddWithValue(p.Key, p.Value ?? DBNull.Value);
+
+        conn.Open();
+        cmd.ExecuteNonQuery();
+        conn.Close();
+        return true;
     }
 
     #endregion

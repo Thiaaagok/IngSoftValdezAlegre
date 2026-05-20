@@ -74,7 +74,8 @@ namespace MPP
                 { "@activo", usuario.Activo },
                 { "@bloqueado", usuario.Bloqueado },
                 { "@login", usuario.Login },
-                { "@contrasenia", usuario.Contrasenia }
+                { "@contrasenia", usuario.Contrasenia },
+                { "@debeCambiarContrasenia", true }
             };
 
             return UsuariosDAL.CrearUsuario(parametros);
@@ -176,6 +177,7 @@ namespace MPP
                 Apellido = row["Apellido"].ToString(),
                 Email = row["Email"].ToString(),
                 IdRol = row["IdRol"].ToString(),
+                DebeCambiarContrasenia = Convert.ToBoolean(row["DebeCambiarContrasenia"]),
                 Activo = Convert.ToBoolean(row["Activo"]),
                 Bloqueado = Convert.ToBoolean(row["Bloqueado"]),
                 Login = row["Login"].ToString(),
@@ -183,6 +185,35 @@ namespace MPP
             };
         }
 
+        #endregion
+
+        #region Intentos Login
+        public bool RegistrarIntento(string id, string dni, bool exitoso)
+        {
+            var parametros = new Dictionary<string, object>
+        {
+            { "@id", id },
+            { "@dni", dni },
+            { "@exitoso", exitoso }
+        };
+            return UsuariosDAL.RegistrarIntentoSesion(parametros);
+        }
+
+        public int ContarFallidosRecientes(string dni, int horas)
+        {
+            var parametros = new Dictionary<string, object>
+            {
+                { "@dni", dni },
+                { "@desde", DateTime.Now.AddHours(-horas) }
+            };
+            return UsuariosDAL.ObtenerIntentosFallidosRecientes(parametros);
+        }
+
+        public bool LimpiarIntentosFallidos(string dni)
+        {
+            var parametros = new Dictionary<string, object> { { "@dni", dni } };
+            return UsuariosDAL.LimpiarIntentosFallidos(parametros);
+        }
         #endregion
     }
 }
