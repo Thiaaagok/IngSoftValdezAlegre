@@ -224,7 +224,7 @@ public class UsuariosDAL06AV
 
     public bool LimpiarIntentosFallidos(Dictionary<string, object> parametros)
     {
-        string query = "DELETE FROM IntentosLogin WHERE Dni = @dni AND Exitoso = 0";
+        string query = "DELETE FROM IntentosLogin WHERE UsuarioDni = @dni AND Exitoso = 0";
 
         SqlConnection conn = Conexion.Instancia.ObtenerConexion();
         SqlCommand cmd = new SqlCommand(query, conn);

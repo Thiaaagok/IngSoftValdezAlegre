@@ -25,8 +25,12 @@ namespace IngSoftValdezAlegre
         {
             InitializeComponent();
             ConfigurarBotonesDelDesigner();
-            Usuario = UsuarioSesion06AV.Instancia().UsuarioActual;
-            lblUsuario.Text = Usuario.Nombre + " " + Usuario.Apellido;
+            lblUsuario.Text = UsuarioSesion06AV.Instancia().NombreCompleto();
+            if (!UsuarioSesion06AV.Instancia().TieneRol("Administrador"))
+            {
+                bitacoraBTN.Enabled = false;
+                bitacoraBTN.Visible = false;
+            }
         }
 
         private void MostrarControl(UserControl control)

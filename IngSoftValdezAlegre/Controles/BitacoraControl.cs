@@ -1,4 +1,5 @@
 ﻿using BE;
+using IngSoftValdezAlegre.Common;
 using SER;
 using SER.Exportacion;
 using System;
@@ -107,31 +108,16 @@ namespace IngSoftValdezAlegre.Controles
 
                 if (desde > hasta)
                 {
-                    MessageBox.Show("La fecha inicial no puede ser mayor a la final.",
-                        "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    ConfirmacionForm.MostrarInfo(
+                        "La fecha inicial no puede ser mayor a la final.",
+                        titulo: "Aviso",
+                        tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
+                        owner: this.FindForm());
                     return;
                 }
 
                 var eventos = _bitacoraSer.ObtenerEventosEntreFechas(desde, hasta) ?? new List<Bitacora06AV>();
                 IEnumerable<Bitacora06AV> filtrados = eventos;
-
-                if (!string.IsNullOrWhiteSpace(txtDni.Text))
-                {
-                    var dnisCoincidentes = new HashSet<string>(_usuariosPorDni.Values
-                        .Select(u => u.Dni));
-
-                    if (dnisCoincidentes.Count == 0)
-                    {
-                        // Nada que mostrar
-                        _eventosCargados = new List<Bitacora06AV>();
-                        grilla.DataSource = null;
-                        grilla.DataSource = _eventosCargados;
-                        lblCantidad.Text = "Eventos: 0";
-                        return;
-                    }
-
-                    filtrados = filtrados.Where(ev => ev.UsuarioDni != null && dnisCoincidentes.Contains(ev.UsuarioDni));
-                }
 
                 if (cmbModulo.SelectedItem != null && cmbModulo.SelectedItem.ToString() != OPCION_TODOS)
                 {
@@ -160,11 +146,12 @@ namespace IngSoftValdezAlegre.Controles
             }
             catch (Exception ex)
             {
-                MessageBox.Show("No se pudo aplicar el filtro:\n" + ex.Message,
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ConfirmacionForm.MostrarInfo(
+                    "No se pudo aplicar el filtro:\n" + ex.Message,
+                    titulo: "Error",
+                    tipo: ConfirmacionForm.TipoConfirmacion.Error,
+                    owner: this.FindForm());
             }
-
-
         }
 
         private void PintarPorCriticidad()
@@ -252,7 +239,6 @@ namespace IngSoftValdezAlegre.Controles
             cmbModulo.SelectedIndex = 0;
             cmbEvento.SelectedIndex = 0;
             cmbCriticidad.SelectedIndex = 0;
-            txtDni.Text = "—";
             AplicarFiltros();
         }
 
@@ -264,6 +250,29 @@ namespace IngSoftValdezAlegre.Controles
         private void grilla_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
+        }
+
+        private void grilla_SelectionChanged(object sender, EventArgs e)
+        {
+            var ev = grilla.CurrentRow?.DataBoundItem as Bitacora06AV;
+
+            if (ev == null || string.IsNullOrEmpty(ev.UsuarioDni))
+            {
+                txtApellido.Text = "";
+                txtNombre.Text = "";
+                return;
+            }
+
+            if (_usuariosPorDni.TryGetValue(ev.UsuarioDni, out var usuario))
+            {
+                txtApellido.Text = usuario.Apellido;
+                txtNombre.Text = usuario.Nombre;
+            }
+            else
+            {
+                txtApellido.Text = "(no encontrado)";
+                txtNombre.Text = "(no encontrado)";
+            }
         }
     }
 }

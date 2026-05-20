@@ -1,4 +1,5 @@
 ﻿using BE;
+using IngSoftValdezAlegre.Common;
 using SER;
 using SER.Excepciones;
 using System;
@@ -76,15 +77,15 @@ namespace IngSoftValdezAlegre.Controles
 
                     if (_esObligatorio)
                     {
-                        MessageBox.Show(
+                        ConfirmacionForm.MostrarInfo(
                             "Contraseña actualizada correctamente.\nYa podés ingresar al sistema.",
-                            "Listo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            "Listo");
                     }
                     else
                     {
-                        MessageBox.Show(
+                        ConfirmacionForm.MostrarInfo(
                             "Contraseña actualizada correctamente.\nDebés iniciar sesión nuevamente.",
-                            "Listo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            "Listo");
                         UsuarioSesion06AV.Instancia().CerrarSesion();
                     }
 

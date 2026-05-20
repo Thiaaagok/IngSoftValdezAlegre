@@ -391,6 +391,10 @@ namespace SER
 
                 bool resultado = MPP.DesbloquearUsuario(dni);
                 MPP.LimpiarIntentosFallidos(dni);
+
+                //Seteo contraseña base
+                usuario.Contrasenia = SetearContrasenia(usuario.Dni, usuario.Apellido);
+                MPP.EditarUsuario(usuario);
                 bitacora.Modificacion(
                     $"Usuario: {dni} desbloqueado. Se le requerirá cambiar contraseña.",
                     ModuloBitacora.Usuarios,

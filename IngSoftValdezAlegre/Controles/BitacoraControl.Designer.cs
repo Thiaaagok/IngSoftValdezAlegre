@@ -32,7 +32,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.grilla = new System.Windows.Forms.DataGridView();
             this.lblTitulo = new System.Windows.Forms.Label();
-            this.txtDni = new System.Windows.Forms.TextBox();
+            this.txtNombre = new System.Windows.Forms.TextBox();
             this.dtpFechaIni = new System.Windows.Forms.DateTimePicker();
             this.dtpFechaFin = new System.Windows.Forms.DateTimePicker();
             this.lblFiltrar = new System.Windows.Forms.Button();
@@ -49,6 +49,8 @@
             this.lblEvento = new System.Windows.Forms.Label();
             this.lblModulo = new System.Windows.Forms.Label();
             this.lblImprimirEXCEL = new System.Windows.Forms.Button();
+            this.lblApellido = new System.Windows.Forms.Label();
+            this.txtApellido = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.grilla)).BeginInit();
             this.SuspendLayout();
             // 
@@ -87,6 +89,7 @@
             this.grilla.Size = new System.Drawing.Size(982, 314);
             this.grilla.TabIndex = 5;
             this.grilla.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grilla_CellContentClick);
+            this.grilla.SelectionChanged += new System.EventHandler(this.grilla_SelectionChanged);
             // 
             // lblTitulo
             // 
@@ -99,14 +102,14 @@
             this.lblTitulo.TabIndex = 6;
             this.lblTitulo.Text = "Bitácora de eventos";
             // 
-            // txtDni
+            // txtNombre
             // 
-            this.txtDni.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.txtDni.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.txtDni.Location = new System.Drawing.Point(11, 400);
-            this.txtDni.Name = "txtDni";
-            this.txtDni.Size = new System.Drawing.Size(200, 24);
-            this.txtDni.TabIndex = 11;
+            this.txtNombre.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.txtNombre.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.txtNombre.Location = new System.Drawing.Point(11, 400);
+            this.txtNombre.Name = "txtNombre";
+            this.txtNombre.Size = new System.Drawing.Size(116, 24);
+            this.txtNombre.TabIndex = 11;
             // 
             // dtpFechaIni
             // 
@@ -200,9 +203,9 @@
             this.lblDni.AutoSize = true;
             this.lblDni.Location = new System.Drawing.Point(8, 384);
             this.lblDni.Name = "lblDni";
-            this.lblDni.Size = new System.Drawing.Size(26, 13);
+            this.lblDni.Size = new System.Drawing.Size(44, 13);
             this.lblDni.TabIndex = 21;
-            this.lblDni.Text = "DNI";
+            this.lblDni.Text = "Nombre";
             // 
             // lblFechaDesde
             // 
@@ -259,10 +262,30 @@
             this.lblImprimirEXCEL.UseVisualStyleBackColor = true;
             this.lblImprimirEXCEL.Click += new System.EventHandler(this.lblImprimirEXCEL_Click);
             // 
+            // lblApellido
+            // 
+            this.lblApellido.AutoSize = true;
+            this.lblApellido.Location = new System.Drawing.Point(130, 384);
+            this.lblApellido.Name = "lblApellido";
+            this.lblApellido.Size = new System.Drawing.Size(44, 13);
+            this.lblApellido.TabIndex = 28;
+            this.lblApellido.Text = "Apellido";
+            // 
+            // txtApellido
+            // 
+            this.txtApellido.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.txtApellido.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.txtApellido.Location = new System.Drawing.Point(133, 400);
+            this.txtApellido.Name = "txtApellido";
+            this.txtApellido.Size = new System.Drawing.Size(130, 24);
+            this.txtApellido.TabIndex = 29;
+            // 
             // BitacoraControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.txtApellido);
+            this.Controls.Add(this.lblApellido);
             this.Controls.Add(this.lblImprimirEXCEL);
             this.Controls.Add(this.lblModulo);
             this.Controls.Add(this.lblEvento);
@@ -279,7 +302,7 @@
             this.Controls.Add(this.lblFiltrar);
             this.Controls.Add(this.dtpFechaFin);
             this.Controls.Add(this.dtpFechaIni);
-            this.Controls.Add(this.txtDni);
+            this.Controls.Add(this.txtNombre);
             this.Controls.Add(this.lblTitulo);
             this.Controls.Add(this.grilla);
             this.Name = "BitacoraControl";
@@ -295,7 +318,7 @@
 
         private System.Windows.Forms.DataGridView grilla;
         private System.Windows.Forms.Label lblTitulo;
-        private System.Windows.Forms.TextBox txtDni;
+        private System.Windows.Forms.TextBox txtNombre;
         private System.Windows.Forms.DateTimePicker dtpFechaIni;
         private System.Windows.Forms.DateTimePicker dtpFechaFin;
         private System.Windows.Forms.Button lblFiltrar;
@@ -312,5 +335,7 @@
         private System.Windows.Forms.Label lblEvento;
         private System.Windows.Forms.Label lblModulo;
         private System.Windows.Forms.Button lblImprimirEXCEL;
+        private System.Windows.Forms.Label lblApellido;
+        private System.Windows.Forms.TextBox txtApellido;
     }
 }
