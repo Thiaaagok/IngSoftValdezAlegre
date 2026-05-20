@@ -17,6 +17,10 @@ namespace IngSoftValdezAlegre.Controles
         public FRMCambiarContrasenia(string dni, bool esObligatorio = false)
         {
             InitializeComponent();
+            if (String.IsNullOrEmpty(dni))
+            {
+                dni = UsuarioSesion06AV.Instancia().UsuarioActual.Dni;
+            }
             _dni = dni;
             _esObligatorio = esObligatorio;
 

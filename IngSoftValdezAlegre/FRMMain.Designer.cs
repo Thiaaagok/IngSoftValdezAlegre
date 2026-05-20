@@ -51,9 +51,9 @@
             // 
             // panelPrincipal
             // 
-            this.panelPrincipal.Location = new System.Drawing.Point(133, 38);
+            this.panelPrincipal.Location = new System.Drawing.Point(133, 39);
             this.panelPrincipal.Name = "panelPrincipal";
-            this.panelPrincipal.Size = new System.Drawing.Size(1302, 579);
+            this.panelPrincipal.Size = new System.Drawing.Size(1008, 578);
             this.panelPrincipal.TabIndex = 1;
             // 
             // usuariosBTN
@@ -91,7 +91,7 @@
             // 
             this.panel4.Controls.Add(this.lblUsuario);
             this.panel4.Controls.Add(this.opcionesUsuarioBTN);
-            this.panel4.Location = new System.Drawing.Point(1220, 3);
+            this.panel4.Location = new System.Drawing.Point(937, 3);
             this.panel4.Name = "panel4";
             this.panel4.Size = new System.Drawing.Size(208, 37);
             this.panel4.TabIndex = 1;
@@ -176,18 +176,18 @@
             this.flpModulos.TabIndex = 0;
             this.flpModulos.WrapContents = false;
             // 
-            // MainForm
+            // FRMMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1435, 615);
+            this.ClientSize = new System.Drawing.Size(1150, 615);
             this.ControlBox = false;
             this.Controls.Add(this.flpModulos);
             this.Controls.Add(this.pnlSidebar);
             this.Controls.Add(this.pnlTopBar);
             this.Controls.Add(this.panelPrincipal);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.Name = "MainForm";
+            this.Name = "FRMMain";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.Text = "MainForm";
