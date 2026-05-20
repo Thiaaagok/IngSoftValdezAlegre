@@ -79,7 +79,7 @@ namespace IngSoftValdezAlegre.Controles
         private void CambiarModo(Modo nuevo)
         {
             _modo = nuevo;
-
+            bool esAdmin = UsuarioSesion06AV.Instancia().TieneRol("Administrador");
             switch (nuevo)
             {
                 case Modo.Consulta:
@@ -92,6 +92,11 @@ namespace IngSoftValdezAlegre.Controles
                     break;
 
                 case Modo.Anadir:
+                    if (!esAdmin)
+                    {
+                        ConfirmacionForm.MostrarInfo("No sos administrador, no podes crear usuarios");
+                        return;
+                    }
                     SetMensaje("Modo Añadir",
                         "Completá DNI, Apellido, Nombre, Email y Rol. El sistema genera el " +
                         "Login y una contraseña inicial. Presioná Aplicar para crear.");
@@ -107,7 +112,7 @@ namespace IngSoftValdezAlegre.Controles
                         "Modo Modificar",
                         "Solo se puede modificar el Email y el Rol del usuario.");
 
-                    bool esAdmin = UsuarioSesion06AV.Instancia().TieneRol("Administrador");
+                    
                     var seleccionado = ObtenerUsuarioSeleccionado();
                     bool esMiPropioUsuario = seleccionado?.Dni == UsuarioSesion06AV.Instancia().UsuarioActual.Dni;
 
@@ -141,6 +146,11 @@ namespace IngSoftValdezAlegre.Controles
                     break;
 
                 case Modo.ActivarDesactivar:
+                    if (!esAdmin)
+                    {
+                        ConfirmacionForm.MostrarInfo("No sos administrador, no podes desactivar o activar usuarios");
+                        return;
+                    }
                     SetMensaje("Modo Activar/Desactivar",
                         "Vas a alternar el estado Activo/Inactivo del usuario seleccionado. " +
                         "Presioná Aplicar para confirmar.");
@@ -150,6 +160,11 @@ namespace IngSoftValdezAlegre.Controles
                     break;
 
                 case Modo.Desbloquear:
+                    if (!esAdmin)
+                    {
+                        ConfirmacionForm.MostrarInfo("No sos administrador, no podes desbloquear usuarios");
+                        return;
+                    }
                     SetMensaje("Modo Desbloquear",
                         "Seleccioná un usuario bloqueado en la grilla y presioná Aplicar para desbloquearlo.");
                     SetBotones(crear: false, desbloq: false, modif: false, actDesact: false,
