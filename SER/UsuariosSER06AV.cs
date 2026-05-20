@@ -67,6 +67,7 @@ namespace SER
                 RolesMPP06AV RolesMPP = new RolesMPP06AV();
                 Rol06AV rol = RolesMPP.ObtenerPorId(usuario.IdRol);
 
+                UsuariosMPP.LimpiarIntentosFallidos(usuario.Dni);
                 usuario.Email = enc.DesencriptarReversible(usuario.Email);
                 UsuarioSesion06AV.Instancia().IniciarSesion(usuario, rol);
                 bitacora.LoginExitoso(usuario.Dni);
