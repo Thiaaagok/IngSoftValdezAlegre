@@ -141,12 +141,13 @@ namespace MPP
             return UsuariosDAL.BloquearUsuario(parametros);
         }
 
-        public bool DesbloquearUsuario(string dni)
+        public bool DesbloquearUsuario(string dni, string contrasenia)
         {
 
             var parametros = new Dictionary<string, object>
             {
-                { "@dni", dni }
+                { "@dni", dni },
+                { "@contrasenia", contrasenia }
             };
 
             return UsuariosDAL.DesbloquearUsuario(parametros);

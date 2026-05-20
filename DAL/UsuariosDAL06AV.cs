@@ -122,7 +122,8 @@ public class UsuariosDAL06AV
     public bool DesbloquearUsuario(Dictionary<string, object> parametros)
     {
         string query = @"UPDATE Usuarios 
-                     SET Bloqueado = 0, DebeCambiarContrasenia = 1 
+                     SET Bloqueado = 0, DebeCambiarContrasenia = 1, 
+                     Contrasenia = @contrasenia
                      WHERE Dni = @dni";
         return Ejecutar(query, parametros);
     }

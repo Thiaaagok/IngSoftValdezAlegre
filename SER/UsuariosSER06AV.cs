@@ -389,13 +389,10 @@ namespace SER
 
                 if (!usuario.Bloqueado)
                     throw new UsuarioEstadoInvalidoException(dni, "Desbloqueado", "DesbloquearUsuario");
-
-                bool resultado = MPP.DesbloquearUsuario(dni);
+                string contraseniaBase = SetearContrasenia(dni, usuario.Apellido);
+                bool resultado = MPP.DesbloquearUsuario(dni, contraseniaBase);
                 MPP.LimpiarIntentosFallidos(dni);
-
-                //Seteo contraseña base
-                usuario.Contrasenia = SetearContrasenia(usuario.Dni, usuario.Apellido);
-                MPP.EditarUsuario(usuario);
+           
                 bitacora.Modificacion(
                     $"Usuario: {dni} desbloqueado. Se le requerirá cambiar contraseña.",
                     ModuloBitacora.Usuarios,

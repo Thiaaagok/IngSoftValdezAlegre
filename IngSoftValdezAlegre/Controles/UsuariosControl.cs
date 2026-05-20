@@ -84,11 +84,12 @@ namespace IngSoftValdezAlegre.Controles
             {
                 case Modo.Consulta:
                     SetMensaje("Modo Consulta",
-                        "Unicamente para ver los usuario");
+                        "Unicamente para ver los usuarios");
                     SetBotones(crear: true, desbloq: true, modif: true, actDesact: true,
                                aplicar: true, cancelar: false, radios: true);
                     SetFormularioEditable(false, incluirEstado: false);
                     grilla.Enabled = true;
+                    txtLogin.ReadOnly = true;
                     break;
 
                 case Modo.Anadir:
@@ -105,6 +106,7 @@ namespace IngSoftValdezAlegre.Controles
                     LimpiarFormulario();
                     SetFormularioEditable(true, incluirEstado: false);
                     txtDni.Focus();
+                    txtLogin.ReadOnly = true;
                     break;
 
                 case Modo.Modificar:
@@ -157,6 +159,7 @@ namespace IngSoftValdezAlegre.Controles
                     SetBotones(crear: false, desbloq: false, modif: false, actDesact: false,
                                aplicar: true, cancelar: true, radios: false);
                     SetFormularioEditable(false, incluirEstado: false);
+                    txtLogin.ReadOnly = true;
                     break;
 
                 case Modo.Desbloquear:
@@ -170,6 +173,7 @@ namespace IngSoftValdezAlegre.Controles
                     SetBotones(crear: false, desbloq: false, modif: false, actDesact: false,
                                aplicar: true, cancelar: true, radios: false);
                     SetFormularioEditable(false, incluirEstado: false);
+                    txtLogin.ReadOnly = true;
                     break;
             }
         }
@@ -204,7 +208,6 @@ namespace IngSoftValdezAlegre.Controles
             txtApellido.ReadOnly = !editable;
             txtNombre.ReadOnly = !editable;
             txtEmail.ReadOnly = !editable;
-            txtLogin.ReadOnly = !editable;
             cmbRol.Enabled = editable;
             chkBloqueado.Enabled = incluirEstado;
             chkActivo.Enabled = incluirEstado;
@@ -440,7 +443,6 @@ namespace IngSoftValdezAlegre.Controles
                         "Usuario desbloqueado correctamente.",
                         titulo: "Listo",
                         owner: this.FindForm());
-
                     CambiarModo(Modo.Consulta);
                     RecargarGrilla();
                 }
