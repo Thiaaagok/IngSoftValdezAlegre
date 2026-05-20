@@ -28,8 +28,8 @@ namespace SER
             UsuariosMPP06AV UsuariosMPP = new UsuariosMPP06AV();
             GeneradorID gid = new GeneradorID();
 
-            const int MAX_INTENTOS = 3;
-            const int VENTANA_HORAS = 3;
+            const int MaximosIntentos = 3;
+            const int HorasATomarEnCuenta = 3;
 
             try
             {
@@ -51,9 +51,9 @@ namespace SER
                 {
                     UsuariosMPP.RegistrarIntento(IdIntento,usuario.Dni, exitoso: false);
                     bitacora.LoginFallido(usuario.Dni);
-                    int fallidos = UsuariosMPP.ContarFallidosRecientes(usuario.Dni, VENTANA_HORAS);
+                    int fallidos = UsuariosMPP.ContarFallidosRecientes(usuario.Dni, HorasATomarEnCuenta);
 
-                    if (fallidos >= MAX_INTENTOS)
+                    if (fallidos >= MaximosIntentos)
                     {
                         UsuariosMPP.BloquearUsuario(usuario.Dni);
                         throw new UsuarioEstadoInvalidoException(usuario.Dni, "Bloqueado", "Login");

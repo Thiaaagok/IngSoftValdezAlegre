@@ -1,6 +1,7 @@
 ﻿using BE;
 using IngSoftValdezAlegre.Common;
 using IngSoftValdezAlegre.Controles;
+using SER;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -107,6 +108,7 @@ namespace IngSoftValdezAlegre
 
         private void cerrarSesiónToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            BitacoraSER06AV bitacora = new BitacoraSER06AV();
             bool confirmado = ConfirmacionForm.Mostrar(
                 mensaje: "¿Estás seguro que querés cerrar sesión?",
                 titulo: "Cerrar sesión",
@@ -117,6 +119,7 @@ namespace IngSoftValdezAlegre
             if (!confirmado) return;
 
             this.Hide();
+            bitacora.Logout(UsuarioSesion06AV.Instancia().UsuarioActual.Dni);
             UsuarioSesion06AV.Instancia().CerrarSesion();
             var login = new FRMLogin();
             login.FormClosed += (s, args) => this.Close();
