@@ -85,7 +85,6 @@ namespace IngSoftValdezAlegre
                     }
                     else
                     {
-                        // Mostrar solo las primeras 2 letras (o un ícono si usás iconos)
                         btn.Text = textoOriginal.Substring(0, Math.Min(2, textoOriginal.Length));
                         btn.TextAlign = ContentAlignment.MiddleCenter;
                     }
@@ -103,7 +102,20 @@ namespace IngSoftValdezAlegre
             using (var f = new FRMCambiarContrasenia(Usuario.Dni))
             {
                 f.ShowDialog(this);
+
+                if (f.ContraseniaCambiada)
+                {
+                    CerrarSesionYVolverALogin();
+                }
             }
+        }
+
+        private void CerrarSesionYVolverALogin()
+        {
+            UsuarioSesion06AV.Instancia().CerrarSesion();
+            var login = new FRMLogin();
+            login.Show();
+            this.Close();
         }
 
         private void cerrarSesiónToolStripMenuItem_Click(object sender, EventArgs e)

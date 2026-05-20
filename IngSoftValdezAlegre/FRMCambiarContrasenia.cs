@@ -86,7 +86,7 @@ namespace IngSoftValdezAlegre.Controles
                         ConfirmacionForm.MostrarInfo(
                             "Contraseña actualizada correctamente.\nDebés iniciar sesión nuevamente.",
                             "Listo");
-                        UsuarioSesion06AV.Instancia().CerrarSesion();
+          
                     }
 
                     this.DialogResult = DialogResult.OK;
