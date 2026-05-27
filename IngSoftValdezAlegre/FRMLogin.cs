@@ -61,6 +61,19 @@ namespace IngSoftValdezAlegre
                                 owner: this);
                             return;
                         }
+
+                        // Cambió la contraseña → cerramos sesión y lo obligamos a loguearse de nuevo
+                        UsuarioSesion06AV.Instancia().CerrarSesion();
+                        ConfirmacionForm.MostrarInfo(
+                            "Tu contraseña fue actualizada. Iniciá sesión nuevamente con tu nueva contraseña.",
+                            titulo: "Contraseña actualizada",
+                            tipo: ConfirmacionForm.TipoConfirmacion.Info,
+                            owner: this);
+
+                        LoginTextBox.Clear();
+                        ContraseniaTextBox.Clear();
+                        LoginTextBox.Focus();
+                        return;
                     }
                 }
 
