@@ -1,4 +1,4 @@
-﻿using BE;
+﻿using BLL;
 using IngSoftValdezAlegre.Common;
 using SER;
 using SER.Exportacion;
@@ -14,19 +14,65 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    public partial class BitacoraControl : UserControl
+    public partial class BitacoraControl : UserControl, IIdiomaAplicable
     {
-        private readonly BitacoraSER06AV _bitacoraSer = new BitacoraSER06AV();
-        private readonly UsuariosSER06AV _usuariosSer = new UsuariosSER06AV();
+        private readonly BitacoraBLL06AV _bitacoraSer = new BitacoraBLL06AV();
+        private readonly UsuariosBLL06AV _usuariosSer = new UsuariosBLL06AV();
 
         private List<Bitacora06AV> _eventosCargados = new List<Bitacora06AV>();
         private Dictionary<string, Usuario06AV> _usuariosPorDni = new Dictionary<string, Usuario06AV>();
 
         private const string OPCION_TODOS = "(Todos)";
+
         public BitacoraControl()
         {
             InitializeComponent();
+            AplicarTema();
             ConfigurarColumnas();
+            AplicarIdioma();
+        }
+
+        private void AplicarTema()
+        {
+            Tema.AplicarControl(this);
+            Tema.AplicarTitulo(lblTitulo);
+            Tema.AplicarGrilla(grilla);
+
+            Tema.AplicarBotonPrimario(lblFiltrar);
+            Tema.AplicarBotonSecundario(lblLimpiar);
+            Tema.AplicarBotonAcento(lblImprimirPDF);
+            Tema.AplicarBotonAcento(lblImprimirEXCEL);
+
+            lblCantidad.ForeColor = Tema.TextoSuave;
+        }
+
+        public void AplicarIdioma()
+        {
+            var t = GestorIdioma06AV.Instancia;
+            lblTitulo.Text        = t.Obtener("bitacora_titulo");
+            lblFiltrar.Text       = t.Obtener("filtrar");
+            lblLimpiar.Text       = t.Obtener("limpiar");
+            lblImprimirPDF.Text   = t.Obtener("imprimir_pdf");
+            lblImprimirEXCEL.Text = t.Obtener("imprimir_excel");
+            lblFechaDesde.Text    = t.Obtener("fecha_desde");
+            lblFechaHasta.Text    = t.Obtener("fecha_hasta");
+            lblCriticidad.Text    = t.Obtener("criticidad");
+            lblEvento.Text        = t.Obtener("evento");
+            lblModulo.Text        = t.Obtener("modulo");
+            lblDni.Text           = t.Obtener("nombre");
+            lblApellido.Text      = t.Obtener("apellido");
+
+            // Headers de la grilla
+            if (grilla.Columns["UsuarioDni"]  != null) grilla.Columns["UsuarioDni"].HeaderText  = t.Obtener("dni");
+            if (grilla.Columns["Fecha"]       != null) grilla.Columns["Fecha"].HeaderText       = "Fecha";
+            if (grilla.Columns["Hora"]        != null) grilla.Columns["Hora"].HeaderText        = "Hora";
+            if (grilla.Columns["Modulo"]      != null) grilla.Columns["Modulo"].HeaderText      = t.Obtener("modulo");
+            if (grilla.Columns["Descripcion"] != null) grilla.Columns["Descripcion"].HeaderText = t.Obtener("evento");
+            if (grilla.Columns["Criticidad"]  != null) grilla.Columns["Criticidad"].HeaderText  = t.Obtener("criticidad");
+
+            // Actualizar conteo si ya hay datos
+            if (_eventosCargados != null && _eventosCargados.Count > 0)
+                lblCantidad.Text = t.Obtener("numero_eventos") + " " + _eventosCargados.Count;
         }
 
         private void BitacoraControl2_Load(object sender, EventArgs e)
@@ -140,7 +186,8 @@ namespace IngSoftValdezAlegre.Controles
                 _eventosCargados = filtrados.OrderByDescending(ev => ev.Fecha).ToList();
                 grilla.DataSource = null;
                 grilla.DataSource = _eventosCargados;
-                lblCantidad.Text = "Eventos: " + _eventosCargados.Count;
+                lblCantidad.Text = GestorIdioma06AV.Instancia.Obtener("numero_eventos")
+                                  + " " + _eventosCargados.Count;
 
                 PintarPorCriticidad();
             }
@@ -164,19 +211,21 @@ namespace IngSoftValdezAlegre.Controles
                 switch (ev.Criticidad)
                 {
                     case "Critica":
-                        row.DefaultCellStyle.BackColor = Color.FromArgb(255, 224, 224);
+                        row.DefaultCellStyle.BackColor = Tema.PeligroSuave;
                         row.DefaultCellStyle.ForeColor = Tema.Peligro;
                         break;
                     case "Alta":
-                        row.DefaultCellStyle.BackColor = Tema.Amber50;
-                        row.DefaultCellStyle.ForeColor = Color.FromArgb(140, 80, 0);
+                        row.DefaultCellStyle.BackColor = Tema.AdvertenciaSuave;
+                        row.DefaultCellStyle.ForeColor = Tema.Naranja600;
                         break;
                     case "Media":
-                        row.DefaultCellStyle.BackColor = Color.White;
+                        row.DefaultCellStyle.BackColor = Tema.FondoElevado;
+                        row.DefaultCellStyle.ForeColor = Tema.Texto;
                         break;
                     case "Baja":
                     default:
-                        row.DefaultCellStyle.BackColor = Color.White;
+                        row.DefaultCellStyle.BackColor = Tema.FondoElevado;
+                        row.DefaultCellStyle.ForeColor = Tema.Texto;
                         break;
                 }
             }

@@ -1,5 +1,4 @@
-﻿using BE;
-using IngSoftValdezAlegre.Common;
+﻿using IngSoftValdezAlegre.Common;
 using IngSoftValdezAlegre.Controles;
 using SER;
 using SER.Excepciones;
@@ -20,11 +19,49 @@ namespace IngSoftValdezAlegre
         public FRMLogin()
         {
             InitializeComponent();
+            AplicarTema();
+            AplicarIdioma();
+        }
+
+        private void AplicarTema()
+        {
+            Tema.AplicarFormulario(this);
+
+            BackColor = Tema.FondoApp;
+            panel1.BackColor = Tema.Grafito900;
+
+            Usuario.BackColor = Tema.FondoApp;
+            Usuario.ForeColor = Tema.Texto;
+            Usuario.Font = new Font("Segoe UI Semibold", 11.5f, FontStyle.Bold);
+            materialLabel2.BackColor = Tema.FondoApp;
+            materialLabel2.ForeColor = Tema.Texto;
+            materialLabel2.Font = new Font("Segoe UI Semibold", 11.5f, FontStyle.Bold);
+
+            LoginTextBox.BackColor = Tema.FondoElevado;
+            LoginTextBox.ForeColor = Tema.Texto;
+            LoginTextBox.Font = new Font("Segoe UI", 13f, FontStyle.Regular);
+            LoginTextBox.BorderStyle = BorderStyle.FixedSingle;
+            ContraseniaTextBox.BackColor = Tema.FondoElevado;
+            ContraseniaTextBox.ForeColor = Tema.Texto;
+            ContraseniaTextBox.Font = new Font("Segoe UI", 13f, FontStyle.Regular);
+            ContraseniaTextBox.BorderStyle = BorderStyle.FixedSingle;
+
+            Tema.AplicarBotonPrimario(IniciarSesionBTN);
+            Tema.AplicarBotonAcento(CerrarBTN);
+        }
+
+        public void AplicarIdioma()
+        {
+            var t = GestorIdioma06AV.Instancia;
+            this.Text                  = t.Obtener("login");
+            Usuario.Text               = t.Obtener("usuario_label");
+            materialLabel2.Text        = t.Obtener("contrasenia_label");
+            IniciarSesionBTN.Text      = t.Obtener("iniciar_sesion");
+            CerrarBTN.Text             = t.Obtener("cerrar").ToUpperInvariant();
         }
 
         private void Login_Load(object sender, EventArgs e)
         {
-
         }
 
         private void IniciarSesionBTN_Click(object sender, EventArgs e)
@@ -34,7 +71,7 @@ namespace IngSoftValdezAlegre
 
             try
             {
-                UsuariosSER06AV SER = new UsuariosSER06AV();
+                UsuariosBLL06AV SER = new UsuariosBLL06AV();
                 Usuario06AV usuario = SER.Login(login, contrasenia);
 
                 // Si tiene que cambiar contraseña (primer login o post-desbloqueo)

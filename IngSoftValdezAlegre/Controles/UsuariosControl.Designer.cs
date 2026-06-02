@@ -103,11 +103,11 @@
             // lblCantidad
             // 
             this.lblCantidad.AutoSize = true;
-            this.lblCantidad.Location = new System.Drawing.Point(737, 17);
+            this.lblCantidad.Location = new System.Drawing.Point(878, 17);
             this.lblCantidad.Name = "lblCantidad";
-            this.lblCantidad.Size = new System.Drawing.Size(113, 13);
+            this.lblCantidad.Size = new System.Drawing.Size(60, 13);
             this.lblCantidad.TabIndex = 3;
-            this.lblCantidad.Text = "Número de usuarios: 0";
+            this.lblCantidad.Text = "Usuarios: 0";
             // 
             // lblFormTitulo
             // 
@@ -376,7 +376,7 @@
             dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.grilla.DefaultCellStyle = dataGridViewCellStyle2;
             this.grilla.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(189)))), ((int)(((byte)(189)))), ((int)(((byte)(189)))));
-            this.grilla.Location = new System.Drawing.Point(8, 37);
+            this.grilla.Location = new System.Drawing.Point(11, 37);
             this.grilla.Name = "grilla";
             this.grilla.ReadOnly = true;
             this.grilla.RowHeadersVisible = false;

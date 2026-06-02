@@ -43,18 +43,20 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BitacoraMPP06AV.cs" />
+    <Compile Include="PatenteMPP06AV.cs" />
+    <Compile Include="FamiliaMPP06AV.cs" />
     <Compile Include="RolesMPP06AV.cs" />
     <Compile Include="UsuariosMPP06AV.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BE\BE_06AV.csproj">
-      <Project>{b2d14455-f2ec-4381-b7fe-a9e5496f593c}</Project>
-      <Name>BE_06AV</Name>
-    </ProjectReference>
     <ProjectReference Include="..\DAL\DAL_06AV.csproj">
       <Project>{587d07d4-43b3-47bd-abb8-644a8a853501}</Project>
       <Name>DAL_06AV</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SER\SER_06AV.csproj">
+      <Project>{82b0c5f6-0e96-4e40-acc9-7847e8196eeb}</Project>
+      <Name>SER_06AV</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

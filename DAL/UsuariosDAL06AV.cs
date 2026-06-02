@@ -138,6 +138,15 @@ public class UsuariosDAL06AV
 
     #endregion
 
+    #region Cambiar Idioma
+    public bool CambiarIdioma(Dictionary<string, object> parametros)
+    {
+        string query = "UPDATE Usuarios SET Idioma = @idioma WHERE Dni = @dni";
+        return Ejecutar(query, parametros);
+    }
+
+    #endregion
+
     #region Eliminar
 
     public bool EliminarUsuario(Dictionary<string, object> parametros)

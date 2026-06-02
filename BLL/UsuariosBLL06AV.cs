@@ -1,17 +1,19 @@
-﻿using BE;
+﻿using BLL;
 using MPP;
 using SER.Encriptador;
 using SER.Excepciones;
 using SER.Generador;
+using SER;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+
 namespace SER
 {
-    public class UsuariosSER06AV
+    public class UsuariosBLL06AV
     {
         #region Login
 
@@ -23,7 +25,7 @@ namespace SER
             if (string.IsNullOrWhiteSpace(contrasenia))
                 throw new UsuarioValidacionException("contrasenia", "La contraseña no puede estar vacía.");
 
-            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
             EncriptacionSER06AV enc = new EncriptacionSER06AV();
             UsuariosMPP06AV UsuariosMPP = new UsuariosMPP06AV();
             GeneradorID gid = new GeneradorID();
@@ -70,6 +72,7 @@ namespace SER
                 UsuariosMPP.LimpiarIntentosFallidos(usuario.Dni);
                 usuario.Email = enc.DesencriptarReversible(usuario.Email);
                 UsuarioSesion06AV.Instancia().IniciarSesion(usuario, rol);
+                GestorIdioma06AV.Instancia.Cargar(usuario.Idioma);
                 bitacora.LoginExitoso(usuario.Dni);
 
                 return usuario;
@@ -77,13 +80,13 @@ namespace SER
             catch (UsuarioException) { throw; }
             catch (Exception ex)
             {
-                bitacora.Error($"Error en Login: {ex.Message}", ModuloBitacora.Autenticacion, login);
+                bitacora.Error($"Error en Login ({login}): {ex.Message}", ModuloBitacora.Autenticacion, null);
                 throw new UsuarioAccesoDatosException($"Login({login})", ex);
             }
         }
         public void Logout()
         {
-            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
 
             try
             {
@@ -102,7 +105,7 @@ namespace SER
             }
             catch (Exception ex)
             {
-                bitacora.Error($"Error en Logout: {ex.Message}", ModuloBitacora.Autenticacion);
+                bool v = bitacora.Error($"Error en Logout: {ex.Message}", ModuloBitacora.Autenticacion);
                 throw new UsuarioAccesoDatosException("Logout", ex);
             }
         }
@@ -137,7 +140,7 @@ namespace SER
         {
             ValidarDni(dni);
 
-            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
 
             try
             {
@@ -172,7 +175,7 @@ namespace SER
             ValidarNombre(nombre, "Nombre");
             ValidarNombre(apellido, "Apellido");
             ValidarEmail(email);
-            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
             try
             {
                 UsuariosMPP06AV MPP = new UsuariosMPP06AV();
@@ -226,7 +229,7 @@ namespace SER
             ValidarDni(usuario.Dni);
             ValidarEmail(usuario.Email);
 
-            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
             try
             {
                 UsuariosMPP06AV MPP = new UsuariosMPP06AV();
@@ -255,7 +258,7 @@ namespace SER
         public bool EliminarUsuario(string dni, string dniOperador)
         {
             ValidarDni(dni);
-            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
             try
             {
                 UsuariosMPP06AV MPP = new UsuariosMPP06AV();
@@ -285,7 +288,7 @@ namespace SER
         public bool ReactivarUsuario(string dni, string dniOperador)
         {
             ValidarDni(dni);
-            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
             try
             {
                 UsuariosMPP06AV MPP = new UsuariosMPP06AV();
@@ -315,7 +318,7 @@ namespace SER
         public bool DesactivarUsuario(string dni, string dniOperador)
         {
             ValidarDni(dni);
-            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
             try
             {
                 UsuariosMPP06AV MPP = new UsuariosMPP06AV();
@@ -345,7 +348,7 @@ namespace SER
         public bool BloquearUsuario(string dni, string dniOperador)
         {
             ValidarDni(dni);
-            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
             try
             {
                 UsuariosMPP06AV MPP = new UsuariosMPP06AV();
@@ -378,7 +381,7 @@ namespace SER
         public bool DesbloquearUsuario(string dni, string dniOperador)
         {
             ValidarDni(dni);
-            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
             try
             {
                 UsuariosMPP06AV MPP = new UsuariosMPP06AV();
@@ -420,7 +423,7 @@ namespace SER
             if (contraseniaActual == contraseniaNueva)
                 throw new UsuarioValidacionException("contrasenia nueva", "La nueva contraseña debe ser distinta a la actual.");
 
-            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
             try
             {
                 UsuariosMPP06AV MPP = new UsuariosMPP06AV();
@@ -449,6 +452,50 @@ namespace SER
             {
                 bitacora.Error($"Error cambiando contraseña: {dni}", ModuloBitacora.Usuarios, dni);
                 throw new UsuarioAccesoDatosException($"CambiarContraseña({dni})", ex);
+            }
+        }
+
+        /// <summary>
+        /// Cambia el idioma del usuario: lo persiste en la BD y actualiza el GestorIdioma de la sesión.
+        /// </summary>
+        public bool CambiarIdioma(string dni, string idioma)
+        {
+            ValidarDni(dni);
+
+            if (!GestorIdioma06AV.Instancia.EsValido(idioma))
+                throw new UsuarioValidacionException("idioma",
+                    $"El idioma '{idioma}' no es válido. Opciones: {string.Join(", ", GestorIdioma06AV.IdiomasDisponibles)}");
+
+            BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
+            try
+            {
+                UsuariosMPP06AV MPP = new UsuariosMPP06AV();
+
+                var usuario = MPP.ObtenerPorDni(dni);
+                if (usuario == null)
+                    throw new UsuarioNoEncontradoException(dni);
+
+                bool resultado = MPP.CambiarIdioma(dni, idioma);
+
+                if (resultado)
+                {
+                    GestorIdioma06AV.Instancia.CambiarIdioma(idioma);
+
+                    // Actualizar el objeto de sesión si es el usuario activo
+                    var sesion = UsuarioSesion06AV.Instancia();
+                    if (sesion.UsuarioActual != null && sesion.UsuarioActual.Dni == dni)
+                        sesion.UsuarioActual.Idioma = idioma;
+
+                    bitacora.Modificacion($"Usuario {dni} cambió idioma a '{idioma}'", ModuloBitacora.Usuarios, dni);
+                }
+
+                return resultado;
+            }
+            catch (UsuarioException) { throw; }
+            catch (Exception ex)
+            {
+                bitacora.Error($"Error cambiando idioma: {ex.Message}", ModuloBitacora.Usuarios, dni);
+                throw new UsuarioAccesoDatosException($"CambiarIdioma({dni})", ex);
             }
         }
 

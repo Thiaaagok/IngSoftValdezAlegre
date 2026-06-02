@@ -5,7 +5,7 @@ using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BE
+namespace SER
 {
     public sealed class UsuarioSesion06AV
     {

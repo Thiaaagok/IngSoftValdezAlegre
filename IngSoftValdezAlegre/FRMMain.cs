@@ -1,15 +1,11 @@
-﻿using BE;
+using BLL;
 using IngSoftValdezAlegre.Common;
 using IngSoftValdezAlegre.Controles;
 using SER;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Drawing.Drawing2D;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre
@@ -17,27 +13,252 @@ namespace IngSoftValdezAlegre
     public partial class FRMMain : Form
     {
         private const int SidebarAnchoExpandido = 220;
-        private const int SidebarAnchoColapsado = 60;
+        private const int SidebarAnchoColapsado = 64;
+        private const int WmNcButtonDown = 0xA1;
+        private const int HtCaption = 0x2;
         private bool _sidebarExpandido = true;
+        private Button _moduloActivo;
+        private ToolStripMenuItem cambiarIdiomaToolStripMenuItem;
+
+        [DllImport("user32.dll")]
+        private static extern bool ReleaseCapture();
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
 
         public Usuario06AV Usuario = new Usuario06AV();
 
         public FRMMain()
         {
             InitializeComponent();
-            ConfigurarBotonesDelDesigner();
-            lblUsuario.Text = UsuarioSesion06AV.Instancia().NombreCompleto();
-            if (!UsuarioSesion06AV.Instancia().TieneRol("Administrador"))
+            ConfigurarInterfaz();
+            CargarSesionEnEncabezado();
+            AplicarIdioma();
+
+            if (!EsAdministrador())
             {
                 bitacoraBTN.Enabled = false;
                 bitacoraBTN.Visible = false;
+            }
+
+            SeleccionarModulo(usuariosBTN);
+            MostrarControl(new UsuariosControl());
+        }
+
+        public void AplicarIdioma()
+        {
+            var t = GestorIdioma06AV.Instancia;
+
+            Text = "PC Factory";
+            lblSistema.Text = "PC FACTORY";
+            lblMenuPrincipal.Text = t.IdiomaActual == GestorIdioma06AV.ES ? "PRINCIPAL" : "MAIN";
+            lblSidebarFooter.Text = t.IdiomaActual == GestorIdioma06AV.ES
+                ? "Planta de ensamblaje"
+                : "Management system";
+
+            ConfigurarBotonModulo(usuariosBTN, t.Obtener("usuarios"), "\uE716");
+            ConfigurarBotonModulo(bitacoraBTN, t.Obtener("bitacora"), "\uE9D5");
+
+            cambiarContraseñaToolStripMenuItem.Text = t.Obtener("cambiar_contrasenia");
+            btnCerrarSesion.Text = t.Obtener("cerrar_sesion");
+            btnIdioma.Text = t.IdiomaActual;
+
+            if (cambiarIdiomaToolStripMenuItem == null)
+            {
+                cambiarIdiomaToolStripMenuItem = new ToolStripMenuItem
+                {
+                    Name = "cambiarIdiomaToolStripMenuItem",
+                    Text = t.Obtener("cambiar_idioma")
+                };
+                cambiarIdiomaToolStripMenuItem.Click += cambiarIdiomaToolStripMenuItem_Click;
+            }
+            else
+            {
+                cambiarIdiomaToolStripMenuItem.Text = t.Obtener("cambiar_idioma");
+            }
+
+            toolTipMain.SetToolTip(btnIdioma, t.Obtener("cambiar_idioma"));
+            toolTipMain.SetToolTip(btnCerrarSesion, t.Obtener("cerrar_sesion"));
+            toolTipMain.SetToolTip(opcionesUsuarioBTN, t.Obtener("usuario"));
+
+            if (panelPrincipal.Controls.Count > 0 &&
+                panelPrincipal.Controls[0] is IIdiomaAplicable control)
+            {
+                control.AplicarIdioma();
+            }
+        }
+
+        private void ConfigurarInterfaz()
+        {
+            DoubleBuffered = true;
+
+            pnlTopBar.BackColor = Tema.FondoElevado;
+            pnlShell.BackColor = Tema.FondoApp;
+            panelPrincipal.BackColor = Tema.FondoApp;
+            pnlSidebar.BackColor = Tema.FondoElevado;
+            panelPrincipal.Padding = new Padding(16);
+
+            lblSistema.Font = new Font("Segoe UI Semibold", 15.5f, FontStyle.Bold);
+            lblSistema.ForeColor = Tema.TextoFuerte;
+            lblSistema.Width = 220;
+            lblSistema.MouseDown += ArrastrarVentana_MouseDown;
+            pnlTopBar.MouseDown += ArrastrarVentana_MouseDown;
+            pnlTopBar.Paint += DibujarLineaInferior;
+            pnlSidebar.Paint += DibujarLineaDerecha;
+
+            ConfigurarBotonTopbar(btnToggleSidebar, Tema.FondoElevado, Tema.Acero700);
+            ConfigurarBotonTopbar(opcionesUsuarioBTN, Tema.FondoElevado, Tema.Acero700);
+            ConfigurarBotonTopbar(btnIdioma, Tema.PrimarioSuave, Tema.Primario);
+            ConfigurarBotonTopbar(btnCerrarSesion, Tema.FondoElevado, Tema.Peligro);
+
+            ConfigurarPanelUsuario();
+            ConfigurarMenuUsuario();
+            AjustarSidebar();
+        }
+
+        private void ConfigurarPanelUsuario()
+        {
+            panel4.BackColor = Tema.FondoElevado;
+            lblAvatar.BackColor = Tema.Primario;
+            lblAvatar.ForeColor = Tema.TextoInvertido;
+            lblAvatar.Font = new Font("Segoe UI Semibold", 9f, FontStyle.Bold);
+            lblUsuario.Font = new Font("Segoe UI Semibold", 9f, FontStyle.Bold);
+            lblRol.Font = new Font("Segoe UI", 8f, FontStyle.Regular);
+            lblUsuario.ForeColor = Tema.Texto;
+            lblRol.ForeColor = Tema.TextoSuave;
+            AplicarAvatarCircular();
+        }
+
+        private void ConfigurarMenuUsuario()
+        {
+            ctxMenuUsuario.Font = new Font("Segoe UI", 9.5f, FontStyle.Regular);
+            ctxMenuUsuario.BackColor = Tema.FondoElevado;
+            ctxMenuUsuario.ForeColor = Tema.Texto;
+            ctxMenuUsuario.RenderMode = ToolStripRenderMode.System;
+            ctxMenuUsuario.Padding = new Padding(4);
+        }
+
+        private void ConfigurarBotonTopbar(Button btn, Color fondo, Color texto)
+        {
+            btn.BackColor = fondo;
+            btn.ForeColor = texto;
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderColor = Tema.Borde;
+            btn.FlatAppearance.MouseOverBackColor = Tema.Acero100;
+            btn.FlatAppearance.MouseDownBackColor = Tema.Borde;
+            btn.Font = new Font("Segoe UI Semibold", 9f, FontStyle.Bold);
+            btn.TextAlign = ContentAlignment.MiddleCenter;
+        }
+
+        private void ConfigurarBotonModulo(Button btn, string texto, string icono)
+        {
+            btn.Tag = new ModuloSidebar(texto, icono);
+            btn.Width = Math.Max(44, pnlSidebar.Width - pnlSidebar.Padding.Left - pnlSidebar.Padding.Right);
+            btn.Height = 42;
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 0;
+            btn.Font = new Font("Segoe UI Semibold", 9.5f, FontStyle.Bold);
+            btn.Cursor = Cursors.Hand;
+            btn.ImageAlign = _sidebarExpandido ? ContentAlignment.MiddleLeft : ContentAlignment.MiddleCenter;
+            btn.TextImageRelation = TextImageRelation.ImageBeforeText;
+            btn.TextAlign = _sidebarExpandido ? ContentAlignment.MiddleLeft : ContentAlignment.MiddleCenter;
+            btn.Padding = _sidebarExpandido ? new Padding(16, 0, 0, 0) : Padding.Empty;
+            btn.UseVisualStyleBackColor = false;
+            btn.TabStop = false;
+
+            RenderizarBotonModulo(btn);
+            toolTipMain.SetToolTip(btn, texto);
+        }
+
+        private void RenderizarBotonModulo(Button btn)
+        {
+            if (!(btn.Tag is ModuloSidebar modulo))
+            {
+                return;
+            }
+
+            bool activo = btn == _moduloActivo;
+            btn.Text = _sidebarExpandido ? modulo.Texto : string.Empty;
+            btn.TextAlign = _sidebarExpandido ? ContentAlignment.MiddleLeft : ContentAlignment.MiddleCenter;
+            btn.ImageAlign = _sidebarExpandido ? ContentAlignment.MiddleLeft : ContentAlignment.MiddleCenter;
+            btn.Padding = _sidebarExpandido ? new Padding(16, 0, 0, 0) : Padding.Empty;
+            btn.BackColor = activo ? Tema.PrimarioSuave : Tema.FondoElevado;
+            btn.ForeColor = activo ? Tema.Primario : Tema.Acero700;
+            btn.FlatAppearance.MouseOverBackColor = activo
+                ? Tema.PrimarioSuave
+                : Tema.Acero50;
+            btn.FlatAppearance.MouseDownBackColor = Tema.Seleccion;
+            btn.Width = Math.Max(44, pnlSidebar.Width - pnlSidebar.Padding.Left - pnlSidebar.Padding.Right);
+
+            Image imagenAnterior = btn.Image;
+            btn.Image = CrearIconoModulo(modulo.Icono, btn.ForeColor);
+            imagenAnterior?.Dispose();
+        }
+
+        private Image CrearIconoModulo(string icono, Color color)
+        {
+            var bitmap = new Bitmap(20, 20);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            using (var fuente = new Font("Segoe MDL2 Assets", 11.5f, FontStyle.Regular))
+            {
+                g.Clear(Color.Transparent);
+                TextRenderer.DrawText(
+                    g,
+                    icono,
+                    fuente,
+                    new Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                    color,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+            }
+
+            return bitmap;
+        }
+
+        private void AplicarAvatarCircular()
+        {
+            lblAvatar.Region?.Dispose();
+            using (var path = new GraphicsPath())
+            {
+                path.AddEllipse(0, 0, lblAvatar.Width - 1, lblAvatar.Height - 1);
+                lblAvatar.Region = new Region(path);
+            }
+        }
+
+        private void DibujarLineaInferior(object sender, PaintEventArgs e)
+        {
+            using (var pen = new Pen(Tema.Borde))
+            {
+                e.Graphics.DrawLine(pen, 0, pnlTopBar.Height - 1, pnlTopBar.Width, pnlTopBar.Height - 1);
+            }
+        }
+
+        private void DibujarLineaDerecha(object sender, PaintEventArgs e)
+        {
+            using (var pen = new Pen(Tema.Borde))
+            {
+                e.Graphics.DrawLine(pen, pnlSidebar.Width - 1, 0, pnlSidebar.Width - 1, pnlSidebar.Height);
+            }
+        }
+
+        private void SeleccionarModulo(Button boton)
+        {
+            _moduloActivo = boton;
+
+            foreach (Control c in flpModulos.Controls)
+            {
+                if (c is Button btn)
+                {
+                    RenderizarBotonModulo(btn);
+                }
             }
         }
 
         private void MostrarControl(UserControl control)
         {
             foreach (Control c in panelPrincipal.Controls)
+            {
                 c.Dispose();
+            }
 
             panelPrincipal.Controls.Clear();
             control.Dock = DockStyle.Fill;
@@ -46,60 +267,96 @@ namespace IngSoftValdezAlegre
 
         private void bitacoraBTN_Click(object sender, EventArgs e)
         {
+            SeleccionarModulo(bitacoraBTN);
             MostrarControl(new BitacoraControl());
         }
 
         private void usuariosBTN_Click(object sender, EventArgs e)
         {
+            SeleccionarModulo(usuariosBTN);
             MostrarControl(new UsuariosControl());
-        }
-
-        private void ConfigurarBotonesDelDesigner()
-        {
-            AsignarTag(usuariosBTN, "Usuarios");
-            AsignarTag(bitacoraBTN, "Bitácora");
-        }
-
-        private void AsignarTag(Button btn, string texto)
-        {
-            btn.Tag = texto;
-            btn.Text = texto;
-            btn.TextAlign = ContentAlignment.MiddleLeft;
-            btn.Padding = new Padding(15, 0, 0, 0);
         }
 
         private void btnToggleSidebar_Click(object sender, EventArgs e)
         {
             _sidebarExpandido = !_sidebarExpandido;
+            AjustarSidebar();
+        }
+
+        private void AjustarSidebar()
+        {
             pnlSidebar.Width = _sidebarExpandido ? SidebarAnchoExpandido : SidebarAnchoColapsado;
+            pnlSidebar.Padding = _sidebarExpandido
+                ? new Padding(14, 20, 10, 14)
+                : new Padding(10, 20, 10, 14);
+            lblMenuPrincipal.Visible = _sidebarExpandido;
+            lblSidebarFooter.Visible = _sidebarExpandido;
+            btnToggleSidebar.Text = _sidebarExpandido ? "≡" : ">";
 
             foreach (Control c in flpModulos.Controls)
             {
-                if (c is Button btn && btn.Tag is string textoOriginal)
+                if (c is Button btn)
                 {
-                    btn.Width = pnlSidebar.Width - 5;
-                    if (_sidebarExpandido)
-                    {
-                        btn.Text = textoOriginal;
-                        btn.TextAlign = ContentAlignment.MiddleLeft;
-                    }
-                    else
-                    {
-                        btn.Text = textoOriginal.Substring(0, Math.Min(2, textoOriginal.Length));
-                        btn.TextAlign = ContentAlignment.MiddleCenter;
-                    }
+                    RenderizarBotonModulo(btn);
                 }
             }
         }
 
         private void opcionesUsuarioBTN_Click(object sender, EventArgs e)
         {
-            ctxMenuUsuario.Show(opcionesUsuarioBTN, new Point(0, opcionesUsuarioBTN.Height));
+            ctxMenuUsuario.Show(panel4, new Point(panel4.Width - ctxMenuUsuario.Width, panel4.Height + 2));
+        }
+
+        private void btnIdioma_Click(object sender, EventArgs e)
+        {
+            CambiarIdiomaActual();
+        }
+
+        private void cambiarIdiomaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CambiarIdiomaActual();
+        }
+
+        private void CambiarIdiomaActual()
+        {
+            var t = GestorIdioma06AV.Instancia;
+            string actual = t.IdiomaActual;
+            string nuevo = actual == GestorIdioma06AV.ES ? GestorIdioma06AV.EN : GestorIdioma06AV.ES;
+
+            try
+            {
+                string dni = UsuarioSesion06AV.Instancia().UsuarioActual.Dni;
+                new UsuariosBLL06AV().CambiarIdioma(dni, nuevo);
+                AplicarIdioma();
+                ConfirmacionForm.MostrarInfo(
+                    t.Obtener("idioma_guardado"),
+                    titulo: t.Obtener("idioma"),
+                    owner: this);
+            }
+            catch (Exception ex)
+            {
+                ConfirmacionForm.MostrarInfo(ex.Message,
+                    titulo: t.Obtener("error"),
+                    tipo: ConfirmacionForm.TipoConfirmacion.Error,
+                    owner: this);
+            }
+        }
+
+        private void btnCerrarSesion_Click(object sender, EventArgs e)
+        {
+            cerrarSesiónToolStripMenuItem_Click(sender, e);
         }
 
         private void cambiarContraseñaToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            using (var f = new FRMCambiarContrasenia(Usuario.Dni))
+            var usuarioActual = UsuarioSesion06AV.Instancia().UsuarioActual;
+            if (usuarioActual == null)
+            {
+                CerrarSesionYVolverALogin();
+                return;
+            }
+
+            using (var f = new FRMCambiarContrasenia(usuarioActual.Dni))
             {
                 f.ShowDialog(this);
 
@@ -115,27 +372,89 @@ namespace IngSoftValdezAlegre
             UsuarioSesion06AV.Instancia().CerrarSesion();
             var login = new FRMLogin();
             login.Show();
-            this.Close();
+            Close();
         }
 
         private void cerrarSesiónToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            BitacoraSER06AV bitacora = new BitacoraSER06AV();
+            var t = GestorIdioma06AV.Instancia;
+            BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
             bool confirmado = ConfirmacionForm.Mostrar(
-                mensaje: "¿Estás seguro que querés cerrar sesión?",
-                titulo: "Cerrar sesión",
-                textoSi: "Sí, cerrar",
-                textoNo: "Cancelar",
+                mensaje: t.IdiomaActual == GestorIdioma06AV.ES
+                    ? "Estas seguro que queres cerrar sesion?"
+                    : "Are you sure you want to sign out?",
+                titulo: t.Obtener("cerrar_sesion"),
+                textoSi: t.IdiomaActual == GestorIdioma06AV.ES ? "Si, cerrar" : "Sign out",
+                textoNo: t.Obtener("cancelar"),
                 owner: this);
 
             if (!confirmado) return;
 
-            this.Hide();
-            bitacora.Logout(UsuarioSesion06AV.Instancia().UsuarioActual.Dni);
+            Hide();
+            var usuarioActual = UsuarioSesion06AV.Instancia().UsuarioActual;
+            if (usuarioActual != null)
+            {
+                bitacora.Logout(usuarioActual.Dni);
+            }
             UsuarioSesion06AV.Instancia().CerrarSesion();
             var login = new FRMLogin();
-            login.FormClosed += (s, args) => this.Close();
+            login.FormClosed += (s, args) => Close();
             login.Show();
         }
+
+        private void ArrastrarVentana_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button != MouseButtons.Left)
+            {
+                return;
+            }
+
+            ReleaseCapture();
+            SendMessage(Handle, WmNcButtonDown, HtCaption, 0);
+        }
+
+        private void CargarSesionEnEncabezado()
+        {
+            var sesion = UsuarioSesion06AV.Instancia();
+            Usuario = sesion.UsuarioActual ?? new Usuario06AV();
+
+            lblUsuario.Text = sesion.UsuarioActual != null
+                ? sesion.NombreCompleto()
+                : GestorIdioma06AV.Instancia.Obtener("usuario");
+            lblRol.Text = sesion.Rol?.Descripcion ?? string.Empty;
+            lblAvatar.Text = ObtenerIniciales(sesion.UsuarioActual);
+        }
+
+        private bool EsAdministrador()
+        {
+            var rol = UsuarioSesion06AV.Instancia().Rol;
+            return rol != null &&
+                   string.Equals(rol.Descripcion, "Administrador", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string ObtenerIniciales(Usuario06AV usuario)
+        {
+            if (usuario == null)
+            {
+                return "US";
+            }
+
+            string nombre = string.IsNullOrWhiteSpace(usuario.Nombre) ? "U" : usuario.Nombre.Trim().Substring(0, 1);
+            string apellido = string.IsNullOrWhiteSpace(usuario.Apellido) ? "S" : usuario.Apellido.Trim().Substring(0, 1);
+            return (nombre + apellido).ToUpperInvariant();
+        }
+
+        private sealed class ModuloSidebar
+        {
+            public ModuloSidebar(string texto, string icono)
+            {
+                Texto = texto;
+                Icono = icono;
+            }
+
+            public string Texto { get; }
+            public string Icono { get; }
+        }
+
     }
 }

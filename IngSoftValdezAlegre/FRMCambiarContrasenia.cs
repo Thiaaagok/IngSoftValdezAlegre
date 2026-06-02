@@ -1,5 +1,4 @@
-﻿using BE;
-using IngSoftValdezAlegre.Common;
+﻿using IngSoftValdezAlegre.Common;
 using SER;
 using SER.Excepciones;
 using System;
@@ -17,22 +16,57 @@ namespace IngSoftValdezAlegre.Controles
         public FRMCambiarContrasenia(string dni, bool esObligatorio = false)
         {
             InitializeComponent();
+            AplicarTema();
             if (String.IsNullOrEmpty(dni))
-            {
                 dni = UsuarioSesion06AV.Instancia().UsuarioActual.Dni;
-            }
+
             _dni = dni;
             _esObligatorio = esObligatorio;
+
+            AplicarIdioma();
 
             if (_esObligatorio)
             {
                 btnCancelar.Visible = false;
                 this.ControlBox = false;
-                this.Text = "Cambio de contraseña obligatorio";
-
+                this.Text = GestorIdioma06AV.Instancia.Obtener("cambiar_contrasenia") + " (obligatorio)";
                 lblMensaje.ForeColor = Tema.Peligro;
                 lblMensaje.Text = "Por seguridad, debés cambiar tu contraseña antes de continuar.";
             }
+        }
+
+        private void AplicarTema()
+        {
+            Tema.AplicarFormulario(this);
+            BackColor = Tema.FondoElevado;
+            pnlTitulo.BackColor = Tema.Grafito900;
+            lblTitulo.BackColor = Tema.Grafito900;
+            lblTitulo.ForeColor = Tema.TextoInvertido;
+            lblTitulo.Font = Tema.FuenteTitulo;
+
+            lblActual.ForeColor = Tema.Texto;
+            lblNueva.ForeColor = Tema.Texto;
+            lblRepetir.ForeColor = Tema.Texto;
+            lblMensaje.ForeColor = Tema.Peligro;
+
+            txtActual.BorderStyle = BorderStyle.FixedSingle;
+            txtNueva.BorderStyle = BorderStyle.FixedSingle;
+            txtRepetir.BorderStyle = BorderStyle.FixedSingle;
+
+            Tema.AplicarBotonPrimario(btnAceptar);
+            Tema.AplicarBotonSecundario(btnCancelar);
+        }
+
+        public void AplicarIdioma()
+        {
+            var t = GestorIdioma06AV.Instancia;
+            this.Text          = t.Obtener("cambiar_contrasenia");
+            lblTitulo.Text     = t.Obtener("cambiar_contrasenia");
+            lblActual.Text     = t.Obtener("contrasenia_actual");
+            lblNueva.Text      = t.Obtener("nueva_contrasenia");
+            lblRepetir.Text    = t.Obtener("repetir_contrasenia");
+            btnAceptar.Text    = t.Obtener("aceptar");
+            btnCancelar.Text   = t.Obtener("cancelar");
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
@@ -72,7 +106,7 @@ namespace IngSoftValdezAlegre.Controles
 
             try
             {
-                var ser = new UsuariosSER06AV();
+                var ser = new UsuariosBLL06AV();
                 bool ok = ser.CambiarContraseña(_dni, actual, nueva);
 
                 if (ok)

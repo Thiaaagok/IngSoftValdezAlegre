@@ -1,9 +1,10 @@
-﻿using BE;
-using DAL;
+﻿using DAL;
+using SER;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -113,7 +114,7 @@ namespace MPP
                 Fecha = Convert.ToDateTime(row["Fecha"]),
                 Id = row["Id"].ToString(),
                 Modulo = row["Modulo"].ToString(),
-                UsuarioDni = row["UsuarioDni"] == DBNull.Value ? null : row["UsuarioDni"].ToString()
+                UsuarioDni = row["UsuarioDni"].ToString()
             };
         }
 

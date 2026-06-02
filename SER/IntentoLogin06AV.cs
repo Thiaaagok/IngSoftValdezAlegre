@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BE
+namespace SER
 {
-    public class IntentoLogin
+    public class IntentoLogin06AV
     {
         public string Id { get; set; }
         public DateTime Fecha { get; set; }

@@ -31,11 +31,11 @@
             this.materialLabel2 = new ReaLTaiizor.Controls.MaterialLabel();
             this.Usuario = new ReaLTaiizor.Controls.MaterialLabel();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.logo = new System.Windows.Forms.PictureBox();
             this.LoginTextBox = new System.Windows.Forms.TextBox();
             this.ContraseniaTextBox = new System.Windows.Forms.TextBox();
             this.IniciarSesionBTN = new System.Windows.Forms.Button();
             this.CerrarBTN = new System.Windows.Forms.Button();
-            this.logo = new System.Windows.Forms.PictureBox();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.logo)).BeginInit();
             this.SuspendLayout();
@@ -74,6 +74,15 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(295, 419);
             this.panel1.TabIndex = 9;
+            // 
+            // logo
+            // 
+            this.logo.Image = global::IngSoftValdezAlegre.Properties.Resources.pcforge_logo1;
+            this.logo.Location = new System.Drawing.Point(12, 79);
+            this.logo.Name = "logo";
+            this.logo.Size = new System.Drawing.Size(264, 214);
+            this.logo.TabIndex = 14;
+            this.logo.TabStop = false;
             // 
             // LoginTextBox
             // 
@@ -114,16 +123,7 @@
             this.CerrarBTN.UseVisualStyleBackColor = true;
             this.CerrarBTN.Click += new System.EventHandler(this.CerrarBTN_Click);
             // 
-            // logo
-            // 
-            this.logo.Image = global::IngSoftValdezAlegre.Properties.Resources.pcforge_logo1;
-            this.logo.Location = new System.Drawing.Point(12, 79);
-            this.logo.Name = "logo";
-            this.logo.Size = new System.Drawing.Size(264, 214);
-            this.logo.TabIndex = 14;
-            this.logo.TabStop = false;
-            // 
-            // Login
+            // FRMLogin
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -138,7 +138,7 @@
             this.Controls.Add(this.Usuario);
             this.Controls.Add(this.materialLabel2);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.Name = "Login";
+            this.Name = "FRMLogin";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;

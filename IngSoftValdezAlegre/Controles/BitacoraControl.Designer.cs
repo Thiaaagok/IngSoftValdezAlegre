@@ -86,7 +86,7 @@
             this.grilla.ReadOnly = true;
             this.grilla.RowHeadersVisible = false;
             this.grilla.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grilla.Size = new System.Drawing.Size(982, 314);
+            this.grilla.Size = new System.Drawing.Size(859, 316);
             this.grilla.TabIndex = 5;
             this.grilla.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grilla_CellContentClick);
             this.grilla.SelectionChanged += new System.EventHandler(this.grilla_SelectionChanged);
@@ -131,9 +131,9 @@
             // 
             // lblFiltrar
             // 
-            this.lblFiltrar.Location = new System.Drawing.Point(792, 395);
+            this.lblFiltrar.Location = new System.Drawing.Point(758, 400);
             this.lblFiltrar.Name = "lblFiltrar";
-            this.lblFiltrar.Size = new System.Drawing.Size(132, 40);
+            this.lblFiltrar.Size = new System.Drawing.Size(96, 29);
             this.lblFiltrar.TabIndex = 14;
             this.lblFiltrar.Text = "Filtrar";
             this.lblFiltrar.UseVisualStyleBackColor = true;
@@ -141,9 +141,9 @@
             // 
             // lblLimpiar
             // 
-            this.lblLimpiar.Location = new System.Drawing.Point(792, 441);
+            this.lblLimpiar.Location = new System.Drawing.Point(758, 435);
             this.lblLimpiar.Name = "lblLimpiar";
-            this.lblLimpiar.Size = new System.Drawing.Size(132, 40);
+            this.lblLimpiar.Size = new System.Drawing.Size(96, 30);
             this.lblLimpiar.TabIndex = 15;
             this.lblLimpiar.Text = "Limpiar";
             this.lblLimpiar.UseVisualStyleBackColor = true;
@@ -151,9 +151,9 @@
             // 
             // lblImprimirPDF
             // 
-            this.lblImprimirPDF.Location = new System.Drawing.Point(792, 487);
+            this.lblImprimirPDF.Location = new System.Drawing.Point(758, 471);
             this.lblImprimirPDF.Name = "lblImprimirPDF";
-            this.lblImprimirPDF.Size = new System.Drawing.Size(132, 40);
+            this.lblImprimirPDF.Size = new System.Drawing.Size(96, 30);
             this.lblImprimirPDF.TabIndex = 16;
             this.lblImprimirPDF.Text = "Imprimir PDF";
             this.lblImprimirPDF.UseVisualStyleBackColor = true;
@@ -192,7 +192,7 @@
             // lblCantidad
             // 
             this.lblCantidad.AutoSize = true;
-            this.lblCantidad.Location = new System.Drawing.Point(841, 22);
+            this.lblCantidad.Location = new System.Drawing.Point(809, 22);
             this.lblCantidad.Name = "lblCantidad";
             this.lblCantidad.Size = new System.Drawing.Size(58, 13);
             this.lblCantidad.TabIndex = 20;
@@ -254,9 +254,9 @@
             // 
             // lblImprimirEXCEL
             // 
-            this.lblImprimirEXCEL.Location = new System.Drawing.Point(792, 533);
+            this.lblImprimirEXCEL.Location = new System.Drawing.Point(758, 507);
             this.lblImprimirEXCEL.Name = "lblImprimirEXCEL";
-            this.lblImprimirEXCEL.Size = new System.Drawing.Size(132, 40);
+            this.lblImprimirEXCEL.Size = new System.Drawing.Size(96, 30);
             this.lblImprimirEXCEL.TabIndex = 27;
             this.lblImprimirEXCEL.Text = "Imprimir EXCEL";
             this.lblImprimirEXCEL.UseVisualStyleBackColor = true;
@@ -306,7 +306,7 @@
             this.Controls.Add(this.lblTitulo);
             this.Controls.Add(this.grilla);
             this.Name = "BitacoraControl";
-            this.Size = new System.Drawing.Size(1025, 585);
+            this.Size = new System.Drawing.Size(879, 545);
             this.Load += new System.EventHandler(this.BitacoraControl2_Load);
             ((System.ComponentModel.ISupportInitialize)(this.grilla)).EndInit();
             this.ResumeLayout(false);

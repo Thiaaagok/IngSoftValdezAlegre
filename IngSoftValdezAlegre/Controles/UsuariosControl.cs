@@ -1,4 +1,4 @@
-﻿using BE;
+﻿using BLL;
 using IngSoftValdezAlegre.Common;
 using Microsoft.VisualBasic;
 using SER;
@@ -15,7 +15,7 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    public partial class UsuariosControl : UserControl
+    public partial class UsuariosControl : UserControl, IIdiomaAplicable
     {
         private enum Modo
         {
@@ -26,8 +26,8 @@ namespace IngSoftValdezAlegre.Controles
             Desbloquear
         }
 
-        private readonly UsuariosSER06AV _usuariosSer = new UsuariosSER06AV();
-        private readonly RolesSER06AV _rolesSer = new RolesSER06AV();
+        private readonly UsuariosBLL06AV _usuariosSer = new UsuariosBLL06AV();
+        private readonly RolesBLL06AV _rolesSer = new RolesBLL06AV();
 
         private List<Usuario06AV> _usuariosCargados = new List<Usuario06AV>();
         private Modo _modo = Modo.Consulta;
@@ -36,9 +36,141 @@ namespace IngSoftValdezAlegre.Controles
         public UsuariosControl()
         {
             InitializeComponent();
+            AplicarTema();
             ConfigurarColumnas();
+            AplicarIdioma();
+            AjustarLayout();
+            Resize += (s, e) => AjustarLayout();
         }
 
+        private void AplicarTema()
+        {
+            Tema.AplicarControl(this);
+            Tema.AplicarTitulo(lblTitulo);
+            Tema.AplicarSubtitulo(lblFormTitulo);
+            Tema.AplicarSubtitulo(lblMensajeTitulo);
+            Tema.AplicarGrilla(grilla);
+
+            Tema.AplicarBotonPrimario(btnCrear);
+            Tema.AplicarBotonPrimario(btnModificar);
+            Tema.AplicarBotonAcento(btnActDesact);
+            Tema.AplicarBotonAcento(btnDesbloquear);
+            Tema.AplicarBotonPrimario(btnAplicar);
+            Tema.AplicarBotonSecundario(btnCancelar);
+
+            txtMensaje.BackColor = Tema.Acero50;
+            txtMensaje.ForeColor = Tema.Texto;
+            txtMensaje.BorderStyle = BorderStyle.FixedSingle;
+            lblCantidad.ForeColor = Tema.TextoSuave;
+        }
+
+        private void AjustarLayout()
+        {
+            int margen = 8;
+            int ancho = Math.Max(680, ClientSize.Width);
+            int alto = Math.Max(500, ClientSize.Height);
+            int altoHeader = 34;
+            int anchoAcciones = 118;
+            int espacio = 12;
+            int altoInferior = 210;
+
+            lblTitulo.Location = new Point(margen, 0);
+            radActivos.Location = new Point(Math.Max(210, ancho - 310), 10);
+            radTodos.Location = new Point(Math.Max(310, ancho - 200), 10);
+            lblCantidad.Location = new Point(Math.Max(420, ancho - 150), 12);
+
+            int grillaY = altoHeader + 4;
+            int grillaH = Math.Max(190, alto - grillaY - altoInferior - 16);
+            int accionesX = ancho - anchoAcciones - margen;
+            int grillaW = Math.Max(420, accionesX - margen - espacio);
+
+            grilla.Location = new Point(margen, grillaY);
+            grilla.Size = new Size(grillaW, grillaH);
+
+            Button[] acciones = { btnCrear, btnDesbloquear, btnModificar, btnActDesact, btnAplicar, btnCancelar };
+            int botonY = grillaY;
+            foreach (Button boton in acciones)
+            {
+                boton.SetBounds(accionesX, botonY, anchoAcciones, 34);
+                botonY += 42;
+            }
+
+            int formY = grillaY + grillaH + 20;
+            int labelW = 64;
+            int inputX = margen + labelW + 6;
+            int mensajeW = Math.Min(240, Math.Max(190, ancho / 4));
+            int mensajeX = ancho - mensajeW - margen;
+            int inputW = Math.Max(260, mensajeX - inputX - 34);
+            int rowH = 28;
+
+            lblFormTitulo.Location = new Point(margen, formY);
+            lblMensajeTitulo.Location = new Point(mensajeX, formY);
+
+            int y = formY + 30;
+            PosicionarCampo(lblDni, txtDni, margen, inputX, y, labelW, inputW);
+            y += rowH;
+            PosicionarCampo(lblApellido, txtApellido, margen, inputX, y, labelW, inputW);
+            y += rowH;
+            PosicionarCampo(lblNombre, txtNombre, margen, inputX, y, labelW, inputW);
+            y += rowH;
+            PosicionarCampo(lblEmail, txtEmail, margen, inputX, y, labelW, inputW);
+            y += rowH;
+            PosicionarCampo(lblRol, cmbRol, margen, inputX, y, labelW, inputW);
+            y += rowH;
+            PosicionarCampo(lblLogin, txtLogin, margen, inputX, y, labelW, inputW);
+
+            int checksY = Math.Min(alto - 26, y + 32);
+            lblBloqueado.Location = new Point(inputX, checksY);
+            chkBloqueado.Location = new Point(inputX + 78, checksY + 2);
+            lblActivo.Location = new Point(inputX + 170, checksY);
+            chkActivo.Location = new Point(inputX + 222, checksY + 2);
+
+            txtMensaje.SetBounds(mensajeX, formY + 30, mensajeW, Math.Max(78, alto - formY - 42));
+        }
+
+        private void PosicionarCampo(Label label, Control input, int labelX, int inputX, int y, int labelW, int inputW)
+        {
+            label.SetBounds(labelX, y + 4, labelW, 20);
+            input.SetBounds(inputX, y, inputW, input is ComboBox ? 25 : 24);
+        }
+
+        public void AplicarIdioma()
+        {
+            var t = GestorIdioma06AV.Instancia;
+            lblTitulo.Text      = t.Obtener("usuarios");
+            radActivos.Text     = t.Obtener("activos");
+            radTodos.Text       = t.Obtener("todos");
+            lblFormTitulo.Text  = t.Obtener("datos_usuario");
+            lblDni.Text         = t.Obtener("dni");
+            lblApellido.Text    = t.Obtener("apellido");
+            lblNombre.Text      = t.Obtener("nombre");
+            lblEmail.Text       = t.Obtener("email");
+            lblLogin.Text       = t.Obtener("campo_login");
+            lblRol.Text         = t.Obtener("rol");
+            lblBloqueado.Text   = t.Obtener("bloqueado");
+            lblActivo.Text      = t.Obtener("activo");
+            lblMensajeTitulo.Text = t.Obtener("mensaje");
+            btnCrear.Text       = t.Obtener("crear");
+            btnDesbloquear.Text = t.Obtener("desbloquear");
+            btnModificar.Text   = t.Obtener("modificar");
+            btnActDesact.Text   = t.Obtener("act_desact");
+            btnAplicar.Text     = t.Obtener("aplicar");
+            btnCancelar.Text    = t.Obtener("cancelar");
+
+            // Headers de la grilla
+            if (grilla.Columns["Dni"]      != null) grilla.Columns["Dni"].HeaderText      = t.Obtener("dni");
+            if (grilla.Columns["Apellido"] != null) grilla.Columns["Apellido"].HeaderText = t.Obtener("apellido");
+            if (grilla.Columns["Nombre"]   != null) grilla.Columns["Nombre"].HeaderText   = t.Obtener("nombre");
+            if (grilla.Columns["Login"]    != null) grilla.Columns["Login"].HeaderText    = t.Obtener("campo_login");
+            if (grilla.Columns["Email"]    != null) grilla.Columns["Email"].HeaderText    = t.Obtener("email");
+            if (grilla.Columns["Rol"]      != null) grilla.Columns["Rol"].HeaderText      = t.Obtener("rol");
+            if (grilla.Columns["Activo"]   != null) grilla.Columns["Activo"].HeaderText   = t.Obtener("activo");
+            if (grilla.Columns["Bloqueado"]!= null) grilla.Columns["Bloqueado"].HeaderText= t.Obtener("bloqueado");
+
+            // Actualizar conteo si ya hay datos cargados
+            if (_usuariosCargados != null && _usuariosCargados.Count > 0)
+                lblCantidad.Text = t.Obtener("numero_usuarios") + " " + _usuariosCargados.Count;
+        }
 
         private void ConfigurarColumnas()
         {
@@ -199,7 +331,24 @@ namespace IngSoftValdezAlegre.Controles
         private void HabilitarBoton(Button b, bool habilitado)
         {
             b.Enabled = habilitado;
-            b.BackColor = habilitado ? Tema.Primario : Tema.Gris400;
+            if (!habilitado)
+            {
+                Tema.AplicarBotonDeshabilitado(b);
+                return;
+            }
+
+            if (b == btnActDesact || b == btnDesbloquear)
+            {
+                Tema.AplicarBotonAcento(b);
+            }
+            else if (b == btnCancelar)
+            {
+                Tema.AplicarBotonSecundario(b);
+            }
+            else
+            {
+                Tema.AplicarBotonPrimario(b);
+            }
         }
 
         private void SetFormularioEditable(bool editable, bool incluirEstado)
@@ -255,8 +404,8 @@ namespace IngSoftValdezAlegre.Controles
                 grilla.DataSource = null;
                 grilla.DataSource = _usuariosCargados;
 
-                lblCantidad.Text =
-                    "Número de usuarios: " + _usuariosCargados.Count;
+                lblCantidad.Text = GestorIdioma06AV.Instancia.Obtener("numero_usuarios")
+                                  + " " + _usuariosCargados.Count;
 
                 PintarFilasInactivas();
             }
@@ -278,12 +427,13 @@ namespace IngSoftValdezAlegre.Controles
                 if (u == null) continue;
                 if (!u.Activo)
                 {
-                    row.DefaultCellStyle.BackColor = Color.FromArgb(255, 235, 235);
+                    row.DefaultCellStyle.BackColor = Tema.PeligroSuave;
                     row.DefaultCellStyle.ForeColor = Tema.Peligro;
                 }
                 else if (u.Bloqueado)
                 {
-                    row.DefaultCellStyle.BackColor = Tema.Amber50;
+                    row.DefaultCellStyle.BackColor = Tema.AdvertenciaSuave;
+                    row.DefaultCellStyle.ForeColor = Tema.Grafito900;
                 }
             }
         }

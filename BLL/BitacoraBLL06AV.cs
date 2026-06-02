@@ -1,16 +1,16 @@
-﻿using BE;
-using MPP;
+﻿using MPP;
 using SER.Excepciones;
 using SER.Generador;
+using SER;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SER
+namespace BLL
 {
-    public class BitacoraSER06AV
+    public class BitacoraBLL06AV
     {
         #region Registro General
 

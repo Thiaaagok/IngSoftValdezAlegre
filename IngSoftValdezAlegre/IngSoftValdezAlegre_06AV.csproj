@@ -147,6 +147,10 @@
       <Project>{b2d14455-f2ec-4381-b7fe-a9e5496f593c}</Project>
       <Name>BE_06AV</Name>
     </ProjectReference>
+    <ProjectReference Include="..\BLL\BLL_06AV.csproj">
+      <Project>{5d65dcd4-a37f-4a64-90ad-0d146d9c9ce7}</Project>
+      <Name>BLL_06AV</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SER\SER_06AV.csproj">
       <Project>{82b0c5f6-0e96-4e40-acc9-7847e8196eeb}</Project>
       <Name>SER_06AV</Name>

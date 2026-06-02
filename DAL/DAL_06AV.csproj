@@ -43,6 +43,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BitacoraDAL06AV.cs" />
+    <Compile Include="FamiliaDAL06AV.cs" />
+    <Compile Include="PatentesDAL06AV.cs" />
     <Compile Include="Conexion.cs" />
     <Compile Include="RolesDAL06AV.cs" />
     <Compile Include="UsuariosDAL06AV.cs" />

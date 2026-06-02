@@ -8,82 +8,84 @@ using System.Threading.Tasks;
 
 namespace DAL
 {
-    public class RolesDAL06AV
+    public class FamiliaDAL06AV
     {
-        // ── Roles ────────────────────────────────────────────────────────────
+        // ── Familias ────────────────────────────────────────────────────────
 
         public DataTable ObtenerTodos()
         {
-            return EjecutarQuery("SELECT Id, Descripcion FROM Roles", null);
+            return EjecutarQuery("SELECT Id, Descripcion FROM Familias", null);
         }
 
         public DataTable ObtenerPorId(Dictionary<string, object> parametros)
         {
-            return EjecutarQuery("SELECT Id, Descripcion FROM Roles WHERE Id = @id", parametros);
+            return EjecutarQuery("SELECT Id, Descripcion FROM Familias WHERE Id = @id", parametros);
         }
 
         public void Agregar(Dictionary<string, object> parametros)
         {
-            EjecutarNonQuery("INSERT INTO Roles (Id, Descripcion) VALUES (@id, @descripcion)", parametros);
+            EjecutarNonQuery("INSERT INTO Familias (Id, Descripcion) VALUES (@id, @descripcion)", parametros);
         }
 
         public void Modificar(Dictionary<string, object> parametros)
         {
-            EjecutarNonQuery("UPDATE Roles SET Descripcion = @descripcion WHERE Id = @id", parametros);
+            EjecutarNonQuery("UPDATE Familias SET Descripcion = @descripcion WHERE Id = @id", parametros);
         }
 
         public void Eliminar(Dictionary<string, object> parametros)
         {
-            EjecutarNonQuery("DELETE FROM Roles WHERE Id = @id", parametros);
+            EjecutarNonQuery("DELETE FROM Familias WHERE Id = @id", parametros);
         }
 
-        // ── Relación Rol → Patente ───────────────────────────────────────────
+        // ── Relación Familia → Patente ───────────────────────────────────────
 
-        public DataTable ObtenerPatentesPorRol(Dictionary<string, object> parametros)
+        /// <summary>Devuelve las patentes directas de una familia (no recursivo).</summary>
+        public DataTable ObtenerPatentesDeFamilia(Dictionary<string, object> parametros)
         {
             string query = @"SELECT p.Id, p.Descripcion
-                             FROM RolPatentes rp
-                             JOIN Patentes p ON p.Id = rp.IdPatente
-                             WHERE rp.IdRol = @idRol";
+                             FROM FamiliaPatentes fp
+                             JOIN Patentes p ON p.Id = fp.IdPatente
+                             WHERE fp.IdFamilia = @idFamilia";
             return EjecutarQuery(query, parametros);
         }
 
         public void AgregarPatente(Dictionary<string, object> parametros)
         {
             EjecutarNonQuery(
-                "INSERT INTO RolPatentes (IdRol, IdPatente) VALUES (@idRol, @idPatente)",
+                "INSERT INTO FamiliaPatentes (IdFamilia, IdPatente) VALUES (@idFamilia, @idPatente)",
                 parametros);
         }
 
         public void QuitarPatente(Dictionary<string, object> parametros)
         {
             EjecutarNonQuery(
-                "DELETE FROM RolPatentes WHERE IdRol = @idRol AND IdPatente = @idPatente",
+                "DELETE FROM FamiliaPatentes WHERE IdFamilia = @idFamilia AND IdPatente = @idPatente",
                 parametros);
         }
 
-        // ── Relación Rol → Familia ───────────────────────────────────────────
+        // ── Relación Familia → Familia hija ─────────────────────────────────
 
-        public DataTable ObtenerFamiliasPorRol(Dictionary<string, object> parametros)
+        /// <summary>Devuelve las subfamilias directas de una familia.</summary>
+        public DataTable ObtenerSubfamiliasDeFamilia(Dictionary<string, object> parametros)
         {
             string query = @"SELECT f.Id, f.Descripcion
-                             FROM RolFamilias rf
-                             JOIN Familias f ON f.Id = rf.IdFamilia
-                             WHERE rf.IdRol = @idRol";
+                             FROM FamiliaFamilias ff
+                             JOIN Familias f ON f.Id = ff.IdHijo
+                             WHERE ff.IdPadre = @idPadre";
             return EjecutarQuery(query, parametros);
         }
 
-        public void AgregarFamilia(Dictionary<string, object> parametros)
+        public void AgregarSubfamilia(Dictionary<string, object> parametros)
         {
             EjecutarNonQuery(
-                "INSERT INTO RolFamilias (IdRol, IdFamilia) VALUES (@idRol, @idFamilia)",
+                "INSERT INTO FamiliaFamilias (IdPadre, IdHijo) VALUES (@idPadre, @idHijo)",
                 parametros);
         }
 
-        public void QuitarFamilia(Dictionary<string, object> parametros)
+        public void QuitarSubfamilia(Dictionary<string, object> parametros)
         {
             EjecutarNonQuery(
-                "DELETE FROM RolFamilias WHERE IdRol = @idRol AND IdFamilia = @idFamilia",
+                "DELETE FROM FamiliaFamilias WHERE IdPadre = @idPadre AND IdHijo = @idHijo",
                 parametros);
         }
 

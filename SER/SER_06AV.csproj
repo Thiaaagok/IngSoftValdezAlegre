@@ -43,27 +43,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BitacoraSER06AV.cs" />
+    <Compile Include="Bitacora06AV.cs" />
+    <Compile Include="Enums\BitacoraEnum06AV.cs" />
     <Compile Include="Encriptador\EncriptacionSER06AV.cs" />
-    <Compile Include="Excepciones\ExcepcionesBitacora.cs" />
-    <Compile Include="Excepciones\ExcepcionesUsuario.cs" />
     <Compile Include="Exportacion\ExportacionEXCEL.cs" />
     <Compile Include="Exportacion\ExportacionPDF.cs" />
+    <Compile Include="Familia06AV.cs" />
+    <Compile Include="GestorIdioma06AV.cs" />
+    <Compile Include="IIdiomaAplicable.cs" />
+    <Compile Include="IComponentePermiso.cs" />
     <Compile Include="Generador\GeneradorID.cs" />
-    <Compile Include="RolesSER06AV.cs" />
-    <Compile Include="UsuariosSER06AV.cs" />
+    <Compile Include="IntentoLogin06AV.cs" />
+    <Compile Include="Patente06AV.cs" />
+    <Compile Include="Rol06AV.cs" />
+    <Compile Include="Usuario06AV.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UsuarioSesion06AV.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\BE\BE_06AV.csproj">
-      <Project>{b2d14455-f2ec-4381-b7fe-a9e5496f593c}</Project>
-      <Name>BE_06AV</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\MPP\MPP_06AV.csproj">
-      <Project>{d1a2e3fd-8297-40ec-9a1f-b7f5c9a59317}</Project>
-      <Name>MPP_06AV</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

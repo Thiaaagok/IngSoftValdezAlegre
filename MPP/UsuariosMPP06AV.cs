@@ -1,4 +1,4 @@
-﻿using BE;
+﻿using SER;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -166,6 +166,16 @@ namespace MPP
             return UsuariosDAL.CambiarContraseña(parametros);
         }
 
+        public bool CambiarIdioma(string dni, string idioma)
+        {
+            var parametros = new Dictionary<string, object>
+            {
+                { "@dni", dni },
+                { "@idioma", idioma }
+            };
+            return UsuariosDAL.CambiarIdioma(parametros);
+        }
+
         #endregion
 
         #region Mapper
@@ -182,7 +192,10 @@ namespace MPP
                 Activo = Convert.ToBoolean(row["Activo"]),
                 Bloqueado = Convert.ToBoolean(row["Bloqueado"]),
                 Login = row["Login"].ToString(),
-                Contrasenia = row["Contrasenia"].ToString()
+                Contrasenia = row["Contrasenia"].ToString(),
+                Idioma = row.Table.Columns.Contains("Idioma") && row["Idioma"] != DBNull.Value
+                         ? row["Idioma"].ToString()
+                         : SER.GestorIdioma06AV.IdiomaDefecto
             };
         }
 

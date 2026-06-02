@@ -20,18 +20,27 @@ namespace IngSoftValdezAlegre.Common
             Error
         }
 
-        private static readonly Color AzulPrincipal = Color.FromArgb(40, 103, 178);
-        private static readonly Color RojoAdvertencia = Color.FromArgb(200, 50, 60);
-
         public ConfirmacionForm()
         {
             InitializeComponent();
+            AplicarTemaBase();
             btnSi.DialogResult = DialogResult.Yes;
             btnNo.DialogResult = DialogResult.No;
             this.AcceptButton = btnSi;
             this.CancelButton = btnNo;
             btnSi.Click += (s, e) => { this.DialogResult = DialogResult.Yes; this.Close(); };
             btnNo.Click += (s, e) => { this.DialogResult = DialogResult.No; this.Close(); };
+        }
+
+        private void AplicarTemaBase()
+        {
+            Tema.AplicarFormulario(this);
+            BackColor = Tema.FondoElevado;
+            lblMensaje.ForeColor = Tema.Texto;
+            lblMensaje.Font = Tema.FuenteRegular;
+            lblTitulo.ForeColor = Tema.TextoInvertido;
+            lblTitulo.Font = Tema.FuenteTitulo;
+            Tema.AplicarBotonSecundario(btnNo);
         }
 
         public static bool Mostrar(
@@ -86,22 +95,25 @@ namespace IngSoftValdezAlegre.Common
             switch (tipo)
             {
                 case TipoConfirmacion.Advertencia:
-                    colorHeader = RojoAdvertencia;
-                    btnSi.BackColor = RojoAdvertencia;
+                    colorHeader = Tema.Advertencia;
+                    Tema.AplicarBotonAcento(btnSi);
                     break;
                 case TipoConfirmacion.Info:
-                    colorHeader = AzulPrincipal;
-                    btnSi.BackColor = AzulPrincipal;
+                    colorHeader = Tema.Primario;
+                    Tema.AplicarBotonPrimario(btnSi);
                     break;
                 case TipoConfirmacion.Error:
-                    colorHeader = RojoAdvertencia;
-                    btnSi.BackColor = RojoAdvertencia;
+                    colorHeader = Tema.Peligro;
+                    Tema.AplicarBotonPeligro(btnSi);
                     break;
                 default:
-                    colorHeader = AzulPrincipal;
-                    btnSi.BackColor = AzulPrincipal;
+                    colorHeader = Tema.Primario;
+                    Tema.AplicarBotonPrimario(btnSi);
                     break;
             }
+
+            pnlTitulo.BackColor = colorHeader;
+            lblTitulo.BackColor = colorHeader;
         }
     }
 }
