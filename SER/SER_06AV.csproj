@@ -46,6 +46,7 @@
     <Compile Include="Bitacora06AV.cs" />
     <Compile Include="Enums\BitacoraEnum06AV.cs" />
     <Compile Include="Encriptador\EncriptacionSER06AV.cs" />
+    <Compile Include="Enums\PatenteEnum.cs" />
     <Compile Include="Exportacion\ExportacionEXCEL.cs" />
     <Compile Include="Exportacion\ExportacionPDF.cs" />
     <Compile Include="Familia06AV.cs" />

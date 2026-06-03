@@ -362,7 +362,12 @@ namespace IngSoftValdezAlegre.Controles
             txtNombre.Text = "";
             txtEmail.Text = "";
             txtLogin.Text = "";
-            if (cmbRol.Items.Count > 0) cmbRol.SelectedIndex = 0;
+
+            // Seleccionar "UsuarioGeneral" por defecto; si no existe, el primero de la lista
+            cmbRol.SelectedValue = "UsuarioGeneral";
+            if (cmbRol.SelectedValue == null && cmbRol.Items.Count > 0)
+                cmbRol.SelectedIndex = 0;
+
             chkBloqueado.Checked = false;
             chkActivo.Checked = true;
         }

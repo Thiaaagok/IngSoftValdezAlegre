@@ -57,12 +57,27 @@ namespace MPP
             _dal.Eliminar(parametros);
         }
 
+        /// <summary>
+        /// Devuelve todas las patentes que el rol puede ejercer,
+        /// expandiendo recursivamente la jerarquía de familias.
+        /// </summary>
+        public List<Patente06AV> ObtenerPatentesPorRol(string idRol)
+        {
+            DataTable tabla = _dal.ObtenerPatentesPorRol(idRol);
+            var lista = new List<Patente06AV>();
+            foreach (DataRow row in tabla.Rows)
+                lista.Add(Mapear(row));
+            return lista;
+        }
+
         public Patente06AV Mapear(DataRow row)
         {
             return new Patente06AV
             {
-                Id = row["Id"].ToString(),
-                Descripcion = row["Descripcion"].ToString()
+                Id          = row["Id"].ToString(),
+                Descripcion = row.Table.Columns.Contains("Descripcion")
+                                  ? row["Descripcion"].ToString()
+                                  : row["Id"].ToString()
             };
         }
     }

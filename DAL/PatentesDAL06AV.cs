@@ -40,6 +40,16 @@ namespace DAL
             EjecutarNonQuery(query, parametros);
         }
 
+        /// <summary>
+        /// Llama al SP recursivo que expande toda la jerarquía de familias
+        /// del rol y devuelve las patentes resultantes (sin duplicados).
+        /// </summary>
+        public DataTable ObtenerPatentesPorRol(string idRol)
+        {
+            var parametros = new Dictionary<string, object> { { "@IdRol", idRol } };
+            return EjecutarStoredProcedure("sp_ObtenerPatentesUsuario", parametros);
+        }
+
         #region Helpers
 
         private DataTable EjecutarQuery(string query, Dictionary<string, object> parametros)
@@ -66,6 +76,23 @@ namespace DAL
             conn.Open();
             cmd.ExecuteNonQuery();
             conn.Close();
+        }
+
+        private DataTable EjecutarStoredProcedure(string nombreSP, Dictionary<string, object> parametros)
+        {
+            SqlConnection conn = Conexion.Instancia.ObtenerConexion();
+            SqlCommand cmd = new SqlCommand(nombreSP, conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+            if (parametros != null)
+                foreach (var p in parametros)
+                    cmd.Parameters.AddWithValue(p.Key, p.Value);
+            DataTable tabla = new DataTable();
+            conn.Open();
+            new SqlDataAdapter(cmd).Fill(tabla);
+            conn.Close();
+            return tabla;
         }
 
         #endregion

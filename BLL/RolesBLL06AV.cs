@@ -9,7 +9,7 @@ namespace BLL
     {
         private readonly RolesMPP06AV _mpp = new RolesMPP06AV();
 
-        #region CRUD
+        #region ABM
 
         public List<Rol06AV> ObtenerTodos()
         {

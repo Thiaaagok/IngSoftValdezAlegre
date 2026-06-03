@@ -72,14 +72,22 @@ namespace SER
 
                 UsuariosMPP.LimpiarIntentosFallidos(usuario.Dni);
                 usuario.Email = enc.DesencriptarReversible(usuario.Email);
-                UsuarioSesion06AV.Instancia().IniciarSesion(usuario, rol);
+
+                var sesion = UsuarioSesion06AV.Instancia();
+                sesion.IniciarSesion(usuario, rol);
+
+                // Cargar patentes del rol (recursivo via SP)
+                var patentesMPP = new PatenteMPP06AV();
+                var patentes = patentesMPP.ObtenerPatentesPorRol(rol.Id);
+                sesion.CargarPatentes(patentes);
+
                 GestorIdioma06AV.Instancia.Cargar(usuario.Idioma);
                 bitacora.LoginExitoso(usuario.Dni);
 
                 return usuario;
             }
             catch (UsuarioException) { throw; }
-            catch (Exception ex)
+                catch (Exception ex)
             {
                 bitacora.Error($"Error en Login ({login}): {ex.Message}", ModuloBitacora.Autenticacion, null);
                 throw new UsuarioAccesoDatosException($"Login({login})", ex);
@@ -172,6 +180,10 @@ namespace SER
         #region Alta
         public bool CrearUsuario(string dni, string nombre, string apellido, string email, string rol, string dniOperador)
         {
+            // Si no se seleccionó rol, asignar Usuario General por defecto
+            if (string.IsNullOrWhiteSpace(rol))
+                rol = "UsuarioGeneral";
+
             ValidarDni(dni);
             ValidarNombre(nombre, "Nombre");
             ValidarNombre(apellido, "Apellido");
