@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
 
 namespace SER.Excepciones
 {
@@ -27,7 +23,8 @@ namespace SER.Excepciones
     {
         public string Campo { get; }
 
-        public UsuarioValidacionException(string campo, string mensaje): base(mensaje, "USR_VALIDACION")
+        public UsuarioValidacionException(string campo, string mensaje)
+            : base(mensaje, "USR_VALIDACION")
         {
             Campo = campo;
         }
@@ -37,7 +34,8 @@ namespace SER.Excepciones
     {
         public string Dni { get; }
 
-        public UsuarioNoEncontradoException(string dni): base($"No se encontró ningún usuario con DNI '{dni}'.", "USR_NOT_FOUND")
+        public UsuarioNoEncontradoException(string dni)
+            : base(GestorIdioma06AV.Instancia.Obtener("exc_usr_no_encontrado", dni), "USR_NOT_FOUND")
         {
             Dni = dni;
         }
@@ -47,7 +45,8 @@ namespace SER.Excepciones
     {
         public string Dni { get; }
 
-        public UsuarioDuplicadoException(string dni): base($"Ya existe un usuario con DNI '{dni}'.", "USR_DUPLICADO")
+        public UsuarioDuplicadoException(string dni)
+            : base(GestorIdioma06AV.Instancia.Obtener("exc_usr_duplicado", dni), "USR_DUPLICADO")
         {
             Dni = dni;
         }
@@ -59,7 +58,8 @@ namespace SER.Excepciones
         public string EstadoActual { get; }
         public string AccionIntentada { get; }
 
-        public UsuarioEstadoInvalidoException(string dni, string estadoActual, string accionIntentada): base($"No se puede ejecutar '{accionIntentada}' sobre el usuario '{dni}': estado actual es '{estadoActual}'.", "USR_ESTADO_INVALIDO")
+        public UsuarioEstadoInvalidoException(string dni, string estadoActual, string accionIntentada)
+            : base(GestorIdioma06AV.Instancia.Obtener("exc_usr_estado_invalido", dni, estadoActual, accionIntentada), "USR_ESTADO_INVALIDO")
         {
             Dni = dni;
             EstadoActual = estadoActual;
@@ -71,7 +71,8 @@ namespace SER.Excepciones
     {
         public string Dni { get; }
 
-        public ContraseniaInvalidaException(string dni): base($"La contraseña actual ingresada para el usuario '{dni}' es incorrecta.", "USR_CONTRASENIA_INVALIDA")
+        public ContraseniaInvalidaException(string dni)
+            : base(GestorIdioma06AV.Instancia.Obtener("exc_contrasenia_invalida", dni), "USR_CONTRASENIA_INVALIDA")
         {
             Dni = dni;
         }
@@ -79,7 +80,8 @@ namespace SER.Excepciones
 
     public class UsuarioAccesoDatosException : UsuarioException
     {
-        public UsuarioAccesoDatosException(string operacion, Exception inner): base($"Error de acceso a datos durante '{operacion}'.", inner, "USR_DB_ERROR")
+        public UsuarioAccesoDatosException(string operacion, Exception inner)
+            : base(GestorIdioma06AV.Instancia.Obtener("exc_acceso_datos", operacion), inner, "USR_DB_ERROR")
         {
         }
     }

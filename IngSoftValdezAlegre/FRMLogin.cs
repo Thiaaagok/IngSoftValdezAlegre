@@ -74,12 +74,17 @@ namespace IngSoftValdezAlegre
                 UsuariosBLL06AV SER = new UsuariosBLL06AV();
                 Usuario06AV usuario = SER.Login(login, contrasenia);
 
+                // Después del login el idioma ya está cargado → refrescamos labels
+                AplicarIdioma();
+
+                var t = GestorIdioma06AV.Instancia;
+
                 // Si tiene que cambiar contraseña (primer login o post-desbloqueo)
                 if (usuario.DebeCambiarContrasenia)
                 {
                     ConfirmacionForm.MostrarInfo(
-                        "Por seguridad, debés cambiar tu contraseña antes de continuar.",
-                        titulo: "Cambio de contraseña requerido",
+                        t.Obtener("login_cambiar_pass_requerido"),
+                        titulo: t.Obtener("cambio_pass_requerido_titulo"),
                         tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
                         owner: this);
 
@@ -92,8 +97,8 @@ namespace IngSoftValdezAlegre
                             // No cambió → no lo dejamos entrar
                             UsuarioSesion06AV.Instancia().CerrarSesion();
                             ConfirmacionForm.MostrarInfo(
-                                "Debés cambiar tu contraseña para poder ingresar al sistema.",
-                                titulo: "Acceso denegado",
+                                t.Obtener("login_pass_obligatoria"),
+                                titulo: t.Obtener("acceso_denegado"),
                                 tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
                                 owner: this);
                             return;
@@ -102,8 +107,8 @@ namespace IngSoftValdezAlegre
                         // Cambió la contraseña → cerramos sesión y lo obligamos a loguearse de nuevo
                         UsuarioSesion06AV.Instancia().CerrarSesion();
                         ConfirmacionForm.MostrarInfo(
-                            "Tu contraseña fue actualizada. Iniciá sesión nuevamente con tu nueva contraseña.",
-                            titulo: "Contraseña actualizada",
+                            t.Obtener("login_pass_actualizada"),
+                            titulo: t.Obtener("pass_actualizada_titulo"),
                             tipo: ConfirmacionForm.TipoConfirmacion.Info,
                             owner: this);
 
@@ -120,27 +125,57 @@ namespace IngSoftValdezAlegre
             }
             catch (UsuarioValidacionException ex)
             {
-                MessageBox.Show(ex.Message, "Validacion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                var t = GestorIdioma06AV.Instancia;
+                ConfirmacionForm.MostrarInfo(
+                    ex.Message,
+                    titulo: t.Obtener("validacion"),
+                    tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
+                    owner: this);
             }
             catch (UsuarioNoEncontradoException)
             {
-                MessageBox.Show("Login o contraseña incorrectos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                var t = GestorIdioma06AV.Instancia;
+                ConfirmacionForm.MostrarInfo(
+                    t.Obtener("login_o_pass_incorrectos"),
+                    titulo: t.Obtener("error"),
+                    tipo: ConfirmacionForm.TipoConfirmacion.Error,
+                    owner: this);
             }
             catch (ContraseniaInvalidaException)
             {
-                MessageBox.Show("Login o contraseña incorrectos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                var t = GestorIdioma06AV.Instancia;
+                ConfirmacionForm.MostrarInfo(
+                    t.Obtener("login_o_pass_incorrectos"),
+                    titulo: t.Obtener("error"),
+                    tipo: ConfirmacionForm.TipoConfirmacion.Error,
+                    owner: this);
             }
             catch (UsuarioEstadoInvalidoException ex) when (ex.EstadoActual == "Bloqueado")
             {
-                MessageBox.Show("El usuario esta bloqueado. Contacte a un administrador.", "Acceso denegado", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                var t = GestorIdioma06AV.Instancia;
+                ConfirmacionForm.MostrarInfo(
+                    t.Obtener("usuario_bloqueado_contacte"),
+                    titulo: t.Obtener("acceso_denegado"),
+                    tipo: ConfirmacionForm.TipoConfirmacion.Error,
+                    owner: this);
             }
             catch (UsuarioEstadoInvalidoException ex) when (ex.EstadoActual == "Inactivo")
             {
-                MessageBox.Show("El usuario esta inactivo. Contacte a un administrador.", "Acceso denegado", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                var t = GestorIdioma06AV.Instancia;
+                ConfirmacionForm.MostrarInfo(
+                    t.Obtener("usuario_inactivo_contacte"),
+                    titulo: t.Obtener("acceso_denegado"),
+                    tipo: ConfirmacionForm.TipoConfirmacion.Error,
+                    owner: this);
             }
             catch (UsuarioAccesoDatosException)
             {
-                MessageBox.Show("Error de conexion. Intenta mas tarde.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                var t = GestorIdioma06AV.Instancia;
+                ConfirmacionForm.MostrarInfo(
+                    t.Obtener("error_conexion_tarde"),
+                    titulo: t.Obtener("error"),
+                    tipo: ConfirmacionForm.TipoConfirmacion.Error,
+                    owner: this);
             }
         }
 

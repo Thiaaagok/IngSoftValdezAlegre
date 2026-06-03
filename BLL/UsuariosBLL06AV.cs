@@ -19,11 +19,12 @@ namespace SER
 
         public Usuario06AV Login(string login, string contrasenia)
         {
+            var t = GestorIdioma06AV.Instancia;
             if (string.IsNullOrWhiteSpace(login))
-                throw new UsuarioValidacionException("login", "El login no puede estar vacío.");
+                throw new UsuarioValidacionException("login", t.Obtener("val_login_vacio"));
 
             if (string.IsNullOrWhiteSpace(contrasenia))
-                throw new UsuarioValidacionException("contrasenia", "La contraseña no puede estar vacía.");
+                throw new UsuarioValidacionException("contrasenia", t.Obtener("val_contrasenia_vacia"));
 
             BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
             EncriptacionSER06AV enc = new EncriptacionSER06AV();
@@ -93,7 +94,7 @@ namespace SER
                 var usuario = UsuarioSesion06AV.Instancia().UsuarioActual;
 
                 if (usuario == null)
-                    throw new UsuarioValidacionException("sesion", "No hay una sesión activa.");
+                    throw new UsuarioValidacionException("sesion", GestorIdioma06AV.Instancia.Obtener("val_sesion_inactiva"));
 
                 string dni = usuario.Dni;
                 UsuarioSesion06AV.Instancia().CerrarSesion();
@@ -224,7 +225,7 @@ namespace SER
         public bool EditarUsuario(Usuario06AV usuario, string dniOperador)
         {
             if (usuario == null)
-                throw new UsuarioValidacionException("usuario", "El objeto usuario no puede ser nulo.");
+                throw new UsuarioValidacionException("usuario", GestorIdioma06AV.Instancia.Obtener("val_usuario_nulo"));
 
             ValidarDni(usuario.Dni);
             ValidarEmail(usuario.Email);
@@ -413,15 +414,16 @@ namespace SER
         public bool CambiarContraseña(string dni, string contraseniaActual, string contraseniaNueva)
         {
             ValidarDni(dni);
+            var t = GestorIdioma06AV.Instancia;
 
             if (string.IsNullOrWhiteSpace(contraseniaActual))
-                throw new UsuarioValidacionException("contrasenia actual", "La contraseña actual no puede estar vacía.");
+                throw new UsuarioValidacionException("contrasenia actual", t.Obtener("val_contrasenia_actual_vacia"));
 
             if (string.IsNullOrWhiteSpace(contraseniaNueva))
-                throw new UsuarioValidacionException("contrasenia nueva", "La contraseña nueva no puede estar vacía.");
+                throw new UsuarioValidacionException("contrasenia nueva", t.Obtener("val_contrasenia_nueva_vacia"));
 
             if (contraseniaActual == contraseniaNueva)
-                throw new UsuarioValidacionException("contrasenia nueva", "La nueva contraseña debe ser distinta a la actual.");
+                throw new UsuarioValidacionException("contrasenia nueva", t.Obtener("val_contrasenias_iguales"));
 
             BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
             try
@@ -464,7 +466,7 @@ namespace SER
 
             if (!GestorIdioma06AV.Instancia.EsValido(idioma))
                 throw new UsuarioValidacionException("idioma",
-                    $"El idioma '{idioma}' no es válido. Opciones: {string.Join(", ", GestorIdioma06AV.IdiomasDisponibles)}");
+                    GestorIdioma06AV.Instancia.Obtener("val_idioma_invalido", idioma, string.Join(", ", GestorIdioma06AV.IdiomasDisponibles)));
 
             BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
             try
@@ -505,29 +507,31 @@ namespace SER
 
         private static void ValidarDni(string dni)
         {
+            var t = GestorIdioma06AV.Instancia;
             if (string.IsNullOrWhiteSpace(dni))
-                throw new UsuarioValidacionException("dni", "El DNI no puede estar vacío.");
+                throw new UsuarioValidacionException("dni", t.Obtener("val_dni_vacio"));
 
             if (!dni.All(char.IsDigit))
-                throw new UsuarioValidacionException("dni", $"El DNI '{dni}' solo debe contener dígitos.");
+                throw new UsuarioValidacionException("dni", t.Obtener("val_dni_solo_digitos", dni));
 
             if (dni.Length < 7 || dni.Length > 8)
-                throw new UsuarioValidacionException("dni", $"El DNI '{dni}' debe tener entre 7 y 8 dígitos.");
+                throw new UsuarioValidacionException("dni", t.Obtener("val_dni_longitud", dni));
         }
 
         private static void ValidarNombre(string valor, string campo)
         {
             if (string.IsNullOrWhiteSpace(valor))
-                throw new UsuarioValidacionException(campo, $"El campo '{campo}' no puede estar vacío.");
+                throw new UsuarioValidacionException(campo, GestorIdioma06AV.Instancia.Obtener("val_campo_vacio", campo));
         }
 
         private static void ValidarEmail(string email)
         {
+            var t = GestorIdioma06AV.Instancia;
             if (string.IsNullOrWhiteSpace(email))
-                throw new UsuarioValidacionException("email", "El email no puede estar vacío.");
+                throw new UsuarioValidacionException("email", t.Obtener("val_email_vacio"));
 
             if (!email.Contains('@') || !email.Contains('.'))
-                throw new UsuarioValidacionException("email", $"El email '{email}' no tiene un formato válido.");
+                throw new UsuarioValidacionException("email", t.Obtener("val_email_formato", email));
         }
 
         #endregion

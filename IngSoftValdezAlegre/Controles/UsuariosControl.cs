@@ -199,9 +199,10 @@ namespace IngSoftValdezAlegre.Controles
             }
             catch (Exception ex)
             {
+                var t = GestorIdioma06AV.Instancia;
                 ConfirmacionForm.MostrarInfo(
                     ex.Message,
-                    titulo: "Error al cargar roles",
+                    titulo: t.Obtener("error_cargar_roles"),
                     tipo: ConfirmacionForm.TipoConfirmacion.Error,
                     owner: this.FindForm());
             }
@@ -211,12 +212,12 @@ namespace IngSoftValdezAlegre.Controles
         private void CambiarModo(Modo nuevo)
         {
             _modo = nuevo;
+            var t = GestorIdioma06AV.Instancia;
             bool esAdmin = UsuarioSesion06AV.Instancia().TieneRol("Administrador");
             switch (nuevo)
             {
                 case Modo.Consulta:
-                    SetMensaje("Modo Consulta",
-                        "Unicamente para ver los usuarios");
+                    SetMensaje(t.Obtener("modo_consulta_titulo"), t.Obtener("modo_consulta_detalle"));
                     SetBotones(crear: true, desbloq: true, modif: true, actDesact: true,
                                aplicar: true, cancelar: false, radios: true);
                     SetFormularioEditable(false, incluirEstado: false);
@@ -227,12 +228,10 @@ namespace IngSoftValdezAlegre.Controles
                 case Modo.Anadir:
                     if (!esAdmin)
                     {
-                        ConfirmacionForm.MostrarInfo("No sos administrador, no podes crear usuarios");
+                        ConfirmacionForm.MostrarInfo(t.Obtener("no_admin_crear"), owner: this.FindForm());
                         return;
                     }
-                    SetMensaje("Modo Añadir",
-                        "Completá DNI, Apellido, Nombre, Email y Rol. El sistema genera el " +
-                        "Login y una contraseña inicial. Presioná Aplicar para crear.");
+                    SetMensaje(t.Obtener("modo_anadir_titulo"), t.Obtener("modo_anadir_detalle"));
                     SetBotones(crear: false, desbloq: false, modif: false, actDesact: false,
                                aplicar: true, cancelar: true, radios: false);
                     LimpiarFormulario();
@@ -242,11 +241,8 @@ namespace IngSoftValdezAlegre.Controles
                     break;
 
                 case Modo.Modificar:
-                    SetMensaje(
-                        "Modo Modificar",
-                        "Solo se puede modificar el Email y el Rol del usuario.");
+                    SetMensaje(t.Obtener("modo_modificar_titulo"), t.Obtener("modo_modificar_detalle"));
 
-                    
                     var seleccionado = ObtenerUsuarioSeleccionado();
                     bool esMiPropioUsuario = seleccionado?.Dni == UsuarioSesion06AV.Instancia().UsuarioActual.Dni;
 
@@ -282,12 +278,10 @@ namespace IngSoftValdezAlegre.Controles
                 case Modo.ActivarDesactivar:
                     if (!esAdmin)
                     {
-                        ConfirmacionForm.MostrarInfo("No sos administrador, no podes desactivar o activar usuarios");
+                        ConfirmacionForm.MostrarInfo(t.Obtener("no_admin_actdesact"), owner: this.FindForm());
                         return;
                     }
-                    SetMensaje("Modo Activar/Desactivar",
-                        "Vas a alternar el estado Activo/Inactivo del usuario seleccionado. " +
-                        "Presioná Aplicar para confirmar.");
+                    SetMensaje(t.Obtener("modo_actdesact_titulo"), t.Obtener("modo_actdesact_detalle"));
                     SetBotones(crear: false, desbloq: false, modif: false, actDesact: false,
                                aplicar: true, cancelar: true, radios: false);
                     SetFormularioEditable(false, incluirEstado: false);
@@ -297,11 +291,10 @@ namespace IngSoftValdezAlegre.Controles
                 case Modo.Desbloquear:
                     if (!esAdmin)
                     {
-                        ConfirmacionForm.MostrarInfo("No sos administrador, no podes desbloquear usuarios");
+                        ConfirmacionForm.MostrarInfo(t.Obtener("no_admin_desbloquear"), owner: this.FindForm());
                         return;
                     }
-                    SetMensaje("Modo Desbloquear",
-                        "Seleccioná un usuario bloqueado en la grilla y presioná Aplicar para desbloquearlo.");
+                    SetMensaje(t.Obtener("modo_desbloquear_titulo"), t.Obtener("modo_desbloquear_detalle"));
                     SetBotones(crear: false, desbloq: false, modif: false, actDesact: false,
                                aplicar: true, cancelar: true, radios: false);
                     SetFormularioEditable(false, incluirEstado: false);
@@ -411,9 +404,10 @@ namespace IngSoftValdezAlegre.Controles
             }
             catch (Exception ex)
             {
+                var t = GestorIdioma06AV.Instancia;
                 ConfirmacionForm.MostrarInfo(
-                    "No se pudo cargar la lista de usuarios.\n" + ex.Message,
-                    titulo: "Error",
+                    t.Obtener("error_cargar_usuarios") + "\n" + ex.Message,
+                    titulo: t.Obtener("error"),
                     tipo: ConfirmacionForm.TipoConfirmacion.Error,
                     owner: this.FindForm());
             }
@@ -440,6 +434,7 @@ namespace IngSoftValdezAlegre.Controles
 
         private void AplicarAlta()
         {
+            var t = GestorIdioma06AV.Instancia;
             try
             {
                 bool ok = _usuariosSer.CrearUsuario(
@@ -452,8 +447,8 @@ namespace IngSoftValdezAlegre.Controles
                 if (ok)
                 {
                     ConfirmacionForm.MostrarInfo(
-                        "Usuario creado correctamente.",
-                        titulo: "Listo",
+                        t.Obtener("usuario_creado"),
+                        titulo: t.Obtener("listo"),
                         owner: this.FindForm());
 
                     LimpiarFormulario();
@@ -463,8 +458,8 @@ namespace IngSoftValdezAlegre.Controles
                 else
                 {
                     ConfirmacionForm.MostrarInfo(
-                        "No se pudo crear el usuario.",
-                        titulo: "Aviso",
+                        t.Obtener("error_crear_usuario"),
+                        titulo: t.Obtener("aviso"),
                         tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
                         owner: this.FindForm());
                 }
@@ -473,7 +468,7 @@ namespace IngSoftValdezAlegre.Controles
             {
                 ConfirmacionForm.MostrarInfo(
                     ex.Message,
-                    titulo: "Aviso",
+                    titulo: t.Obtener("aviso"),
                     tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
                     owner: this.FindForm());
             }
@@ -485,6 +480,7 @@ namespace IngSoftValdezAlegre.Controles
             if (seleccionado == null) return;
             seleccionado.Email = txtEmail.Text.Trim();
             seleccionado.IdRol = cmbRol.SelectedValue?.ToString();
+            var t = GestorIdioma06AV.Instancia;
 
             try
             {
@@ -492,8 +488,8 @@ namespace IngSoftValdezAlegre.Controles
                 if (ok)
                 {
                     ConfirmacionForm.MostrarInfo(
-                        "Usuario modificado correctamente.",
-                        titulo: "Listo",
+                        t.Obtener("usuario_modificado"),
+                        titulo: t.Obtener("listo"),
                         owner: this.FindForm());
 
                     CambiarModo(Modo.Consulta);
@@ -502,8 +498,8 @@ namespace IngSoftValdezAlegre.Controles
                 else
                 {
                     ConfirmacionForm.MostrarInfo(
-                        "No se pudo modificar el usuario.",
-                        titulo: "Aviso",
+                        t.Obtener("error_modificar_usuario"),
+                        titulo: t.Obtener("aviso"),
                         tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
                         owner: this.FindForm());
                 }
@@ -512,7 +508,7 @@ namespace IngSoftValdezAlegre.Controles
             {
                 ConfirmacionForm.MostrarInfo(
                     ex.Message,
-                    titulo: "Aviso",
+                    titulo: t.Obtener("aviso"),
                     tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
                     owner: this.FindForm());
             }
@@ -522,24 +518,25 @@ namespace IngSoftValdezAlegre.Controles
         {
             var u = ObtenerUsuarioSeleccionado();
             if (u == null) return;
+            var t = GestorIdioma06AV.Instancia;
 
-            string accion = u.Activo ? "desactivar" : "reactivar";
+            string accion = u.Activo ? t.Obtener("accion_desactivar") : t.Obtener("accion_reactivar");
 
             bool confirmado = ConfirmacionForm.Mostrar(
-                mensaje: $"¿Confirmás {accion} al usuario {u.Apellido}, {u.Nombre}?",
-                titulo: "Confirmar",
+                mensaje: t.Obtener("confirmar_toggle_activo", accion, u.Apellido, u.Nombre),
+                titulo: t.Obtener("confirmar_titulo"),
                 tipo: u.Activo
                     ? ConfirmacionForm.TipoConfirmacion.Advertencia
                     : ConfirmacionForm.TipoConfirmacion.Pregunta,
-                textoSi: u.Activo ? "Sí, desactivar" : "Sí, reactivar",
-                textoNo: "Cancelar",
+                textoSi: u.Activo ? t.Obtener("si_desactivar") : t.Obtener("si_reactivar"),
+                textoNo: t.Obtener("cancelar"),
                 owner: this.FindForm());
 
             if (!confirmado) return;
 
-            if(u.Dni == UsuarioSesion06AV.Instancia().UsuarioActual.Dni)
+            if (u.Dni == UsuarioSesion06AV.Instancia().UsuarioActual.Dni)
             {
-                ConfirmacionForm.MostrarInfo("No se puede desactivar a uno mismo");
+                ConfirmacionForm.MostrarInfo(t.Obtener("no_desactivar_mismo"), owner: this.FindForm());
                 return;
             }
 
@@ -552,8 +549,8 @@ namespace IngSoftValdezAlegre.Controles
                 if (ok)
                 {
                     ConfirmacionForm.MostrarInfo(
-                        "Operación realizada correctamente.",
-                        titulo: "Listo",
+                        t.Obtener("operacion_exitosa"),
+                        titulo: t.Obtener("listo"),
                         owner: this.FindForm());
 
                     CambiarModo(Modo.Consulta);
@@ -564,7 +561,7 @@ namespace IngSoftValdezAlegre.Controles
             {
                 ConfirmacionForm.MostrarInfo(
                     ex.Message,
-                    titulo: "Aviso",
+                    titulo: t.Obtener("aviso"),
                     tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
                     owner: this.FindForm());
             }
@@ -574,12 +571,13 @@ namespace IngSoftValdezAlegre.Controles
         {
             var u = ObtenerUsuarioSeleccionado();
             if (u == null) return;
+            var t = GestorIdioma06AV.Instancia;
 
             bool confirmado = ConfirmacionForm.Mostrar(
-                mensaje: $"¿Desbloquear al usuario {u.Apellido}, {u.Nombre}?",
-                titulo: "Confirmar desbloqueo",
-                textoSi: "Sí, desbloquear",
-                textoNo: "Cancelar",
+                mensaje: t.Obtener("confirmar_desbloqueo", u.Apellido, u.Nombre),
+                titulo: t.Obtener("confirmar_desbloqueo_titulo"),
+                textoSi: t.Obtener("si_desbloquear"),
+                textoNo: t.Obtener("cancelar"),
                 owner: this.FindForm());
 
             if (!confirmado) return;
@@ -590,8 +588,8 @@ namespace IngSoftValdezAlegre.Controles
                 if (ok)
                 {
                     ConfirmacionForm.MostrarInfo(
-                        "Usuario desbloqueado correctamente.",
-                        titulo: "Listo",
+                        t.Obtener("usuario_desbloqueado"),
+                        titulo: t.Obtener("listo"),
                         owner: this.FindForm());
                     CambiarModo(Modo.Consulta);
                     RecargarGrilla();
@@ -601,7 +599,7 @@ namespace IngSoftValdezAlegre.Controles
             {
                 ConfirmacionForm.MostrarInfo(
                     ex.Message,
-                    titulo: "Aviso",
+                    titulo: t.Obtener("aviso"),
                     tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
                     owner: this.FindForm());
             }
@@ -658,12 +656,13 @@ namespace IngSoftValdezAlegre.Controles
 
         private void btnModificar_Click(object sender, EventArgs e)
         {
+            var t = GestorIdioma06AV.Instancia;
             var seleccionado = ObtenerUsuarioSeleccionado();
             if (seleccionado == null)
             {
                 ConfirmacionForm.MostrarInfo(
-                    "Seleccioná un usuario en la grilla.",
-                    titulo: "Aviso",
+                    t.Obtener("seleccionar_usuario"),
+                    titulo: t.Obtener("aviso"),
                     owner: this.FindForm());
                 return;
             }
@@ -674,8 +673,8 @@ namespace IngSoftValdezAlegre.Controles
             if (!esAdmin && !esMiPropioUsuario)
             {
                 ConfirmacionForm.MostrarInfo(
-                    "No tenés permisos para modificar a otros usuarios.\nSolo podés modificar tu propio email.",
-                    titulo: "Permiso denegado",
+                    t.Obtener("no_permisos_modificar"),
+                    titulo: t.Obtener("permiso_denegado"),
                     tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
                     owner: this.FindForm());
                 return;
@@ -686,11 +685,12 @@ namespace IngSoftValdezAlegre.Controles
 
         private void btnActDesact_Click(object sender, EventArgs e)
         {
+            var t = GestorIdioma06AV.Instancia;
             if (ObtenerUsuarioSeleccionado() == null)
             {
                 ConfirmacionForm.MostrarInfo(
-                    "Seleccioná un usuario en la grilla.",
-                    titulo: "Aviso",
+                    t.Obtener("seleccionar_usuario"),
+                    titulo: t.Obtener("aviso"),
                     owner: this.FindForm());
                 return;
             }
@@ -699,20 +699,21 @@ namespace IngSoftValdezAlegre.Controles
 
         private void btnDesbloquear_Click(object sender, EventArgs e)
         {
+            var t = GestorIdioma06AV.Instancia;
             var u = ObtenerUsuarioSeleccionado();
             if (u == null)
             {
                 ConfirmacionForm.MostrarInfo(
-                    "Seleccioná un usuario en la grilla.",
-                    titulo: "Aviso",
+                    t.Obtener("seleccionar_usuario"),
+                    titulo: t.Obtener("aviso"),
                     owner: this.FindForm());
                 return;
             }
             if (!u.Bloqueado)
             {
                 ConfirmacionForm.MostrarInfo(
-                    "El usuario seleccionado no está bloqueado.",
-                    titulo: "Aviso",
+                    t.Obtener("usuario_no_bloqueado"),
+                    titulo: t.Obtener("aviso"),
                     owner: this.FindForm());
                 return;
             }

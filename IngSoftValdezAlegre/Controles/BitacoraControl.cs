@@ -154,9 +154,10 @@ namespace IngSoftValdezAlegre.Controles
 
                 if (desde > hasta)
                 {
+                    var t = GestorIdioma06AV.Instancia;
                     ConfirmacionForm.MostrarInfo(
-                        "La fecha inicial no puede ser mayor a la final.",
-                        titulo: "Aviso",
+                        t.Obtener("fecha_inicial_mayor"),
+                        titulo: t.Obtener("aviso"),
                         tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
                         owner: this.FindForm());
                     return;
@@ -193,9 +194,10 @@ namespace IngSoftValdezAlegre.Controles
             }
             catch (Exception ex)
             {
+                var t = GestorIdioma06AV.Instancia;
                 ConfirmacionForm.MostrarInfo(
-                    "No se pudo aplicar el filtro:\n" + ex.Message,
-                    titulo: "Error",
+                    t.Obtener("error_filtro") + "\n" + ex.Message,
+                    titulo: t.Obtener("error"),
                     tipo: ConfirmacionForm.TipoConfirmacion.Error,
                     owner: this.FindForm());
             }
@@ -253,7 +255,7 @@ namespace IngSoftValdezAlegre.Controles
             var exp = new ExportacionPDF();
             exp.Exportar(_eventosCargados, columnas, sfd.FileName, "Bitácora de eventos");
 
-            MessageBox.Show("PDF generado correctamente.");
+            MessageBox.Show(GestorIdioma06AV.Instancia.Obtener("pdf_generado"));
         }
 
         private void lblImprimirEXCEL_Click(object sender, EventArgs e)
@@ -278,8 +280,7 @@ namespace IngSoftValdezAlegre.Controles
             var exp = new ExportacionEXCEL();
             exp.Exportar(_eventosCargados, columnas, sfd.FileName);
 
-
-            MessageBox.Show("Archivo generado correctamente.");
+            MessageBox.Show(GestorIdioma06AV.Instancia.Obtener("archivo_generado"));
         }
 
         private void lblLimpiar_Click(object sender, EventArgs e)

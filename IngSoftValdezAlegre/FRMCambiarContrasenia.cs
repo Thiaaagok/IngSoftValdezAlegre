@@ -27,11 +27,12 @@ namespace IngSoftValdezAlegre.Controles
 
             if (_esObligatorio)
             {
+                var t = GestorIdioma06AV.Instancia;
                 btnCancelar.Visible = false;
                 this.ControlBox = false;
-                this.Text = GestorIdioma06AV.Instancia.Obtener("cambiar_contrasenia") + " (obligatorio)";
+                this.Text = t.Obtener("cambiar_contrasenia") + t.Obtener("cambiar_contrasenia_obligatorio_sufijo");
                 lblMensaje.ForeColor = Tema.Peligro;
-                lblMensaje.Text = "Por seguridad, debés cambiar tu contraseña antes de continuar.";
+                lblMensaje.Text = t.Obtener("cambiar_pass_obligatorio_msg");
             }
         }
 
@@ -77,6 +78,7 @@ namespace IngSoftValdezAlegre.Controles
 
         private void btnAceptar_Click(object sender, EventArgs e)
         {
+            var t = GestorIdioma06AV.Instancia;
             lblMensaje.ForeColor = Tema.Peligro;
             lblMensaje.Text = "";
 
@@ -88,19 +90,19 @@ namespace IngSoftValdezAlegre.Controles
                 string.IsNullOrWhiteSpace(nueva) ||
                 string.IsNullOrWhiteSpace(repetir))
             {
-                lblMensaje.Text = "Completá los tres campos.";
+                lblMensaje.Text = t.Obtener("completar_tres_campos");
                 return;
             }
 
             if (nueva != repetir)
             {
-                lblMensaje.Text = "La nueva contraseña y la repetición no coinciden.";
+                lblMensaje.Text = t.Obtener("pass_no_coincide");
                 return;
             }
 
             if (nueva == actual)
             {
-                lblMensaje.Text = "La nueva contraseña debe ser distinta a la actual.";
+                lblMensaje.Text = t.Obtener("val_contrasenias_iguales");
                 return;
             }
 
@@ -113,31 +115,23 @@ namespace IngSoftValdezAlegre.Controles
                 {
                     ContraseniaCambiada = true;
 
-                    if (_esObligatorio)
-                    {
-                        ConfirmacionForm.MostrarInfo(
-                            "Contraseña actualizada correctamente.\nYa podés ingresar al sistema.",
-                            "Listo");
-                    }
-                    else
-                    {
-                        ConfirmacionForm.MostrarInfo(
-                            "Contraseña actualizada correctamente.\nDebés iniciar sesión nuevamente.",
-                            "Listo");
-          
-                    }
+                    ConfirmacionForm.MostrarInfo(
+                        _esObligatorio
+                            ? t.Obtener("pass_actualizada_obligatorio")
+                            : t.Obtener("pass_actualizada_voluntario"),
+                        t.Obtener("listo"));
 
                     this.DialogResult = DialogResult.OK;
                     this.Close();
                 }
                 else
                 {
-                    lblMensaje.Text = "No se pudo actualizar la contraseña.";
+                    lblMensaje.Text = t.Obtener("error_actualizar_pass");
                 }
             }
             catch (ContraseniaInvalidaException)
             {
-                lblMensaje.Text = "La contraseña actual es incorrecta.";
+                lblMensaje.Text = t.Obtener("pass_actual_incorrecta");
             }
             catch (UsuarioValidacionException ex)
             {
@@ -149,7 +143,7 @@ namespace IngSoftValdezAlegre.Controles
             }
             catch (UsuarioAccesoDatosException)
             {
-                lblMensaje.Text = "Error de conexión. Intentá de nuevo.";
+                lblMensaje.Text = t.Obtener("error_conexion_reintentar");
             }
         }
     }

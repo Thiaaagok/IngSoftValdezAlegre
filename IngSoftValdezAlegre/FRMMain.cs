@@ -380,11 +380,9 @@ namespace IngSoftValdezAlegre
             var t = GestorIdioma06AV.Instancia;
             BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
             bool confirmado = ConfirmacionForm.Mostrar(
-                mensaje: t.IdiomaActual == GestorIdioma06AV.ES
-                    ? "Estas seguro que queres cerrar sesion?"
-                    : "Are you sure you want to sign out?",
+                mensaje: t.Obtener("confirmar_cerrar_sesion"),
                 titulo: t.Obtener("cerrar_sesion"),
-                textoSi: t.IdiomaActual == GestorIdioma06AV.ES ? "Si, cerrar" : "Sign out",
+                textoSi: t.Obtener("si_cerrar"),
                 textoNo: t.Obtener("cancelar"),
                 owner: this);
 
