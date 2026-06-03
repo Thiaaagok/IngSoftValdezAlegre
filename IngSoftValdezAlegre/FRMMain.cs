@@ -14,17 +14,9 @@ namespace IngSoftValdezAlegre
     {
         private const int SidebarAnchoExpandido = 220;
         private const int SidebarAnchoColapsado = 64;
-        private const int WmNcButtonDown = 0xA1;
-        private const int HtCaption = 0x2;
         private bool _sidebarExpandido = true;
         private Button _moduloActivo;
         private ToolStripMenuItem cambiarIdiomaToolStripMenuItem;
-
-        [DllImport("user32.dll")]
-        private static extern bool ReleaseCapture();
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
 
         public Usuario06AV Usuario = new Usuario06AV();
 
@@ -34,6 +26,10 @@ namespace IngSoftValdezAlegre
             ConfigurarInterfaz();
             CargarSesionEnEncabezado();
             AplicarIdioma();
+
+            // Observer: suscribirse al cambio de idioma
+            GestorIdioma06AV.Instancia.IdiomaChanged += AplicarIdioma;
+            FormClosed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
 
             if (!EsAdministrador())
             {
@@ -49,8 +45,8 @@ namespace IngSoftValdezAlegre
         {
             var t = GestorIdioma06AV.Instancia;
 
-            Text = "PC Factory";
-            lblSistema.Text = "PC FACTORY";
+            Text = "PC Forge / Clinica";
+            lblSistema.Text = "PC FORGE/CLINICA";
             lblMenuPrincipal.Text = t.IdiomaActual == GestorIdioma06AV.ES ? "PRINCIPAL" : "MAIN";
             lblSidebarFooter.Text = t.IdiomaActual == GestorIdioma06AV.ES
                 ? "Planta de ensamblaje"
@@ -80,12 +76,6 @@ namespace IngSoftValdezAlegre
             toolTipMain.SetToolTip(btnIdioma, t.Obtener("cambiar_idioma"));
             toolTipMain.SetToolTip(btnCerrarSesion, t.Obtener("cerrar_sesion"));
             toolTipMain.SetToolTip(opcionesUsuarioBTN, t.Obtener("usuario"));
-
-            if (panelPrincipal.Controls.Count > 0 &&
-                panelPrincipal.Controls[0] is IIdiomaAplicable control)
-            {
-                control.AplicarIdioma();
-            }
         }
 
         private void ConfigurarInterfaz()
@@ -101,8 +91,6 @@ namespace IngSoftValdezAlegre
             lblSistema.Font = new Font("Segoe UI Semibold", 15.5f, FontStyle.Bold);
             lblSistema.ForeColor = Tema.TextoFuerte;
             lblSistema.Width = 220;
-            lblSistema.MouseDown += ArrastrarVentana_MouseDown;
-            pnlTopBar.MouseDown += ArrastrarVentana_MouseDown;
             pnlTopBar.Paint += DibujarLineaInferior;
             pnlSidebar.Paint += DibujarLineaDerecha;
 
@@ -326,11 +314,12 @@ namespace IngSoftValdezAlegre
             try
             {
                 string dni = UsuarioSesion06AV.Instancia().UsuarioActual.Dni;
+                // CambiarIdioma en BLL llama a GestorIdioma.CambiarIdioma
+                // que dispara IdiomaChanged → todos los observadores se actualizan solos
                 new UsuariosBLL06AV().CambiarIdioma(dni, nuevo);
-                AplicarIdioma();
                 ConfirmacionForm.MostrarInfo(
-                    t.Obtener("idioma_guardado"),
-                    titulo: t.Obtener("idioma"),
+                    GestorIdioma06AV.Instancia.Obtener("idioma_guardado"),
+                    titulo: GestorIdioma06AV.Instancia.Obtener("idioma"),
                     owner: this);
             }
             catch (Exception ex)
@@ -398,17 +387,6 @@ namespace IngSoftValdezAlegre
             var login = new FRMLogin();
             login.FormClosed += (s, args) => Close();
             login.Show();
-        }
-
-        private void ArrastrarVentana_MouseDown(object sender, MouseEventArgs e)
-        {
-            if (e.Button != MouseButtons.Left)
-            {
-                return;
-            }
-
-            ReleaseCapture();
-            SendMessage(Handle, WmNcButtonDown, HtCaption, 0);
         }
 
         private void CargarSesionEnEncabezado()

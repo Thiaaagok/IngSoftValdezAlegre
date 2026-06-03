@@ -41,6 +41,10 @@ namespace IngSoftValdezAlegre.Controles
             AplicarIdioma();
             AjustarLayout();
             Resize += (s, e) => AjustarLayout();
+
+            // Observer: suscribirse al cambio de idioma
+            GestorIdioma06AV.Instancia.IdiomaChanged += AplicarIdioma;
+            Disposed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
         }
 
         private void AplicarTema()
@@ -170,6 +174,37 @@ namespace IngSoftValdezAlegre.Controles
             // Actualizar conteo si ya hay datos cargados
             if (_usuariosCargados != null && _usuariosCargados.Count > 0)
                 lblCantidad.Text = t.Obtener("numero_usuarios") + " " + _usuariosCargados.Count;
+
+            // Refrescar el texto del recuadro de mensaje según el modo activo
+            RefrescarMensajeModo();
+        }
+
+        /// <summary>
+        /// Reescribe solo el texto de txtMensaje según el modo actual.
+        /// Se llama desde AplicarIdioma() para que el recuadro también
+        /// se actualice cuando el usuario cambia de idioma.
+        /// </summary>
+        private void RefrescarMensajeModo()
+        {
+            var t = GestorIdioma06AV.Instancia;
+            switch (_modo)
+            {
+                case Modo.Consulta:
+                    SetMensaje(t.Obtener("modo_consulta_titulo"), t.Obtener("modo_consulta_detalle"));
+                    break;
+                case Modo.Anadir:
+                    SetMensaje(t.Obtener("modo_anadir_titulo"), t.Obtener("modo_anadir_detalle"));
+                    break;
+                case Modo.Modificar:
+                    SetMensaje(t.Obtener("modo_modificar_titulo"), t.Obtener("modo_modificar_detalle"));
+                    break;
+                case Modo.ActivarDesactivar:
+                    SetMensaje(t.Obtener("modo_actdesact_titulo"), t.Obtener("modo_actdesact_detalle"));
+                    break;
+                case Modo.Desbloquear:
+                    SetMensaje(t.Obtener("modo_desbloquear_titulo"), t.Obtener("modo_desbloquear_detalle"));
+                    break;
+            }
         }
 
         private void ConfigurarColumnas()

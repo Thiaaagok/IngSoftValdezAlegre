@@ -43,6 +43,19 @@ namespace SER
 
         #endregion
 
+        #region Observer
+
+        /// <summary>
+        /// Se dispara cada vez que el idioma activo cambia.
+        /// Todos los formularios y controles deben suscribirse a este evento
+        /// para refrescarse automáticamente.
+        /// </summary>
+        public event System.Action IdiomaChanged;
+
+        private void NotificarCambio() => IdiomaChanged?.Invoke();
+
+        #endregion
+
         #region Estado
 
         private string _idiomaActual;
@@ -52,7 +65,7 @@ namespace SER
 
         /// <summary>
         /// Carga el idioma del usuario al iniciar sesión.
-        /// Si el valor es nulo o no reconocido, usa el idioma por defecto.
+        /// No dispara el evento porque la UI aún no está construida en ese punto.
         /// </summary>
         public void Cargar(string idioma)
         {
@@ -60,7 +73,7 @@ namespace SER
         }
 
         /// <summary>
-        /// Cambia el idioma activo en memoria.
+        /// Cambia el idioma activo en memoria y notifica a todos los observadores.
         /// Para persistirlo a la base de datos llamar a UsuariosBLL06AV.CambiarIdioma().
         /// </summary>
         public void CambiarIdioma(string idioma)
@@ -68,6 +81,7 @@ namespace SER
             if (!EsValido(idioma))
                 throw new System.ArgumentException($"Idioma '{idioma}' no está disponible. Opciones: {string.Join(", ", IdiomasDisponibles)}");
             _idiomaActual = idioma;
+            NotificarCambio();
         }
 
         public bool EsValido(string idioma)
@@ -106,7 +120,6 @@ namespace SER
             catch { return plantilla; }
         }
 
-        // Diccionario principal: idioma → (clave → texto)
         private static readonly Dictionary<string, Dictionary<string, string>> _traducciones =
             new Dictionary<string, Dictionary<string, string>>
             {

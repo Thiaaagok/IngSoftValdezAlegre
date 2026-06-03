@@ -67,7 +67,7 @@ namespace IngSoftValdezAlegre
             this.panelPrincipal.Location = new System.Drawing.Point(220, 0);
             this.panelPrincipal.Name = "panelPrincipal";
             this.panelPrincipal.Padding = new System.Windows.Forms.Padding(16);
-            this.panelPrincipal.Size = new System.Drawing.Size(1080, 794);
+            this.panelPrincipal.Size = new System.Drawing.Size(1080, 732);
             this.panelPrincipal.TabIndex = 1;
             // 
             // usuariosBTN
@@ -229,7 +229,7 @@ namespace IngSoftValdezAlegre
             this.lblSistema.Name = "lblSistema";
             this.lblSistema.Size = new System.Drawing.Size(220, 56);
             this.lblSistema.TabIndex = 1;
-            this.lblSistema.Text = "PCFORGE CLINICA";
+            this.lblSistema.Text = "PCFORGE";
             this.lblSistema.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // pnlShell
@@ -239,7 +239,7 @@ namespace IngSoftValdezAlegre
             this.pnlShell.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlShell.Location = new System.Drawing.Point(0, 56);
             this.pnlShell.Name = "pnlShell";
-            this.pnlShell.Size = new System.Drawing.Size(1300, 794);
+            this.pnlShell.Size = new System.Drawing.Size(1300, 732);
             this.pnlShell.TabIndex = 1;
             // 
             // pnlSidebar
@@ -252,7 +252,7 @@ namespace IngSoftValdezAlegre
             this.pnlSidebar.Location = new System.Drawing.Point(0, 0);
             this.pnlSidebar.Name = "pnlSidebar";
             this.pnlSidebar.Padding = new System.Windows.Forms.Padding(16, 22, 12, 16);
-            this.pnlSidebar.Size = new System.Drawing.Size(220, 794);
+            this.pnlSidebar.Size = new System.Drawing.Size(220, 732);
             this.pnlSidebar.TabIndex = 0;
             // 
             // flpModulos
@@ -264,7 +264,7 @@ namespace IngSoftValdezAlegre
             this.flpModulos.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
             this.flpModulos.Location = new System.Drawing.Point(16, 50);
             this.flpModulos.Name = "flpModulos";
-            this.flpModulos.Size = new System.Drawing.Size(192, 698);
+            this.flpModulos.Size = new System.Drawing.Size(192, 636);
             this.flpModulos.TabIndex = 1;
             this.flpModulos.WrapContents = false;
             // 
@@ -285,7 +285,7 @@ namespace IngSoftValdezAlegre
             this.lblSidebarFooter.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.lblSidebarFooter.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblSidebarFooter.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(148)))), ((int)(((byte)(163)))), ((int)(((byte)(184)))));
-            this.lblSidebarFooter.Location = new System.Drawing.Point(16, 748);
+            this.lblSidebarFooter.Location = new System.Drawing.Point(16, 686);
             this.lblSidebarFooter.Name = "lblSidebarFooter";
             this.lblSidebarFooter.Size = new System.Drawing.Size(192, 30);
             this.lblSidebarFooter.TabIndex = 2;
@@ -297,7 +297,7 @@ namespace IngSoftValdezAlegre
             this.ctxMenuUsuario.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.cambiarContraseñaToolStripMenuItem});
             this.ctxMenuUsuario.Name = "ctxMenuUsuario";
-            this.ctxMenuUsuario.Size = new System.Drawing.Size(183, 48);
+            this.ctxMenuUsuario.Size = new System.Drawing.Size(183, 26);
             // 
             // cambiarContraseñaToolStripMenuItem
             // 
@@ -311,7 +311,7 @@ namespace IngSoftValdezAlegre
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(247)))), ((int)(((byte)(251)))));
-            this.ClientSize = new System.Drawing.Size(1300, 850);
+            this.ClientSize = new System.Drawing.Size(1300, 788);
             this.ControlBox = false;
             this.Controls.Add(this.pnlShell);
             this.Controls.Add(this.pnlTopBar);
