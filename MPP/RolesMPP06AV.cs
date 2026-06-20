@@ -35,7 +35,8 @@ namespace MPP
             var parametros = new Dictionary<string, object>
             {
                 { "@id", rol.Id },
-                { "@descripcion", rol.Descripcion }
+                { "@descripcion", rol.Descripcion },
+                { "@codigo", rol.Codigo }
             };
             _dal.Agregar(parametros);
         }
@@ -101,7 +102,10 @@ namespace MPP
             var rol = new Rol06AV
             {
                 Id = id,
-                Descripcion = row["Descripcion"].ToString()
+                Descripcion = row["Descripcion"].ToString(),
+                Codigo = row.Table.Columns.Contains("Codigo")
+                    ? row["Codigo"].ToString()
+                    : id
             };
 
             // Agregar patentes directas

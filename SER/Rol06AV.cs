@@ -4,13 +4,14 @@ using System.Linq;
 
 namespace SER
 {
-    public class Rol06AV : IComponentePermiso
+    public class Rol06AV : IComponentePermiso06AV
     {
         public string Id { get; set; }
         public string Descripcion { get; set; }
+        public string Codigo { get; set; }
 
-        private readonly List<IComponentePermiso> _hijos = new List<IComponentePermiso>();
-        public IReadOnlyList<IComponentePermiso> Hijos => _hijos.AsReadOnly();
+        private readonly List<IComponentePermiso06AV> _hijos = new List<IComponentePermiso06AV>();
+        public IReadOnlyList<IComponentePermiso06AV> Hijos => _hijos.AsReadOnly();
 
         public HashSet<Patente06AV> ObtenerPatentes()
         {
@@ -24,7 +25,7 @@ namespace SER
         /// Agrega una Patente o Familia al rol.
         /// Lanza InvalidOperationException si alguna patente ya está contenida.
         /// </summary>
-        public void Agregar(IComponentePermiso componente)
+        public void Agregar(IComponentePermiso06AV componente)
         {
             var existentes = ObtenerPatentes();
             var nuevas = componente.ObtenerPatentes();
@@ -39,7 +40,7 @@ namespace SER
             /// Agrega múltiples componentes validando todos antes de persistir ninguno.
             /// Si alguno genera duplicado, no se agrega ninguno.
             /// </summary>
-            public void AgregarRango(IEnumerable<IComponentePermiso> componentes)
+            public void AgregarRango(IEnumerable<IComponentePermiso06AV> componentes)
             {
                 var acumuladas = ObtenerPatentes();
             foreach (var componente in componentes)
@@ -54,7 +55,7 @@ namespace SER
             _hijos.AddRange(componentes);
         }
 
-        public void Quitar(IComponentePermiso componente)
+        public void Quitar(IComponentePermiso06AV componente)
         {
             _hijos.RemoveAll(h => h.Id == componente.Id && h.GetType() == componente.GetType());
         }

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace SER
 {
-    public class Patente06AV : IComponentePermiso
+    public class Patente06AV : IComponentePermiso06AV
     {
         public string Id { get; set; }
         public string Descripcion { get; set; }

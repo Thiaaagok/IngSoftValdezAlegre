@@ -46,13 +46,13 @@
     <Compile Include="Bitacora06AV.cs" />
     <Compile Include="Enums\BitacoraEnum06AV.cs" />
     <Compile Include="Encriptador\EncriptacionSER06AV.cs" />
-    <Compile Include="Enums\PatenteEnum.cs" />
+    <Compile Include="Enums\PatenteEnum06AV.cs" />
     <Compile Include="Exportacion\ExportacionEXCEL.cs" />
     <Compile Include="Exportacion\ExportacionPDF.cs" />
     <Compile Include="Familia06AV.cs" />
     <Compile Include="GestorIdioma06AV.cs" />
-    <Compile Include="IIdiomaAplicable.cs" />
-    <Compile Include="IComponentePermiso.cs" />
+    <Compile Include="Interfaces\IIdiomaAplicable06AV.cs" />
+    <Compile Include="IComponentePermiso06AV.cs" />
     <Compile Include="Generador\GeneradorID.cs" />
     <Compile Include="IntentoLogin06AV.cs" />
     <Compile Include="Patente06AV.cs" />
