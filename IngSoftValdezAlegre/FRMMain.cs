@@ -33,6 +33,10 @@ namespace IngSoftValdezAlegre
 
             if (!EsAdministrador())
             {
+                rolesBTN.Enabled = false;
+                rolesBTN.Visible = false;
+                familiasBTN.Enabled = false;
+                familiasBTN.Visible = false;
                 bitacoraBTN.Enabled = false;
                 bitacoraBTN.Visible = false;
             }
@@ -53,6 +57,8 @@ namespace IngSoftValdezAlegre
                 : "Management system";
 
             ConfigurarBotonModulo(usuariosBTN, t.Obtener("usuarios"), "\uE716");
+            ConfigurarBotonModulo(rolesBTN, "Roles", "\uE8D7");
+            ConfigurarBotonModulo(familiasBTN, "Familias", "\uE902");
             ConfigurarBotonModulo(bitacoraBTN, t.Obtener("bitacora"), "\uE9D5");
 
             cambiarContraseñaToolStripMenuItem.Text = t.Obtener("cambiar_contrasenia");
@@ -263,6 +269,18 @@ namespace IngSoftValdezAlegre
         {
             SeleccionarModulo(usuariosBTN);
             MostrarControl(new UsuariosControl());
+        }
+
+        private void rolesBTN_Click(object sender, EventArgs e)
+        {
+            SeleccionarModulo(rolesBTN);
+            MostrarControl(new RolesControl());
+        }
+
+        private void familiasBTN_Click(object sender, EventArgs e)
+        {
+            SeleccionarModulo(familiasBTN);
+            MostrarControl(new FamiliasControl());
         }
 
         private void btnToggleSidebar_Click(object sender, EventArgs e)

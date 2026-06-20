@@ -31,6 +31,8 @@ namespace IngSoftValdezAlegre
             this.components = new System.ComponentModel.Container();
             this.panelPrincipal = new System.Windows.Forms.Panel();
             this.usuariosBTN = new System.Windows.Forms.Button();
+            this.rolesBTN = new System.Windows.Forms.Button();
+            this.familiasBTN = new System.Windows.Forms.Button();
             this.bitacoraBTN = new System.Windows.Forms.Button();
             this.pnlTopBar = new System.Windows.Forms.Panel();
             this.flpTopActions = new System.Windows.Forms.FlowLayoutPanel();
@@ -83,15 +85,41 @@ namespace IngSoftValdezAlegre
             this.usuariosBTN.UseVisualStyleBackColor = true;
             this.usuariosBTN.Click += new System.EventHandler(this.usuariosBTN_Click);
             // 
+            // rolesBTN
+            // 
+            this.rolesBTN.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.rolesBTN.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rolesBTN.Location = new System.Drawing.Point(0, 50);
+            this.rolesBTN.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
+            this.rolesBTN.Name = "rolesBTN";
+            this.rolesBTN.Size = new System.Drawing.Size(220, 42);
+            this.rolesBTN.TabIndex = 1;
+            this.rolesBTN.Text = "Roles";
+            this.rolesBTN.UseVisualStyleBackColor = true;
+            this.rolesBTN.Click += new System.EventHandler(this.rolesBTN_Click);
+            // 
+            // familiasBTN
+            // 
+            this.familiasBTN.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.familiasBTN.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.familiasBTN.Location = new System.Drawing.Point(0, 100);
+            this.familiasBTN.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
+            this.familiasBTN.Name = "familiasBTN";
+            this.familiasBTN.Size = new System.Drawing.Size(220, 42);
+            this.familiasBTN.TabIndex = 2;
+            this.familiasBTN.Text = "Familias";
+            this.familiasBTN.UseVisualStyleBackColor = true;
+            this.familiasBTN.Click += new System.EventHandler(this.familiasBTN_Click);
+            // 
             // bitacoraBTN
             // 
             this.bitacoraBTN.Cursor = System.Windows.Forms.Cursors.Hand;
             this.bitacoraBTN.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.bitacoraBTN.Location = new System.Drawing.Point(0, 50);
+            this.bitacoraBTN.Location = new System.Drawing.Point(0, 150);
             this.bitacoraBTN.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
             this.bitacoraBTN.Name = "bitacoraBTN";
             this.bitacoraBTN.Size = new System.Drawing.Size(220, 42);
-            this.bitacoraBTN.TabIndex = 1;
+            this.bitacoraBTN.TabIndex = 3;
             this.bitacoraBTN.Text = "Bitacora";
             this.bitacoraBTN.UseVisualStyleBackColor = true;
             this.bitacoraBTN.Click += new System.EventHandler(this.bitacoraBTN_Click);
@@ -259,6 +287,8 @@ namespace IngSoftValdezAlegre
             // 
             this.flpModulos.AutoScroll = true;
             this.flpModulos.Controls.Add(this.usuariosBTN);
+            this.flpModulos.Controls.Add(this.rolesBTN);
+            this.flpModulos.Controls.Add(this.familiasBTN);
             this.flpModulos.Controls.Add(this.bitacoraBTN);
             this.flpModulos.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flpModulos.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
@@ -337,6 +367,8 @@ namespace IngSoftValdezAlegre
 
         private System.Windows.Forms.Panel panelPrincipal;
         private System.Windows.Forms.Button usuariosBTN;
+        private System.Windows.Forms.Button rolesBTN;
+        private System.Windows.Forms.Button familiasBTN;
         private System.Windows.Forms.Button bitacoraBTN;
         private System.Windows.Forms.Panel pnlTopBar;
         private System.Windows.Forms.Label lblSistema;

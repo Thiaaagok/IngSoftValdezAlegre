@@ -14,7 +14,7 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    public partial class BitacoraControl : UserControl, IIdiomaAplicable
+    public partial class BitacoraControl : UserControl, IIdiomaAplicable06AV
     {
         private readonly BitacoraBLL06AV _bitacoraSer = new BitacoraBLL06AV();
         private readonly UsuariosBLL06AV _usuariosSer = new UsuariosBLL06AV();
@@ -23,6 +23,21 @@ namespace IngSoftValdezAlegre.Controles
         private Dictionary<string, Usuario06AV> _usuariosPorDni = new Dictionary<string, Usuario06AV>();
 
         private const string OPCION_TODOS = "(Todos)";
+
+        // Mapa: módulo → categorías que aplican
+        private static readonly Dictionary<ModuloBitacora, CategoriaBitacora[]> _categoriasPorModulo =
+            new Dictionary<ModuloBitacora, CategoriaBitacora[]>
+            {
+                { ModuloBitacora.Autenticacion, new[] { CategoriaBitacora.Login, CategoriaBitacora.LoginFallido, CategoriaBitacora.Logout } },
+                { ModuloBitacora.Usuarios,      new[] { CategoriaBitacora.Alta, CategoriaBitacora.Modificacion, CategoriaBitacora.Baja } },
+                { ModuloBitacora.General,        new[] { CategoriaBitacora.Error, CategoriaBitacora.ErrorCritico } },
+                { ModuloBitacora.Clientes,       new[] { CategoriaBitacora.Alta, CategoriaBitacora.Modificacion, CategoriaBitacora.Baja } },
+                { ModuloBitacora.Proveedores,    new[] { CategoriaBitacora.Alta, CategoriaBitacora.Modificacion, CategoriaBitacora.Baja } },
+                { ModuloBitacora.Computadoras,   new[] { CategoriaBitacora.Alta, CategoriaBitacora.Modificacion, CategoriaBitacora.Baja } },
+                { ModuloBitacora.Ventas,         new[] { CategoriaBitacora.Alta, CategoriaBitacora.Modificacion, CategoriaBitacora.Baja } },
+                { ModuloBitacora.Compras,        new[] { CategoriaBitacora.Alta, CategoriaBitacora.Modificacion, CategoriaBitacora.Baja } },
+                { ModuloBitacora.Reportes,       new[] { CategoriaBitacora.Error, CategoriaBitacora.ErrorCritico } },
+            };
 
         public BitacoraControl()
         {
@@ -124,15 +139,10 @@ namespace IngSoftValdezAlegre.Controles
             {
                 cmbModulo.Items.Add(m);
             }
-            cmbModulo.SelectedIndex = 0;
+            cmbModulo.SelectedIndexChanged += cmbModulo_SelectedIndexChanged;
+            cmbModulo.SelectedIndex = 0;  // dispara ActualizarComboEvento vía evento
 
-            cmbEvento.Items.Clear();
-            cmbEvento.Items.Add(OPCION_TODOS);
-            foreach (var c in Enum.GetNames(typeof(CategoriaBitacora)))
-            {
-                cmbEvento.Items.Add(c);
-            }
-            cmbEvento.SelectedIndex = 0;
+            // cmbEvento se llena desde ActualizarComboEvento()
 
             cmbCriticidad.Items.Clear();
             cmbCriticidad.Items.Add(OPCION_TODOS);
@@ -141,6 +151,40 @@ namespace IngSoftValdezAlegre.Controles
                 cmbCriticidad.Items.Add(c);
             }
             cmbCriticidad.SelectedIndex = 0;
+        }
+
+        private void cmbModulo_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ActualizarComboEvento();
+        }
+
+        private void ActualizarComboEvento()
+        {
+            string seleccion = cmbModulo.SelectedItem?.ToString();
+
+            cmbEvento.Items.Clear();
+            cmbEvento.Items.Add(OPCION_TODOS);
+
+            if (string.IsNullOrEmpty(seleccion) || seleccion == OPCION_TODOS)
+            {
+                // Todos los módulos → todas las categorías
+                foreach (var c in Enum.GetNames(typeof(CategoriaBitacora)))
+                    cmbEvento.Items.Add(c);
+            }
+            else if (Enum.TryParse(seleccion, out ModuloBitacora modulo) &&
+                     _categoriasPorModulo.TryGetValue(modulo, out var categorias))
+            {
+                foreach (var cat in categorias)
+                    cmbEvento.Items.Add(cat.ToString());
+            }
+            else
+            {
+                // Módulo sin mapa definido → todas las categorías como fallback
+                foreach (var c in Enum.GetNames(typeof(CategoriaBitacora)))
+                    cmbEvento.Items.Add(c);
+            }
+
+            cmbEvento.SelectedIndex = 0;
         }
 
         private void EstablecerRangoPorDefecto()

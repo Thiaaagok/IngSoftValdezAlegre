@@ -64,6 +64,18 @@
     <Compile Include="Controles\BitacoraControl.Designer.cs">
       <DependentUpon>BitacoraControl.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controles\FamiliasControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\FamiliasControl.Designer.cs">
+      <DependentUpon>FamiliasControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\RolesControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\RolesControl.Designer.cs">
+      <DependentUpon>RolesControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controles\UsuariosControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -96,6 +108,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Controles\BitacoraControl.resx">
       <DependentUpon>BitacoraControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\FamiliasControl.resx">
+      <DependentUpon>FamiliasControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\RolesControl.resx">
+      <DependentUpon>RolesControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FRMCambiarContrasenia.resx">
       <DependentUpon>FRMCambiarContrasenia.cs</DependentUpon>

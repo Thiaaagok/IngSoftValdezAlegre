@@ -5,16 +5,16 @@ namespace SER
     /// IMPORTANTE: el nombre de cada valor debe ser idéntico al Id
     /// de la tabla Patentes en la base de datos.
     /// </summary>
-    public enum PatenteEnum
+    public enum PatenteEnum06AV
     {
-        // ── Usuarios ───────────────────────────────────────
+        // ── Usuarios ──
         VerUsuarios,
         CrearUsuarios,
         EditarUsuarios,
         ActDesactivarUsuarios,
         DesbloquearUsuarios,
 
-        // ── Bitácora ───────────────────────────────────────
+        // ── Bitácora ──
         VerBitacora,
         ExportarBitacora
     }

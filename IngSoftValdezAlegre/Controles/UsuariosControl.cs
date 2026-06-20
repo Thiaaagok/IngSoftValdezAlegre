@@ -1,21 +1,17 @@
 ﻿using BLL;
 using IngSoftValdezAlegre.Common;
-using Microsoft.VisualBasic;
 using SER;
 using SER.Excepciones;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    public partial class UsuariosControl : UserControl, IIdiomaAplicable
+    public partial class UsuariosControl : UserControl, IIdiomaAplicable06AV
     {
         private enum Modo
         {
@@ -244,26 +240,64 @@ namespace IngSoftValdezAlegre.Controles
         }
 
 
+        /// <summary>
+        /// Oculta los botones de acción para los que el usuario no tiene patente.
+        /// Se llama al cargar el control y cada vez que se vuelve a Modo.Consulta.
+        /// </summary>
+        private void AplicarPermisosBotones()
+        {
+            var sesion = UsuarioSesion06AV.Instancia();
+
+            // Visible + habilitado solo si tiene la patente correspondiente
+            bool puedeVer        = sesion.TienePermiso(PatenteEnum06AV.VerUsuarios);
+            bool puedeCrear      = sesion.TienePermiso(PatenteEnum06AV.CrearUsuarios);
+            bool puedeEditar     = sesion.TienePermiso(PatenteEnum06AV.EditarUsuarios);
+            bool puedeActDesact  = sesion.TienePermiso(PatenteEnum06AV.ActDesactivarUsuarios);
+            bool puedeDesbloquear= sesion.TienePermiso(PatenteEnum06AV.DesbloquearUsuarios);
+
+            // La grilla misma solo se muestra si puede ver usuarios
+            grilla.Visible  = puedeVer;
+
+            // Botones de acción: visibles solo si tiene el permiso
+            btnCrear.Visible       = puedeCrear;
+            btnModificar.Visible   = puedeEditar;
+            btnActDesact.Visible   = puedeActDesact;
+            btnDesbloquear.Visible = puedeDesbloquear;
+
+            // Si el botón es visible, lo habilitamos; si no tiene permiso, ocultamos
+            if (puedeCrear)       HabilitarBoton(btnCrear,       true);
+            if (puedeEditar)      HabilitarBoton(btnModificar,   true);
+            if (puedeActDesact)   HabilitarBoton(btnActDesact,   true);
+            if (puedeDesbloquear) HabilitarBoton(btnDesbloquear, true);
+        }
+
         private void CambiarModo(Modo nuevo)
         {
             _modo = nuevo;
-            var t = GestorIdioma06AV.Instancia;
-            bool esAdmin = UsuarioSesion06AV.Instancia().TieneRol("Administrador");
+            var t       = GestorIdioma06AV.Instancia;
+            var sesion  = UsuarioSesion06AV.Instancia();
+
             switch (nuevo)
             {
                 case Modo.Consulta:
                     SetMensaje(t.Obtener("modo_consulta_titulo"), t.Obtener("modo_consulta_detalle"));
                     SetBotones(crear: true, desbloq: true, modif: true, actDesact: true,
                                aplicar: true, cancelar: false, radios: true);
+                    // Ocultar los que no tiene permiso
+                    AplicarPermisosBotones();
                     SetFormularioEditable(false, incluirEstado: false);
                     grilla.Enabled = true;
                     txtLogin.ReadOnly = true;
                     break;
 
                 case Modo.Anadir:
-                    if (!esAdmin)
+                    if (!sesion.TienePermiso(PatenteEnum06AV.CrearUsuarios))
                     {
-                        ConfirmacionForm.MostrarInfo(t.Obtener("no_admin_crear"), owner: this.FindForm());
+                        ConfirmacionForm.MostrarInfo(
+                            t.Obtener("sin_permiso_crear"),
+                            titulo: t.Obtener("permiso_denegado"),
+                            tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
+                            owner: this.FindForm());
                         return;
                     }
                     SetMensaje(t.Obtener("modo_anadir_titulo"), t.Obtener("modo_anadir_detalle"));
@@ -278,42 +312,50 @@ namespace IngSoftValdezAlegre.Controles
                 case Modo.Modificar:
                     SetMensaje(t.Obtener("modo_modificar_titulo"), t.Obtener("modo_modificar_detalle"));
 
-                    var seleccionado = ObtenerUsuarioSeleccionado();
-                    bool esMiPropioUsuario = seleccionado?.Dni == UsuarioSesion06AV.Instancia().UsuarioActual.Dni;
+                    var seleccionado    = ObtenerUsuarioSeleccionado();
+                    bool puedeEditar    = sesion.TienePermiso(PatenteEnum06AV.EditarUsuarios);
+                    bool esMiUsuario    = seleccionado?.Dni == sesion.UsuarioActual?.Dni;
 
                     SetBotones(crear: false, desbloq: false, modif: false, actDesact: false,
-                        aplicar: true, cancelar: true, radios: false);
+                               aplicar: true, cancelar: true, radios: false);
 
-                    txtDni.ReadOnly = true;
+                    txtDni.ReadOnly      = true;
                     txtApellido.ReadOnly = true;
-                    txtNombre.ReadOnly = true;
-                    txtLogin.ReadOnly = true;
+                    txtNombre.ReadOnly   = true;
+                    txtLogin.ReadOnly    = true;
 
-                    if (esAdmin)
+                    if (puedeEditar)
                     {
+                        // Puede editar cualquier usuario: email + rol
                         txtEmail.ReadOnly = false;
-                        cmbRol.Enabled = true;
+                        cmbRol.Enabled    = true;
                     }
-                    else if (esMiPropioUsuario)
+                    else if (esMiUsuario)
                     {
+                        // Solo puede editar su propio email, no el rol
                         txtEmail.ReadOnly = false;
-                        cmbRol.Enabled = false;
+                        cmbRol.Enabled    = false;
                     }
                     else
                     {
+                        // Sin permiso y no es su propio usuario
                         txtEmail.ReadOnly = true;
-                        cmbRol.Enabled = false;
+                        cmbRol.Enabled    = false;
                     }
 
-                    chkActivo.Enabled = false;
+                    chkActivo.Enabled    = false;
                     chkBloqueado.Enabled = false;
-                    grilla.Enabled = false;
+                    grilla.Enabled       = false;
                     break;
 
                 case Modo.ActivarDesactivar:
-                    if (!esAdmin)
+                    if (!sesion.TienePermiso(PatenteEnum06AV.ActDesactivarUsuarios))
                     {
-                        ConfirmacionForm.MostrarInfo(t.Obtener("no_admin_actdesact"), owner: this.FindForm());
+                        ConfirmacionForm.MostrarInfo(
+                            t.Obtener("sin_permiso_actdesact"),
+                            titulo: t.Obtener("permiso_denegado"),
+                            tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
+                            owner: this.FindForm());
                         return;
                     }
                     SetMensaje(t.Obtener("modo_actdesact_titulo"), t.Obtener("modo_actdesact_detalle"));
@@ -324,9 +366,13 @@ namespace IngSoftValdezAlegre.Controles
                     break;
 
                 case Modo.Desbloquear:
-                    if (!esAdmin)
+                    if (!sesion.TienePermiso(PatenteEnum06AV.DesbloquearUsuarios))
                     {
-                        ConfirmacionForm.MostrarInfo(t.Obtener("no_admin_desbloquear"), owner: this.FindForm());
+                        ConfirmacionForm.MostrarInfo(
+                            t.Obtener("sin_permiso_desbloquear"),
+                            titulo: t.Obtener("permiso_denegado"),
+                            tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
+                            owner: this.FindForm());
                         return;
                     }
                     SetMensaje(t.Obtener("modo_desbloquear_titulo"), t.Obtener("modo_desbloquear_detalle"));
@@ -654,7 +700,7 @@ namespace IngSoftValdezAlegre.Controles
         private void UsuariosControl2_Load(object sender, EventArgs e)
         {
             CargarRoles();
-            CambiarModo(Modo.Consulta);
+            CambiarModo(Modo.Consulta);  // ya llama AplicarPermisosBotones() internamente
             RecargarGrilla();
         }
 
@@ -696,8 +742,10 @@ namespace IngSoftValdezAlegre.Controles
 
         private void btnModificar_Click(object sender, EventArgs e)
         {
-            var t = GestorIdioma06AV.Instancia;
+            var t        = GestorIdioma06AV.Instancia;
+            var sesion   = UsuarioSesion06AV.Instancia();
             var seleccionado = ObtenerUsuarioSeleccionado();
+
             if (seleccionado == null)
             {
                 ConfirmacionForm.MostrarInfo(
@@ -707,13 +755,14 @@ namespace IngSoftValdezAlegre.Controles
                 return;
             }
 
-            bool esAdmin = UsuarioSesion06AV.Instancia().TieneRol("Administrador");
-            bool esMiPropioUsuario = seleccionado.Dni == UsuarioSesion06AV.Instancia().UsuarioActual.Dni;
+            bool puedeEditar  = sesion.TienePermiso(PatenteEnum06AV.EditarUsuarios);
+            bool esMiUsuario  = seleccionado.Dni == sesion.UsuarioActual?.Dni;
 
-            if (!esAdmin && !esMiPropioUsuario)
+            // Puede entrar si tiene la patente de edición O si está editando su propio perfil
+            if (!puedeEditar && !esMiUsuario)
             {
                 ConfirmacionForm.MostrarInfo(
-                    t.Obtener("no_permisos_modificar"),
+                    t.Obtener("sin_permiso_modificar"),
                     titulo: t.Obtener("permiso_denegado"),
                     tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
                     owner: this.FindForm());

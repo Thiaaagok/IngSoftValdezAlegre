@@ -79,7 +79,7 @@ namespace SER
         /// Verifica si el usuario tiene la patente indicada por el enum.
         /// El nombre del valor del enum debe coincidir con el Id en la BD.
         /// </summary>
-        public bool TienePermiso(PatenteEnum patente)
+        public bool TienePermiso(PatenteEnum06AV patente)
         {
             if (Patentes == null || Patentes.Count == 0) return false;
             string id = patente.ToString();

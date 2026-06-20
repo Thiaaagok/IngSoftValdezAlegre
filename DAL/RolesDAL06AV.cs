@@ -14,17 +14,17 @@ namespace DAL
 
         public DataTable ObtenerTodos()
         {
-            return EjecutarQuery("SELECT Id, Descripcion FROM Roles", null);
+            return EjecutarQuery("SELECT Id, Descripcion, Codigo FROM Roles", null);
         }
 
         public DataTable ObtenerPorId(Dictionary<string, object> parametros)
         {
-            return EjecutarQuery("SELECT Id, Descripcion FROM Roles WHERE Id = @id", parametros);
+            return EjecutarQuery("SELECT Id, Descripcion, Codigo FROM Roles WHERE Id = @id", parametros);
         }
 
         public void Agregar(Dictionary<string, object> parametros)
         {
-            EjecutarNonQuery("INSERT INTO Roles (Id, Descripcion) VALUES (@id, @descripcion)", parametros);
+            EjecutarNonQuery("INSERT INTO Roles (Id, Descripcion, Codigo) VALUES (@id, @descripcion, @codigo)", parametros);
         }
 
         public void Modificar(Dictionary<string, object> parametros)
