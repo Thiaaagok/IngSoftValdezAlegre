@@ -201,6 +201,11 @@ namespace SER
                     ["idioma"]                = "Idioma",
                     ["cambiar_idioma"]        = "Cambiar idioma",
                     ["idioma_guardado"]       = "Idioma guardado correctamente.",
+                    // Tema
+                    ["tema"]                  = "Tema",
+                    ["tema_claro"]            = "☀ Claro",
+                    ["tema_oscuro"]           = "🌙 Oscuro",
+                    ["cambiar_tema"]          = "Cambiar tema",
                     // Mensajes
                     ["confirmar_eliminacion"] = "¿Está seguro que desea eliminar este registro?",
                     ["operacion_exitosa"]     = "Operación realizada con éxito.",
@@ -380,6 +385,11 @@ namespace SER
                     ["idioma"]                = "Language",
                     ["cambiar_idioma"]        = "Change language",
                     ["idioma_guardado"]       = "Language saved successfully.",
+                    // Theme
+                    ["tema"]                  = "Theme",
+                    ["tema_claro"]            = "☀ Light",
+                    ["tema_oscuro"]           = "🌙 Dark",
+                    ["cambiar_tema"]          = "Change theme",
                     // Messages
                     ["confirmar_eliminacion"] = "Are you sure you want to delete this record?",
                     ["operacion_exitosa"]     = "Operation completed successfully.",
