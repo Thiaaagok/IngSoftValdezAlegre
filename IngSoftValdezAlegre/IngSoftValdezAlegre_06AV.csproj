@@ -152,6 +152,8 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\Idiomas\en.json" />
+    <None Include="Resources\Idiomas\es.json" />
     <None Include="Resources\login-logo1.png" />
   </ItemGroup>
   <ItemGroup>

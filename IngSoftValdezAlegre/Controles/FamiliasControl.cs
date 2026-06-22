@@ -1,6 +1,7 @@
 using BLL;
 using IngSoftValdezAlegre.Common;
 using SER;
+using SER.Generador;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -9,29 +10,10 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    public partial class FamiliasControl : UserControl
+    public partial class FamiliasControl : UserControl, IIdiomaAplicable06AV
     {
         private readonly FamiliasBLL06AV _familiasSer = new FamiliasBLL06AV();
         private readonly PatentesBLL06AV _patentesSer = new PatentesBLL06AV();
-
-        private readonly Label lblTitulo = new Label();
-        private readonly DataGridView grilla = new DataGridView();
-        private readonly Label lblId = new Label();
-        private readonly Label lblDescripcion = new Label();
-        private readonly TextBox txtId = new TextBox();
-        private readonly TextBox txtDescripcion = new TextBox();
-        private readonly Button btnNuevo = new Button();
-        private readonly Button btnGuardar = new Button();
-        private readonly Button btnEliminar = new Button();
-        private readonly TreeView arbol = new TreeView();
-        private readonly ComboBox cmbPatentes = new ComboBox();
-        private readonly ComboBox cmbSubfamilias = new ComboBox();
-        private readonly Button btnAgregarPatente = new Button();
-        private readonly Button btnAgregarSubfamilia = new Button();
-        private readonly Button btnQuitar = new Button();
-        private readonly Label lblPatentes = new Label();
-        private readonly Label lblSubfamilias = new Label();
-        private readonly TextBox txtMensaje = new TextBox();
 
         private List<Familia06AV> _familias = new List<Familia06AV>();
         private Familia06AV _familiaPendiente;
@@ -40,70 +22,21 @@ namespace IngSoftValdezAlegre.Controles
         public FamiliasControl()
         {
             InitializeComponent();
-            ConstruirInterfaz();
+            ConectarEventos();
             AplicarTema();
+            AplicarIdioma();
             AjustarLayout();
             Resize += (s, e) => AjustarLayout();
+
+            GestorIdioma06AV.Instancia.IdiomaChanged += AplicarIdioma;
+            Disposed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
+
             CargarDatos();
         }
 
-        private void ConstruirInterfaz()
+        private void ConectarEventos()
         {
-            Controls.Add(lblTitulo);
-            Controls.Add(grilla);
-            Controls.Add(lblId);
-            Controls.Add(txtId);
-            Controls.Add(lblDescripcion);
-            Controls.Add(txtDescripcion);
-            Controls.Add(btnNuevo);
-            Controls.Add(btnGuardar);
-            Controls.Add(btnEliminar);
-            Controls.Add(arbol);
-            Controls.Add(lblPatentes);
-            Controls.Add(cmbPatentes);
-            Controls.Add(btnAgregarPatente);
-            Controls.Add(lblSubfamilias);
-            Controls.Add(cmbSubfamilias);
-            Controls.Add(btnAgregarSubfamilia);
-            Controls.Add(btnQuitar);
-            Controls.Add(txtMensaje);
-
-            lblTitulo.Text = "Familias";
-            lblId.Text = "Id";
-            lblDescripcion.Text = "Descripcion";
-            lblPatentes.Text = "Patentes disponibles";
-            lblSubfamilias.Text = "Familias disponibles";
-            btnNuevo.Text = "Nueva";
-            btnGuardar.Text = "Guardar";
-            btnEliminar.Text = "Eliminar";
-            btnAgregarPatente.Text = "Agregar patente";
-            btnAgregarSubfamilia.Text = "Agregar familia";
-            btnQuitar.Text = "Quitar seleccionado";
-
-            grilla.AutoGenerateColumns = false;
-            grilla.AllowUserToAddRows = false;
-            grilla.AllowUserToDeleteRows = false;
-            grilla.ReadOnly = true;
-            grilla.MultiSelect = false;
-            grilla.Columns.Add(new DataGridViewTextBoxColumn { Name = "Id", HeaderText = "Id", DataPropertyName = "Id", FillWeight = 85 });
-            grilla.Columns.Add(new DataGridViewTextBoxColumn { Name = "Descripcion", HeaderText = "Descripcion", DataPropertyName = "Descripcion", FillWeight = 140 });
             grilla.SelectionChanged += (s, e) => MostrarSeleccion();
-
-            cmbPatentes.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbSubfamilias.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbPatentes.DisplayMember = "Descripcion";
-            cmbPatentes.ValueMember = "Id";
-            cmbSubfamilias.DisplayMember = "Descripcion";
-            cmbSubfamilias.ValueMember = "Id";
-
-            arbol.HideSelection = false;
-            arbol.FullRowSelect = true;
-
-            txtMensaje.Multiline = true;
-            txtMensaje.ReadOnly = true;
-            txtMensaje.BorderStyle = BorderStyle.FixedSingle;
-            txtMensaje.Text = "Una familia puede tener patentes y otras familias. La pantalla bloquea ciclos y patentes repetidas en toda la rama.";
-
             btnNuevo.Click += (s, e) => Nuevo();
             btnGuardar.Click += (s, e) => Guardar();
             btnEliminar.Click += (s, e) => Eliminar();
@@ -114,8 +47,9 @@ namespace IngSoftValdezAlegre.Controles
             {
                 if (_creando && _familiaPendiente != null)
                 {
+                    var t = GestorIdioma06AV.Instancia;
                     _familiaPendiente.Descripcion = string.IsNullOrWhiteSpace(txtDescripcion.Text)
-                        ? "Nueva familia"
+                        ? t.Obtener("nueva_familia")
                         : txtDescripcion.Text.Trim();
                     DibujarArbol(_familiaPendiente);
                 }
@@ -142,6 +76,23 @@ namespace IngSoftValdezAlegre.Controles
             txtMensaje.ForeColor = Tema.Texto;
         }
 
+        public void AplicarIdioma()
+        {
+            var t = GestorIdioma06AV.Instancia;
+
+            lblTitulo.Text = t.Obtener("titulo_familias");
+            lblDescripcion.Text = t.Obtener("descripcion");
+            btnNuevo.Text = t.Obtener("nueva");
+            btnGuardar.Text = t.Obtener("guardar");
+            btnEliminar.Text = t.Obtener("eliminar");
+            lblPatentes.Text = t.Obtener("patentes_disponibles");
+            btnAgregarPatente.Text = t.Obtener("agregar_patente");
+            lblSubfamilias.Text = t.Obtener("subfamilias_disponibles");
+            btnAgregarSubfamilia.Text = t.Obtener("agregar_subfamilia");
+            btnQuitar.Text = t.Obtener("quitar_seleccionado");
+            txtMensaje.Text = t.Obtener("ayuda_familias");
+        }
+
         private void AjustarLayout()
         {
             int margen = 8;
@@ -155,8 +106,6 @@ namespace IngSoftValdezAlegre.Controles
             grilla.SetBounds(margen, 42, izquierdaW, alto - 50);
 
             int y = 42;
-            lblId.SetBounds(derechaX, y + 4, 80, 22);
-            txtId.SetBounds(derechaX + 92, y, Math.Max(180, derechaW - 340), 25);
             btnNuevo.SetBounds(ancho - margen - 236, y - 1, 72, 30);
             btnGuardar.SetBounds(ancho - margen - 156, y - 1, 72, 30);
             btnEliminar.SetBounds(ancho - margen - 76, y - 1, 76, 30);
@@ -191,11 +140,6 @@ namespace IngSoftValdezAlegre.Controles
 
                 cmbPatentes.DataSource = _patentesSer.ObtenerTodos();
                 CargarComboSubfamilias(null);
-
-                if (_familias.Count > 0 && grilla.CurrentRow == null)
-                    grilla.Rows[0].Selected = true;
-
-                MostrarSeleccion();
             }
             catch (Exception ex)
             {
@@ -221,8 +165,6 @@ namespace IngSoftValdezAlegre.Controles
                 return;
             }
 
-            txtId.Text = familia.Id;
-            txtId.ReadOnly = true;
             txtDescripcion.Text = familia.Descripcion;
             CargarComboSubfamilias(familia.Id);
             DibujarArbol(familia);
@@ -237,20 +179,28 @@ namespace IngSoftValdezAlegre.Controles
         private void Nuevo()
         {
             _creando = true;
-            _familiaPendiente = new Familia06AV { Id = "", Descripcion = "Nueva familia" };
+            _familiaPendiente = new Familia06AV
+            {
+                Id = "",
+                Descripcion = GestorIdioma06AV.Instancia.Obtener("nueva_familia")
+            };
             grilla.ClearSelection();
             LimpiarEditor();
-            txtId.ReadOnly = false;
             CargarComboSubfamilias(null);
             DibujarArbol(_familiaPendiente);
-            txtId.Focus();
         }
 
         private void Guardar()
         {
             try
             {
-                Familia06AV familia = new Familia06AV { Id = txtId.Text.Trim(), Descripcion = txtDescripcion.Text.Trim() };
+                GeneradorID generadorId = new GeneradorID();
+                Familia06AV familia = new Familia06AV
+                {
+                    Id = generadorId.GenerarId(),
+                    Descripcion = txtDescripcion.Text.Trim()
+                };
+
                 if (_creando)
                 {
                     _familiasSer.Agregar(familia);
@@ -277,12 +227,13 @@ namespace IngSoftValdezAlegre.Controles
             Familia06AV familia = ObtenerFamiliaSeleccionada();
             if (familia == null) return;
 
+            var t = GestorIdioma06AV.Instancia;
             bool ok = ConfirmacionForm.Mostrar(
-                "Desea eliminar la familia seleccionada?",
-                "Eliminar familia",
+                t.Obtener("confirmar_eliminar_familia"),
+                t.Obtener("eliminar_familia"),
                 ConfirmacionForm.TipoConfirmacion.Advertencia,
-                "Eliminar",
-                "Cancelar",
+                t.Obtener("eliminar"),
+                t.Obtener("cancelar"),
                 FindForm());
             if (!ok) return;
 
@@ -339,10 +290,9 @@ namespace IngSoftValdezAlegre.Controles
             {
                 if (arbol.SelectedNode.Parent.Parent != null)
                 {
-                    MostrarError("Solo se pueden quitar hijos directos de la familia seleccionada.");
+                    MostrarError(GestorIdioma06AV.Instancia.Obtener("solo_hijos_directos_familia"));
                     return;
                 }
-
                 QuitarPendiente(tag);
                 return;
             }
@@ -355,7 +305,7 @@ namespace IngSoftValdezAlegre.Controles
             else if (tag.Tipo == "Familia" && arbol.SelectedNode.Parent.Parent == null)
                 EjecutarAccion(() => _familiasSer.QuitarSubfamilia(familia.Id, tag.Id), familia.Id);
             else
-                MostrarError("Solo se pueden quitar hijos directos de la familia seleccionada.");
+                MostrarError(GestorIdioma06AV.Instancia.Obtener("solo_hijos_directos_familia"));
         }
 
         private void AgregarPendiente(IComponentePermiso06AV componente)
@@ -363,7 +313,11 @@ namespace IngSoftValdezAlegre.Controles
             try
             {
                 if (_familiaPendiente == null)
-                    _familiaPendiente = new Familia06AV { Id = txtId.Text.Trim(), Descripcion = txtDescripcion.Text.Trim() };
+                    _familiaPendiente = new Familia06AV
+                    {
+                        Id = new GeneradorID().GenerarId(),
+                        Descripcion = txtDescripcion.Text.Trim()
+                    };
 
                 _familiaPendiente.Agregar(componente);
                 DibujarArbol(_familiaPendiente);
@@ -438,7 +392,6 @@ namespace IngSoftValdezAlegre.Controles
 
         private void LimpiarEditor()
         {
-            txtId.Text = "";
             txtDescripcion.Text = "";
             arbol.Nodes.Clear();
         }
@@ -472,21 +425,18 @@ namespace IngSoftValdezAlegre.Controles
         {
             ConfirmacionForm.MostrarInfo(
                 mensaje,
-                "Aviso",
+                GestorIdioma06AV.Instancia.Obtener("aviso"),
                 ConfirmacionForm.TipoConfirmacion.Advertencia,
                 FindForm());
         }
 
         private sealed class NodoPermiso
         {
-            public NodoPermiso(string tipo, string id)
-            {
-                Tipo = tipo;
-                Id = id;
-            }
-
+            public NodoPermiso(string tipo, string id) { Tipo = tipo; Id = id; }
             public string Tipo { get; private set; }
             public string Id { get; private set; }
         }
+
+        private void grilla_CellContentClick(object sender, DataGridViewCellEventArgs e) { }
     }
 }

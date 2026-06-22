@@ -137,27 +137,36 @@ namespace BLL
             catch (Exception) { throw; }
         }
 
-        private void ValidarPatentesEnAncestros(string idFamilia, IEnumerable<Patente06AV> patentesNuevas)
+        private string BuscarRutaPatenteExcluyendoFamilia(
+                IComponentePermiso06AV componente,
+                string idPatente,
+                string idFamiliaExcluida,
+                string rutaActual)
         {
-            foreach (var posibleAncestro in _mpp.ObtenerTodos())
+            if (componente is Familia06AV f &&
+                string.Equals(f.Id, idFamiliaExcluida, StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            if (componente is Patente06AV p)
+                return string.Equals(p.Id, idPatente, StringComparison.OrdinalIgnoreCase)
+                    ? rutaActual : null;
+
+            IEnumerable<IComponentePermiso06AV> hijos =
+                (componente is Familia06AV fam) ? fam.Hijos :
+                (componente is Rol06AV rol) ? rol.Hijos : null;
+
+            if (hijos == null) return null;
+
+            foreach (var hijo in hijos)
             {
-                if (string.Equals(posibleAncestro.Id, idFamilia, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                if (!ContieneFamilia(posibleAncestro, idFamilia))
-                    continue;
-
-                var duplicada = patentesNuevas.FirstOrDefault(p => BuscarRutaPatente(posibleAncestro, p.Id) != null);
-
-                if (duplicada != null)
-                {
-                    string ruta = BuscarRutaPatente(posibleAncestro, duplicada.Id);
-                    throw new InvalidOperationException(
-                        $"No se puede agregar la patente '{duplicada.Descripcion}' porque ya existe en: {ruta}.");
-                }
+                string ruta = BuscarRutaPatenteExcluyendoFamilia(
+                    hijo, idPatente, idFamiliaExcluida,
+                    $"{rutaActual} > {hijo.Descripcion}");
+                if (ruta != null) return ruta;
             }
-        }
 
+            return null;
+        }
         private void ValidarPatentesEnRolesQueContienenFamilia(string idFamilia, IEnumerable<Patente06AV> patentesNuevas)
         {
             RolesBLL06AV rolesBLL = new RolesBLL06AV();
@@ -166,13 +175,13 @@ namespace BLL
                 if (!ContieneFamilia(rol, idFamilia))
                     continue;
 
-                var duplicada = patentesNuevas.FirstOrDefault(p => BuscarRutaPatente(rol, p.Id) != null);
-
-                if (duplicada != null)
+                foreach (var p in patentesNuevas)
                 {
-                    string ruta = BuscarRutaPatente(rol, duplicada.Id);
-                    throw new InvalidOperationException(
-                        $"No se puede agregar la patente '{duplicada.Descripcion}' porque ya existe en: {ruta}.");
+                    string ruta = BuscarRutaPatenteExcluyendoFamilia(
+                        rol, p.Id, idFamilia, rol.Descripcion);
+                    if (ruta != null)
+                        throw new InvalidOperationException(
+                            $"No se puede agregar la patente '{p.Descripcion}' porque ya existe en: {ruta}.");
                 }
             }
         }
@@ -239,5 +248,27 @@ namespace BLL
 
             return null;
         }
+
+        private void ValidarPatentesEnAncestros(string idFamilia, IEnumerable<Patente06AV> patentesNuevas)
+        {
+            foreach (var posibleAncestro in _mpp.ObtenerTodos())
+            {
+                if (string.Equals(posibleAncestro.Id, idFamilia, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (!ContieneFamilia(posibleAncestro, idFamilia))
+                    continue;
+
+                foreach (var p in patentesNuevas)
+                {
+                    string ruta = BuscarRutaPatenteExcluyendoFamilia(
+                        posibleAncestro, p.Id, idFamilia, posibleAncestro.Descripcion);
+                    if (ruta != null)
+                        throw new InvalidOperationException(
+                            $"No se puede agregar la patente '{p.Descripcion}' porque ya existe en: {ruta}.");
+                }
+            }
+        }
+
+
     }
 }

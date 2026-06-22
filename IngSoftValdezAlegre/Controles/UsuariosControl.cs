@@ -32,7 +32,7 @@ namespace IngSoftValdezAlegre.Controles
         public UsuariosControl()
         {
             InitializeComponent();
-            AplicarTema();
+            //AplicarTema();
             ConfigurarColumnas();
             AplicarIdioma();
             AjustarLayout();
