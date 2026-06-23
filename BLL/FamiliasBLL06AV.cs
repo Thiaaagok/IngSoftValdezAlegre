@@ -31,6 +31,9 @@ namespace BLL
                     familia.Id = new GeneradorID().GenerarId();
                 if (string.IsNullOrWhiteSpace(familia.Descripcion))
                     throw new ArgumentException("La familia debe tener una descripción.");
+
+                ValidarDescripcionUnica(familia.Descripcion, idExcluir: null);
+
                 _mpp.Agregar(familia);
             }
             catch (Exception) { throw; }
@@ -42,21 +45,80 @@ namespace BLL
             {
                 if (string.IsNullOrWhiteSpace(familia.Descripcion))
                     throw new ArgumentException("La familia debe tener una descripción.");
+
+                ValidarDescripcionUnica(familia.Descripcion, idExcluir: familia.Id);
+
                 _mpp.Modificar(familia);
             }
             catch (Exception) { throw; }
         }
 
+        /// <summary>
+        /// Elimina una familia solo si no tiene dependencias.
+        /// Orden de validación:
+        ///   1. Hijos propios (patentes o subfamilias directas) → bloquear
+        ///   2. Contenida como subfamilia en otra familia → aviso con nombres
+        ///   3. Asignada directamente a un rol → aviso con nombres
+        /// Si pasa todo, borra sus relaciones y luego la entidad.
+        /// </summary>
         public void Eliminar(string id)
         {
-            try { _mpp.Eliminar(id); }
+            try
+            {
+                Familia06AV familia = _mpp.ObtenerPorId(id);
+                if (familia == null)
+                    throw new InvalidOperationException("Familia no encontrada.");
+
+                // 1. Tiene hijos propios
+                if (familia.Hijos.Any())
+                {
+                    int patentes = familia.Hijos.Count(h => h is Patente06AV);
+                    int subfamilias = familia.Hijos.Count(h => h is Familia06AV);
+                    var partes = new List<string>();
+                    if (patentes > 0) partes.Add($"{patentes} patente{(patentes > 1 ? "s" : "")}");
+                    if (subfamilias > 0) partes.Add($"{subfamilias} subfamilia{(subfamilias > 1 ? "s" : "")}");
+                    throw new InvalidOperationException(
+                        $"No se puede eliminar '{familia.Descripcion}' porque tiene {string.Join(" y ", partes)} asignadas. " +
+                        $"Quitá sus hijos antes de eliminarla.");
+                }
+
+                // 2. Es subfamilia de otra familia
+                var familiasPadre = _mpp.ObtenerTodos()
+                    .Where(f => !string.Equals(f.Id, id, StringComparison.OrdinalIgnoreCase)
+                                && f.Hijos.Any(h => h is Familia06AV sf &&
+                                                    string.Equals(sf.Id, id, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+
+                if (familiasPadre.Any())
+                {
+                    string lista = string.Join(", ", familiasPadre.Select(f => $"'{f.Descripcion}'"));
+                    throw new InvalidOperationException(
+                        $"No se puede eliminar '{familia.Descripcion}' porque es subfamilia de: {lista}. " +
+                        $"Quitala de esas familias antes de eliminarla.");
+                }
+
+                // 3. Está asignada directamente a un rol
+                RolesBLL06AV rolesBLL = new RolesBLL06AV();
+                var rolesConFamilia = rolesBLL.ObtenerTodos()
+                    .Where(r => r.Hijos.Any(h => h is Familia06AV f &&
+                                                  string.Equals(f.Id, id, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+
+                if (rolesConFamilia.Any())
+                {
+                    string lista = string.Join(", ", rolesConFamilia.Select(r => $"'{r.Descripcion}'"));
+                    throw new InvalidOperationException(
+                        $"No se puede eliminar '{familia.Descripcion}' porque está asignada a los roles: {lista}. " +
+                        $"Quitala de esos roles antes de eliminarla.");
+                }
+
+                _mpp.Eliminar(id);
+            }
             catch (Exception) { throw; }
         }
 
-        /// <summary>
-        /// Agrega una patente a una familia, validando que no esté ya contenida
-        /// (directamente o dentro de una subfamilia).
-        /// </summary>
+        // ── Agregar / Quitar patentes y subfamilias ──────────────────────────
+
         public void AgregarPatente(string idFamilia, string idPatente)
         {
             try
@@ -70,7 +132,7 @@ namespace BLL
                 if (patente == null)
                     throw new InvalidOperationException("Patente no encontrada.");
 
-                string rutaDuplicada =  BuscarRutaPatente(familia, idPatente);
+                string rutaDuplicada = BuscarRutaPatente(familia, idPatente);
                 if (rutaDuplicada != null)
                     throw new InvalidOperationException(
                         $"No se puede agregar la patente '{patente.Descripcion}' porque ya existe en: {rutaDuplicada}.");
@@ -90,16 +152,12 @@ namespace BLL
             catch (Exception) { throw; }
         }
 
-        /// <summary>
-        /// Agrega una subfamilia a una familia, validando que ninguna patente
-        /// de la subfamilia ya esté contenida en la familia destino.
-        /// </summary>
         public void AgregarSubfamilia(string idPadre, string idHijo)
         {
             try
             {
                 if (string.Equals(idPadre, idHijo, StringComparison.OrdinalIgnoreCase))
-                    throw new InvalidOperationException("Una familia no puede contenerse a si misma.");
+                    throw new InvalidOperationException("Una familia no puede contenerse a sí misma.");
 
                 Familia06AV padre = _mpp.ObtenerPorId(idPadre);
                 if (padre == null)
@@ -112,7 +170,22 @@ namespace BLL
                     throw new InvalidOperationException("No se puede agregar una familia sin patentes efectivas.");
 
                 if (ContieneFamilia(hijo, idPadre))
-                    throw new InvalidOperationException("No se puede agregar la subfamilia porque generaria un ciclo en la jerarquia.");
+                    throw new InvalidOperationException(
+                        "No se puede agregar la subfamilia porque generaría un ciclo en la jerarquía.");
+
+                // Verificar que la subfamilia no esté ya asignada directamente a un rol
+                RolesBLL06AV rolesBLL = new RolesBLL06AV();
+                var rolesConHijo = rolesBLL.ObtenerTodos()
+                    .Where(r => r.Hijos.Any(h => h is Familia06AV f &&
+                                                  string.Equals(f.Id, idHijo, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+
+                if (rolesConHijo.Any())
+                {
+                    string lista = string.Join(", ", rolesConHijo.Select(r => $"'{r.Descripcion}'"));
+                    throw new InvalidOperationException(
+                        $"No se puede agregar '{hijo.Descripcion}' como subfamilia porque ya está asignada directamente a los roles: {lista}.");
+                }
 
                 foreach (Patente06AV patente in hijo.ObtenerPatentes())
                 {
@@ -137,116 +210,17 @@ namespace BLL
             catch (Exception) { throw; }
         }
 
-        private string BuscarRutaPatenteExcluyendoFamilia(
-                IComponentePermiso06AV componente,
-                string idPatente,
-                string idFamiliaExcluida,
-                string rutaActual)
+        // ── Validaciones cruzadas ────────────────────────────────────────────
+
+        private void ValidarDescripcionUnica(string descripcion, string idExcluir)
         {
-            if (componente is Familia06AV f &&
-                string.Equals(f.Id, idFamiliaExcluida, StringComparison.OrdinalIgnoreCase))
-                return null;
+            bool existe = _mpp.ObtenerTodos().Any(f =>
+                string.Equals(f.Descripcion.Trim(), descripcion.Trim(), StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(f.Id, idExcluir, StringComparison.OrdinalIgnoreCase));
 
-            if (componente is Patente06AV p)
-                return string.Equals(p.Id, idPatente, StringComparison.OrdinalIgnoreCase)
-                    ? rutaActual : null;
-
-            IEnumerable<IComponentePermiso06AV> hijos =
-                (componente is Familia06AV fam) ? fam.Hijos :
-                (componente is Rol06AV rol) ? rol.Hijos : null;
-
-            if (hijos == null) return null;
-
-            foreach (var hijo in hijos)
-            {
-                string ruta = BuscarRutaPatenteExcluyendoFamilia(
-                    hijo, idPatente, idFamiliaExcluida,
-                    $"{rutaActual} > {hijo.Descripcion}");
-                if (ruta != null) return ruta;
-            }
-
-            return null;
-        }
-        private void ValidarPatentesEnRolesQueContienenFamilia(string idFamilia, IEnumerable<Patente06AV> patentesNuevas)
-        {
-            RolesBLL06AV rolesBLL = new RolesBLL06AV();
-            foreach (var rol in rolesBLL.ObtenerTodos())
-            {
-                if (!ContieneFamilia(rol, idFamilia))
-                    continue;
-
-                foreach (var p in patentesNuevas)
-                {
-                    string ruta = BuscarRutaPatenteExcluyendoFamilia(
-                        rol, p.Id, idFamilia, rol.Descripcion);
-                    if (ruta != null)
-                        throw new InvalidOperationException(
-                            $"No se puede agregar la patente '{p.Descripcion}' porque ya existe en: {ruta}.");
-                }
-            }
-        }
-
-        private bool ContieneFamilia(IComponentePermiso06AV componente, string idFamilia)
-        {
-            Familia06AV familia = componente as Familia06AV;
-            if (familia != null)
-            {
-                if (string.Equals(familia.Id, idFamilia, StringComparison.OrdinalIgnoreCase))
-                    return true;
-
-                return familia.Hijos.Any(h => ContieneFamilia(h, idFamilia));
-            }
-
-            Rol06AV rol = componente as Rol06AV;
-            if (rol != null)
-                return rol.Hijos.Any(h => ContieneFamilia(h, idFamilia));
-
-            return false;
-        }
-
-        private string BuscarRutaPatente(IComponentePermiso06AV componente, string idPatente)
-        {
-            return BuscarRutaPatenteRecursivo(
-                componente,
-                idPatente,
-                componente.Descripcion);
-        }
-
-        private string BuscarRutaPatenteRecursivo(
-    IComponentePermiso06AV componente,
-    string idPatente,
-    string rutaActual)
-        {
-            if (componente is Patente06AV patente)
-            {
-                return patente.Id == idPatente
-                    ? rutaActual
-                    : null;
-            }
-
-            IEnumerable<IComponentePermiso06AV> hijos = null;
-
-            if (componente is Familia06AV familia)
-                hijos = familia.Hijos;
-
-            else if (componente is Rol06AV rol)
-                hijos = rol.Hijos;
-
-            if (hijos == null)
-                return null;
-
-            foreach (var hijo in hijos)
-            {
-                string ruta = BuscarRutaPatenteRecursivo(
-                    hijo,
-                    idPatente,
-                    $"{rutaActual} > {hijo.Descripcion}");
-
-                if (ruta != null)
-                    return ruta;
-            }
-
-            return null;
+            if (existe)
+                throw new InvalidOperationException(
+                    GestorIdioma06AV.Instancia.Obtener("val_familia_descripcion_duplicada", descripcion));
         }
 
         private void ValidarPatentesEnAncestros(string idFamilia, IEnumerable<Patente06AV> patentesNuevas)
@@ -269,6 +243,88 @@ namespace BLL
             }
         }
 
+        private void ValidarPatentesEnRolesQueContienenFamilia(string idFamilia, IEnumerable<Patente06AV> patentesNuevas)
+        {
+            RolesBLL06AV rolesBLL = new RolesBLL06AV();
+            foreach (var rol in rolesBLL.ObtenerTodos())
+            {
+                if (!ContieneFamilia(rol, idFamilia))
+                    continue;
 
+                foreach (var p in patentesNuevas)
+                {
+                    string ruta = BuscarRutaPatenteExcluyendoFamilia(
+                        rol, p.Id, idFamilia, rol.Descripcion);
+                    if (ruta != null)
+                        throw new InvalidOperationException(
+                            $"No se puede agregar la patente '{p.Descripcion}' porque ya existe en: {ruta}.");
+                }
+            }
+        }
+
+        private bool ContieneFamilia(IComponentePermiso06AV componente, string idFamilia)
+        {
+            if (componente is Familia06AV familia)
+            {
+                if (string.Equals(familia.Id, idFamilia, StringComparison.OrdinalIgnoreCase))
+                    return true;
+                return familia.Hijos.Any(h => ContieneFamilia(h, idFamilia));
+            }
+            if (componente is Rol06AV rol)
+                return rol.Hijos.Any(h => ContieneFamilia(h, idFamilia));
+            return false;
+        }
+
+        private string BuscarRutaPatente(IComponentePermiso06AV componente, string idPatente)
+        {
+            return BuscarRutaPatenteRecursivo(componente, idPatente, componente.Descripcion);
+        }
+
+        private string BuscarRutaPatenteRecursivo(IComponentePermiso06AV componente, string idPatente, string rutaActual)
+        {
+            if (componente is Patente06AV patente)
+                return patente.Id == idPatente ? rutaActual : null;
+
+            IEnumerable<IComponentePermiso06AV> hijos = null;
+            if (componente is Familia06AV f) hijos = f.Hijos;
+            else if (componente is Rol06AV r) hijos = r.Hijos;
+            if (hijos == null) return null;
+
+            foreach (var hijo in hijos)
+            {
+                string ruta = BuscarRutaPatenteRecursivo(hijo, idPatente, $"{rutaActual} > {hijo.Descripcion}");
+                if (ruta != null) return ruta;
+            }
+            return null;
+        }
+
+        private string BuscarRutaPatenteExcluyendoFamilia(
+            IComponentePermiso06AV componente,
+            string idPatente,
+            string idFamiliaExcluida,
+            string rutaActual)
+        {
+            if (componente is Familia06AV f &&
+                string.Equals(f.Id, idFamiliaExcluida, StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            if (componente is Patente06AV p)
+                return string.Equals(p.Id, idPatente, StringComparison.OrdinalIgnoreCase)
+                    ? rutaActual : null;
+
+            IEnumerable<IComponentePermiso06AV> hijos =
+                (componente is Familia06AV fam) ? fam.Hijos :
+                (componente is Rol06AV rol) ? rol.Hijos : null;
+
+            if (hijos == null) return null;
+
+            foreach (var hijo in hijos)
+            {
+                string ruta = BuscarRutaPatenteExcluyendoFamilia(
+                    hijo, idPatente, idFamiliaExcluida, $"{rutaActual} > {hijo.Descripcion}");
+                if (ruta != null) return ruta;
+            }
+            return null;
+        }
     }
 }

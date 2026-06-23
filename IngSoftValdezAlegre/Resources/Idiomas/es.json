@@ -201,5 +201,19 @@
   "archivo_generado": "Archivo generado correctamente.",
 
   "confirmar_cerrar_sesion": "¿Estás seguro que querés cerrar sesión?",
-  "si_cerrar": "Sí, cerrar"
+  "si_cerrar": "Sí, cerrar",
+
+  "idioma_cambiado_sesion": "Idioma cambiado. Se guardará al cerrar sesión.",
+  "familia_sin_hijos": "Una familia debe tener al menos una patente o subfamilia antes de guardar.",
+  "rol_sin_hijos": "Un rol debe tener al menos una patente o familia antes de guardar.",
+
+  "familia_creada": "Familia creada correctamente.",
+  "familia_modificada": "Familia modificada correctamente.",
+  "familia_eliminada": "Familia eliminada correctamente.",
+  "rol_creado": "Rol creado correctamente.",
+  "rol_modificado": "Rol modificado correctamente.",
+  "rol_eliminado": "Rol eliminado correctamente.",
+  "codigo": "Cdigo",
+  "val_rol_descripcion_duplicada": "Ya existe un rol con la descripción '{0}'.",
+  "val_familia_descripcion_duplicada": "Ya existe una familia con la descripción '{0}'."
 }

@@ -1,4 +1,4 @@
-using BLL;
+    using BLL;
 using IngSoftValdezAlegre.Common;
 using SER;
 using SER.Generador;
@@ -18,6 +18,7 @@ namespace IngSoftValdezAlegre.Controles
         private List<Familia06AV> _familias = new List<Familia06AV>();
         private Familia06AV _familiaPendiente;
         private bool _creando;
+        private bool _suspenderSeleccion; 
 
         public FamiliasControl()
         {
@@ -32,6 +33,15 @@ namespace IngSoftValdezAlegre.Controles
             Disposed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
 
             CargarDatos();
+
+            if (_familias.Count > 0)
+            {
+                _suspenderSeleccion = true;
+                grilla.Rows[0].Selected = true;
+                grilla.CurrentCell = grilla.Rows[0].Cells[0];
+                _suspenderSeleccion = false;
+                MostrarSeleccion();
+            }
         }
 
         private void ConectarEventos()
@@ -47,9 +57,8 @@ namespace IngSoftValdezAlegre.Controles
             {
                 if (_creando && _familiaPendiente != null)
                 {
-                    var t = GestorIdioma06AV.Instancia;
                     _familiaPendiente.Descripcion = string.IsNullOrWhiteSpace(txtDescripcion.Text)
-                        ? t.Obtener("nueva_familia")
+                        ? GestorIdioma06AV.Instancia.Obtener("nueva_familia")
                         : txtDescripcion.Text.Trim();
                     DibujarArbol(_familiaPendiente);
                 }
@@ -79,7 +88,6 @@ namespace IngSoftValdezAlegre.Controles
         public void AplicarIdioma()
         {
             var t = GestorIdioma06AV.Instancia;
-
             lblTitulo.Text = t.Obtener("titulo_familias");
             lblDescripcion.Text = t.Obtener("descripcion");
             btnNuevo.Text = t.Obtener("nueva");
@@ -91,6 +99,10 @@ namespace IngSoftValdezAlegre.Controles
             btnAgregarSubfamilia.Text = t.Obtener("agregar_subfamilia");
             btnQuitar.Text = t.Obtener("quitar_seleccionado");
             txtMensaje.Text = t.Obtener("ayuda_familias");
+
+            if (grilla.Columns["Id"] != null) grilla.Columns["Id"].HeaderText = "Id";
+            if (grilla.Columns["Descripcion"] != null) grilla.Columns["Descripcion"].HeaderText = t.Obtener("descripcion");
+            if (grilla.Columns["Hijos"] != null) grilla.Columns["Hijos"].Visible = false;
         }
 
         private void AjustarLayout()
@@ -130,8 +142,11 @@ namespace IngSoftValdezAlegre.Controles
             txtMensaje.SetBounds(accionesX, y + 258, accionesW, Math.Max(90, alto - y - 266));
         }
 
-        private void CargarDatos()
+        // ── Carga de datos ───────────────────────────────────────────────────
+
+        private void CargarDatos(string idSeleccionar = null)
         {
+            _suspenderSeleccion = true;
             try
             {
                 _familias = _familiasSer.ObtenerTodos() ?? new List<Familia06AV>();
@@ -145,6 +160,20 @@ namespace IngSoftValdezAlegre.Controles
             {
                 MostrarError(ex.Message);
             }
+            finally
+            {
+                _suspenderSeleccion = false;
+            }
+
+            // Reposicionar DESPUÉS de levantar el flag
+            if (idSeleccionar != null)
+                SeleccionarPorId(idSeleccionar);
+            else if (_familias.Count > 0)
+            {
+                grilla.Rows[0].Selected = true;
+                grilla.CurrentCell = grilla.Rows[0].Cells[0];
+                MostrarSeleccion();
+            }
         }
 
         private void CargarComboSubfamilias(string idActual)
@@ -155,15 +184,15 @@ namespace IngSoftValdezAlegre.Controles
             cmbSubfamilias.DataSource = candidatas;
         }
 
+        // ── Selección ────────────────────────────────────────────────────────
+
         private void MostrarSeleccion()
         {
+            if (_suspenderSeleccion) return;
             if (_creando) return;
+
             Familia06AV familia = ObtenerFamiliaSeleccionada();
-            if (familia == null)
-            {
-                LimpiarEditor();
-                return;
-            }
+            if (familia == null) { LimpiarEditor(); return; }
 
             txtDescripcion.Text = familia.Descripcion;
             CargarComboSubfamilias(familia.Id);
@@ -176,6 +205,34 @@ namespace IngSoftValdezAlegre.Controles
             return grilla.CurrentRow.DataBoundItem as Familia06AV;
         }
 
+        private void SeleccionarPorId(string id)
+        {
+            _suspenderSeleccion = true;
+            try
+            {
+                foreach (DataGridViewRow row in grilla.Rows)
+                {
+                    Familia06AV f = row.DataBoundItem as Familia06AV;
+                    if (f != null && f.Id == id)
+                    {
+                        grilla.ClearSelection();
+                        row.Selected = true;
+                        grilla.CurrentCell = row.Cells[0];
+                        break;
+                    }
+                }
+            }
+            finally
+            {
+                _suspenderSeleccion = false;
+            }
+
+            // Una sola llamada controlada al final
+            MostrarSeleccion();
+        }
+
+        // ── ABM ──────────────────────────────────────────────────────────────
+
         private void Nuevo()
         {
             _creando = true;
@@ -184,7 +241,11 @@ namespace IngSoftValdezAlegre.Controles
                 Id = "",
                 Descripcion = GestorIdioma06AV.Instancia.Obtener("nueva_familia")
             };
+
+            _suspenderSeleccion = true;
             grilla.ClearSelection();
+            _suspenderSeleccion = false;
+
             LimpiarEditor();
             CargarComboSubfamilias(null);
             DibujarArbol(_familiaPendiente);
@@ -192,29 +253,53 @@ namespace IngSoftValdezAlegre.Controles
 
         private void Guardar()
         {
+            var t = GestorIdioma06AV.Instancia;
+
+            if (string.IsNullOrWhiteSpace(txtDescripcion.Text))
+            {
+                MostrarError(t.Obtener("val_campo_vacio", t.Obtener("descripcion")));
+                return;
+            }
+
+            if (_creando && (_familiaPendiente == null || !_familiaPendiente.Hijos.Any()))
+            {
+                MostrarError(t.Obtener("familia_sin_hijos"));
+                return;
+            }
+
             try
             {
-                GeneradorID generadorId = new GeneradorID();
-                Familia06AV familia = new Familia06AV
-                {
-                    Id = generadorId.GenerarId(),
-                    Descripcion = txtDescripcion.Text.Trim()
-                };
+                bool creando = _creando;
+                string idFinal;
 
                 if (_creando)
                 {
-                    _familiasSer.Agregar(familia);
-                    PersistirHijosPendientes(familia.Id);
+                    Familia06AV nueva = new Familia06AV
+                    {
+                        Id = new GeneradorID().GenerarId(),
+                        Descripcion = txtDescripcion.Text.Trim()
+                    };
+                    _familiasSer.Agregar(nueva);
+                    PersistirHijosPendientes(nueva.Id);
+                    idFinal = nueva.Id;
                 }
                 else
                 {
-                    _familiasSer.Modificar(familia);
+                    Familia06AV seleccionada = ObtenerFamiliaSeleccionada();
+                    if (seleccionada == null) return;
+                    seleccionada.Descripcion = txtDescripcion.Text.Trim();
+                    _familiasSer.Modificar(seleccionada);
+                    idFinal = seleccionada.Id;
                 }
 
                 _creando = false;
                 _familiaPendiente = null;
-                CargarDatos();
-                SeleccionarPorId(familia.Id);
+
+                CargarDatos(idFinal);
+
+                MostrarExito(creando
+                    ? t.Obtener("familia_creada")
+                    : t.Obtener("familia_modificada"));
             }
             catch (Exception ex)
             {
@@ -241,6 +326,7 @@ namespace IngSoftValdezAlegre.Controles
             {
                 _familiasSer.Eliminar(familia.Id);
                 CargarDatos();
+                MostrarExito(t.Obtener("familia_eliminada"));
             }
             catch (Exception ex)
             {
@@ -248,9 +334,12 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
+        // ── Agregar / Quitar hijos ───────────────────────────────────────────
+
         private void AgregarPatente()
         {
             if (cmbPatentes.SelectedValue == null) return;
+
             if (_creando)
             {
                 Patente06AV patente = cmbPatentes.SelectedItem as Patente06AV;
@@ -261,12 +350,15 @@ namespace IngSoftValdezAlegre.Controles
 
             Familia06AV familia = ObtenerFamiliaSeleccionada();
             if (familia == null) return;
-            EjecutarAccion(() => _familiasSer.AgregarPatente(familia.Id, cmbPatentes.SelectedValue.ToString()), familia.Id);
+            EjecutarAccion(
+                () => _familiasSer.AgregarPatente(familia.Id, cmbPatentes.SelectedValue.ToString()),
+                familia.Id);
         }
 
         private void AgregarSubfamilia()
         {
             if (cmbSubfamilias.SelectedValue == null) return;
+
             if (_creando)
             {
                 Familia06AV subfamilia = cmbSubfamilias.SelectedItem as Familia06AV;
@@ -277,7 +369,9 @@ namespace IngSoftValdezAlegre.Controles
 
             Familia06AV familia = ObtenerFamiliaSeleccionada();
             if (familia == null) return;
-            EjecutarAccion(() => _familiasSer.AgregarSubfamilia(familia.Id, cmbSubfamilias.SelectedValue.ToString()), familia.Id);
+            EjecutarAccion(
+                () => _familiasSer.AgregarSubfamilia(familia.Id, cmbSubfamilias.SelectedValue.ToString()),
+                familia.Id);
         }
 
         private void QuitarSeleccionado()
@@ -307,6 +401,8 @@ namespace IngSoftValdezAlegre.Controles
             else
                 MostrarError(GestorIdioma06AV.Instancia.Obtener("solo_hijos_directos_familia"));
         }
+
+        // ── Pendientes (modo Nuevo) ──────────────────────────────────────────
 
         private void AgregarPendiente(IComponentePermiso06AV componente)
         {
@@ -349,44 +445,31 @@ namespace IngSoftValdezAlegre.Controles
 
             foreach (IComponentePermiso06AV hijo in _familiaPendiente.Hijos)
             {
-                Patente06AV patente = hijo as Patente06AV;
-                if (patente != null)
+                if (hijo is Patente06AV patente)
                 {
                     _familiasSer.AgregarPatente(idFamilia, patente.Id);
                     continue;
                 }
-
-                Familia06AV familia = hijo as Familia06AV;
-                if (familia != null)
+                if (hijo is Familia06AV familia)
                     _familiasSer.AgregarSubfamilia(idFamilia, familia.Id);
             }
         }
 
+        // ── Helpers ──────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Ejecuta una acción sobre la BLL, recarga y reposiciona manteniendo el foco.
+        /// </summary>
         private void EjecutarAccion(Action accion, string idFamilia)
         {
             try
             {
                 accion();
-                CargarDatos();
-                SeleccionarPorId(idFamilia);
+                CargarDatos(idFamilia);
             }
             catch (Exception ex)
             {
                 MostrarError(ex.Message);
-            }
-        }
-
-        private void SeleccionarPorId(string id)
-        {
-            foreach (DataGridViewRow row in grilla.Rows)
-            {
-                Familia06AV familia = row.DataBoundItem as Familia06AV;
-                if (familia != null && familia.Id == id)
-                {
-                    row.Selected = true;
-                    grilla.CurrentCell = row.Cells[0];
-                    break;
-                }
             }
         }
 
@@ -400,7 +483,8 @@ namespace IngSoftValdezAlegre.Controles
         {
             arbol.BeginUpdate();
             arbol.Nodes.Clear();
-            TreeNode raiz = new TreeNode(familia.Descripcion) { Tag = new NodoPermiso("Familia", familia.Id) };
+            TreeNode raiz = new TreeNode(familia.Descripcion)
+            { Tag = new NodoPermiso("Familia", familia.Id) };
             foreach (IComponentePermiso06AV hijo in familia.Hijos)
                 raiz.Nodes.Add(CrearNodo(hijo));
             arbol.Nodes.Add(raiz);
@@ -410,15 +494,25 @@ namespace IngSoftValdezAlegre.Controles
 
         private TreeNode CrearNodo(IComponentePermiso06AV componente)
         {
-            Patente06AV patente = componente as Patente06AV;
-            if (patente != null)
-                return new TreeNode("P - " + patente.Descripcion) { Tag = new NodoPermiso("Patente", patente.Id) };
+            if (componente is Patente06AV patente)
+                return new TreeNode("P - " + patente.Descripcion)
+                { Tag = new NodoPermiso("Patente", patente.Id) };
 
-            Familia06AV familia = componente as Familia06AV;
-            TreeNode nodo = new TreeNode("F - " + familia.Descripcion) { Tag = new NodoPermiso("Familia", familia.Id) };
+            Familia06AV familia = (Familia06AV)componente;
+            TreeNode nodo = new TreeNode("F - " + familia.Descripcion)
+            { Tag = new NodoPermiso("Familia", familia.Id) };
             foreach (IComponentePermiso06AV hijo in familia.Hijos)
                 nodo.Nodes.Add(CrearNodo(hijo));
             return nodo;
+        }
+
+        private void MostrarExito(string mensaje)
+        {
+            ConfirmacionForm.MostrarInfo(
+                mensaje,
+                GestorIdioma06AV.Instancia.Obtener("exito"),
+                ConfirmacionForm.TipoConfirmacion.Info,
+                FindForm());
         }
 
         private void MostrarError(string mensaje)

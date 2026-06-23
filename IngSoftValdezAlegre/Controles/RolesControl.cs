@@ -19,6 +19,7 @@ namespace IngSoftValdezAlegre.Controles
         private List<Rol06AV> _roles = new List<Rol06AV>();
         private Rol06AV _rolPendiente;
         private bool _creando;
+        private bool _suspenderSeleccion;   // ← bloquea MostrarSeleccion durante recargas
 
         public RolesControl()
         {
@@ -33,10 +34,14 @@ namespace IngSoftValdezAlegre.Controles
             Disposed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
 
             CargarDatos();
+
             if (_roles.Count > 0)
             {
+                _suspenderSeleccion = true;
                 grilla.Rows[0].Selected = true;
                 grilla.CurrentCell = grilla.Rows[0].Cells[0];
+                _suspenderSeleccion = false;
+                MostrarSeleccion();
             }
         }
 
@@ -53,9 +58,8 @@ namespace IngSoftValdezAlegre.Controles
             {
                 if (_creando && _rolPendiente != null)
                 {
-                    var t = GestorIdioma06AV.Instancia;
                     _rolPendiente.Descripcion = string.IsNullOrWhiteSpace(txtDescripcion.Text)
-                        ? t.Obtener("nuevo_rol")
+                        ? GestorIdioma06AV.Instancia.Obtener("nuevo_rol")
                         : txtDescripcion.Text.Trim();
                     DibujarArbol(_rolPendiente);
                 }
@@ -85,18 +89,22 @@ namespace IngSoftValdezAlegre.Controles
         public void AplicarIdioma()
         {
             var t = GestorIdioma06AV.Instancia;
-
-            lblTitulo.Text         = t.Obtener("titulo_roles");
-            lblDescripcion.Text    = t.Obtener("descripcion");
-            btnNuevo.Text          = t.Obtener("nuevo");
-            btnGuardar.Text        = t.Obtener("guardar");
-            btnEliminar.Text       = t.Obtener("eliminar");
-            lblPatentes.Text       = t.Obtener("patentes_disponibles");
+            lblTitulo.Text = t.Obtener("titulo_roles");
+            lblDescripcion.Text = t.Obtener("descripcion");
+            btnNuevo.Text = t.Obtener("nuevo");
+            btnGuardar.Text = t.Obtener("guardar");
+            btnEliminar.Text = t.Obtener("eliminar");
+            lblPatentes.Text = t.Obtener("patentes_disponibles");
             btnAgregarPatente.Text = t.Obtener("agregar_patente");
-            lblFamilias.Text       = t.Obtener("familias_disponibles");
+            lblFamilias.Text = t.Obtener("familias_disponibles");
             btnAgregarFamilia.Text = t.Obtener("agregar_familia");
-            btnQuitar.Text         = t.Obtener("quitar_seleccionado");
-            txtMensaje.Text        = t.Obtener("ayuda_roles");
+            btnQuitar.Text = t.Obtener("quitar_seleccionado");
+            txtMensaje.Text = t.Obtener("ayuda_roles");
+
+            if (grilla.Columns["Id"] != null) grilla.Columns["Id"].HeaderText = "Id";
+            if (grilla.Columns["Descripcion"] != null) grilla.Columns["Descripcion"].HeaderText = t.Obtener("descripcion");
+            if (grilla.Columns["Codigo"] != null) grilla.Columns["Codigo"].HeaderText = t.Obtener("codigo");
+            if (grilla.Columns["Hijos"] != null) grilla.Columns["Hijos"].Visible = false;
         }
 
         private void AjustarLayout()
@@ -136,8 +144,11 @@ namespace IngSoftValdezAlegre.Controles
             txtMensaje.SetBounds(accionesX, y + 258, accionesW, Math.Max(90, alto - y - 266));
         }
 
-        private void CargarDatos()
+        // ── Carga de datos ───────────────────────────────────────────────────
+
+        private void CargarDatos(string idSeleccionar = null)
         {
+            _suspenderSeleccion = true;
             try
             {
                 _roles = _rolesSer.ObtenerTodos() ?? new List<Rol06AV>();
@@ -151,17 +162,31 @@ namespace IngSoftValdezAlegre.Controles
             {
                 MostrarError(ex.Message);
             }
+            finally
+            {
+                _suspenderSeleccion = false;
+            }
+
+            // Reposicionar DESPUÉS de levantar el flag
+            if (idSeleccionar != null)
+                SeleccionarPorId(idSeleccionar);
+            else if (_roles.Count > 0)
+            {
+                grilla.Rows[0].Selected = true;
+                grilla.CurrentCell = grilla.Rows[0].Cells[0];
+                MostrarSeleccion();
+            }
         }
+
+        // ── Selección ────────────────────────────────────────────────────────
 
         private void MostrarSeleccion()
         {
+            if (_suspenderSeleccion) return;
             if (_creando) return;
+
             Rol06AV rol = ObtenerRolSeleccionado();
-            if (rol == null)
-            {
-                LimpiarEditor();
-                return;
-            }
+            if (rol == null) { LimpiarEditor(); return; }
 
             txtDescripcion.Text = rol.Descripcion;
             DibujarArbol(rol);
@@ -173,6 +198,34 @@ namespace IngSoftValdezAlegre.Controles
             return grilla.CurrentRow.DataBoundItem as Rol06AV;
         }
 
+        private void SeleccionarPorId(string id)
+        {
+            _suspenderSeleccion = true;
+            try
+            {
+                foreach (DataGridViewRow row in grilla.Rows)
+                {
+                    Rol06AV r = row.DataBoundItem as Rol06AV;
+                    if (r != null && r.Id == id)
+                    {
+                        grilla.ClearSelection();
+                        row.Selected = true;
+                        grilla.CurrentCell = row.Cells[0];
+                        break;
+                    }
+                }
+            }
+            finally
+            {
+                _suspenderSeleccion = false;
+            }
+
+            // Una sola llamada controlada al final
+            MostrarSeleccion();
+        }
+
+        // ── ABM ──────────────────────────────────────────────────────────────
+
         private void Nuevo()
         {
             _creando = true;
@@ -181,35 +234,64 @@ namespace IngSoftValdezAlegre.Controles
                 Id = "",
                 Descripcion = GestorIdioma06AV.Instancia.Obtener("nuevo_rol")
             };
+
+            _suspenderSeleccion = true;
             grilla.ClearSelection();
+            _suspenderSeleccion = false;
+
             LimpiarEditor();
             DibujarArbol(_rolPendiente);
         }
 
         private void Guardar()
         {
+            var t = GestorIdioma06AV.Instancia;
+
+            if (string.IsNullOrWhiteSpace(txtDescripcion.Text))
+            {
+                MostrarError(t.Obtener("val_campo_vacio", t.Obtener("descripcion")));
+                return;
+            }
+
+            if (_creando && (_rolPendiente == null || !_rolPendiente.Hijos.Any()))
+            {
+                MostrarError(t.Obtener("rol_sin_hijos"));
+                return;
+            }
+
             try
             {
-                Rol06AV rol = new Rol06AV
-                {
-                    Id = new GeneradorID().GenerarId().Trim(),
-                    Descripcion = txtDescripcion.Text.Trim()
-                };
+                bool creando = _creando;
+                string idFinal;
 
                 if (_creando)
                 {
-                    _rolesSer.Agregar(rol);
-                    PersistirHijosPendientes(rol.Id);
+                    Rol06AV nuevo = new Rol06AV
+                    {
+                        Id = new GeneradorID().GenerarId().Trim(),
+                        Descripcion = txtDescripcion.Text.Trim()
+                    };
+                    _rolesSer.Agregar(nuevo);
+                    PersistirHijosPendientes(nuevo.Id);
+                    idFinal = nuevo.Id;
                 }
                 else
                 {
-                    _rolesSer.Modificar(rol);
+                    Rol06AV seleccionado = ObtenerRolSeleccionado();
+                    if (seleccionado == null) return;
+                    seleccionado.Descripcion = txtDescripcion.Text.Trim();
+                    _rolesSer.Modificar(seleccionado);
+                    idFinal = seleccionado.Id;
                 }
 
                 _creando = false;
                 _rolPendiente = null;
-                CargarDatos();
-                SeleccionarPorId(rol.Id);
+
+                CargarDatos(idFinal);
+
+                MostrarExito(creando
+                    ? t.Obtener("rol_creado")
+                    : t.Obtener("rol_modificado"));
             }
             catch (Exception ex)
             {
@@ -236,6 +318,7 @@ namespace IngSoftValdezAlegre.Controles
             {
                 _rolesSer.Eliminar(rol.Id);
                 CargarDatos();
+                MostrarExito(t.Obtener("rol_eliminado"));
             }
             catch (Exception ex)
             {
@@ -243,9 +326,12 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
+        // ── Agregar / Quitar hijos ───────────────────────────────────────────
+
         private void AgregarPatente()
         {
             if (cmbPatentes.SelectedValue == null) return;
+
             if (_creando)
             {
                 Patente06AV patente = cmbPatentes.SelectedItem as Patente06AV;
@@ -256,12 +342,15 @@ namespace IngSoftValdezAlegre.Controles
 
             Rol06AV rol = ObtenerRolSeleccionado();
             if (rol == null) return;
-            EjecutarAccion(() => _rolesSer.AgregarPatente(rol.Id, cmbPatentes.SelectedValue.ToString()), rol.Id);
+            EjecutarAccion(
+                () => _rolesSer.AgregarPatente(rol.Id, cmbPatentes.SelectedValue.ToString()),
+                rol.Id);
         }
 
         private void AgregarFamilia()
         {
             if (cmbFamilias.SelectedValue == null) return;
+
             if (_creando)
             {
                 Familia06AV familia = cmbFamilias.SelectedItem as Familia06AV;
@@ -272,7 +361,9 @@ namespace IngSoftValdezAlegre.Controles
 
             Rol06AV rol = ObtenerRolSeleccionado();
             if (rol == null) return;
-            EjecutarAccion(() => _rolesSer.AgregarFamilia(rol.Id, cmbFamilias.SelectedValue.ToString()), rol.Id);
+            EjecutarAccion(
+                () => _rolesSer.AgregarFamilia(rol.Id, cmbFamilias.SelectedValue.ToString()),
+                rol.Id);
         }
 
         private void QuitarSeleccionado()
@@ -302,6 +393,8 @@ namespace IngSoftValdezAlegre.Controles
             else
                 MostrarError(GestorIdioma06AV.Instancia.Obtener("solo_hijos_directos_rol"));
         }
+
+        // ── Pendientes (modo Nuevo) ──────────────────────────────────────────
 
         private void AgregarPendiente(IComponentePermiso06AV componente)
         {
@@ -344,44 +437,28 @@ namespace IngSoftValdezAlegre.Controles
 
             foreach (IComponentePermiso06AV hijo in _rolPendiente.Hijos)
             {
-                Patente06AV patente = hijo as Patente06AV;
-                if (patente != null)
+                if (hijo is Patente06AV patente)
                 {
                     _rolesSer.AgregarPatente(idRol, patente.Id);
                     continue;
                 }
-
-                Familia06AV familia = hijo as Familia06AV;
-                if (familia != null)
+                if (hijo is Familia06AV familia)
                     _rolesSer.AgregarFamilia(idRol, familia.Id);
             }
         }
+
+        // ── Helpers ──────────────────────────────────────────────────────────
 
         private void EjecutarAccion(Action accion, string idRol)
         {
             try
             {
                 accion();
-                CargarDatos();
-                SeleccionarPorId(idRol);
+                CargarDatos(idRol);
             }
             catch (Exception ex)
             {
                 MostrarError(ex.Message);
-            }
-        }
-
-        private void SeleccionarPorId(string id)
-        {
-            foreach (DataGridViewRow row in grilla.Rows)
-            {
-                Rol06AV rol = row.DataBoundItem as Rol06AV;
-                if (rol != null && rol.Id == id)
-                {
-                    row.Selected = true;
-                    grilla.CurrentCell = row.Cells[0];
-                    break;
-                }
             }
         }
 
@@ -395,7 +472,8 @@ namespace IngSoftValdezAlegre.Controles
         {
             arbol.BeginUpdate();
             arbol.Nodes.Clear();
-            TreeNode raiz = new TreeNode(rol.Descripcion) { Tag = new NodoPermiso("Rol", rol.Id) };
+            TreeNode raiz = new TreeNode(rol.Descripcion)
+            { Tag = new NodoPermiso("Rol", rol.Id) };
             foreach (IComponentePermiso06AV hijo in rol.Hijos)
                 raiz.Nodes.Add(CrearNodo(hijo));
             arbol.Nodes.Add(raiz);
@@ -405,15 +483,25 @@ namespace IngSoftValdezAlegre.Controles
 
         private TreeNode CrearNodo(IComponentePermiso06AV componente)
         {
-            Patente06AV patente = componente as Patente06AV;
-            if (patente != null)
-                return new TreeNode("P - " + patente.Descripcion) { Tag = new NodoPermiso("Patente", patente.Id) };
+            if (componente is Patente06AV patente)
+                return new TreeNode("P - " + patente.Descripcion)
+                { Tag = new NodoPermiso("Patente", patente.Id) };
 
-            Familia06AV familia = componente as Familia06AV;
-            TreeNode nodo = new TreeNode("F - " + familia.Descripcion) { Tag = new NodoPermiso("Familia", familia.Id) };
+            Familia06AV familia = (Familia06AV)componente;
+            TreeNode nodo = new TreeNode("F - " + familia.Descripcion)
+            { Tag = new NodoPermiso("Familia", familia.Id) };
             foreach (IComponentePermiso06AV hijo in familia.Hijos)
                 nodo.Nodes.Add(CrearNodo(hijo));
             return nodo;
+        }
+
+        private void MostrarExito(string mensaje)
+        {
+            ConfirmacionForm.MostrarInfo(
+                mensaje,
+                GestorIdioma06AV.Instancia.Obtener("exito"),
+                ConfirmacionForm.TipoConfirmacion.Info,
+                FindForm());
         }
 
         private void MostrarError(string mensaje)
@@ -432,4 +520,4 @@ namespace IngSoftValdezAlegre.Controles
             public string Id { get; private set; }
         }
     }
-}
+}   

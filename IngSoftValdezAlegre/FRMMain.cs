@@ -57,8 +57,8 @@ namespace IngSoftValdezAlegre
                 : "Management system";
 
             ConfigurarBotonModulo(usuariosBTN, t.Obtener("usuarios"), "\uE716");
-            ConfigurarBotonModulo(rolesBTN, "Roles", "\uE8D7");
-            ConfigurarBotonModulo(familiasBTN, "Familias", "\uE902");
+            ConfigurarBotonModulo(rolesBTN, t.Obtener("titulo_roles"), "\uE8D7");
+            ConfigurarBotonModulo(familiasBTN, t.Obtener("titulo_familias"), "\uE902");
             ConfigurarBotonModulo(bitacoraBTN, t.Obtener("bitacora"), "\uE9D5");
 
             cambiarContraseñaToolStripMenuItem.Text = t.Obtener("cambiar_contrasenia");
@@ -326,23 +326,23 @@ namespace IngSoftValdezAlegre
         private void CambiarIdiomaActual()
         {
             var t = GestorIdioma06AV.Instancia;
-            string actual = t.IdiomaActual;
-            string nuevo = actual == GestorIdioma06AV.ES ? GestorIdioma06AV.EN : GestorIdioma06AV.ES;
+            string nuevo = t.IdiomaActual == GestorIdioma06AV.ES
+                ? GestorIdioma06AV.EN
+                : GestorIdioma06AV.ES;
 
             try
             {
-                string dni = UsuarioSesion06AV.Instancia().UsuarioActual.Dni;
-                // CambiarIdioma en BLL llama a GestorIdioma.CambiarIdioma
-                // que dispara IdiomaChanged → todos los observadores se actualizan solos
-                new UsuariosBLL06AV().CambiarIdioma(dni, nuevo);
+                t.CambiarIdioma(nuevo);
+
                 ConfirmacionForm.MostrarInfo(
-                    GestorIdioma06AV.Instancia.Obtener("idioma_guardado"),
-                    titulo: GestorIdioma06AV.Instancia.Obtener("idioma"),
+                    t.Obtener("idioma_cambiado_sesion"),
+                    titulo: t.Obtener("idioma"),
                     owner: this);
             }
             catch (Exception ex)
             {
-                ConfirmacionForm.MostrarInfo(ex.Message,
+                ConfirmacionForm.MostrarInfo(
+                    ex.Message,
                     titulo: t.Obtener("error"),
                     tipo: ConfirmacionForm.TipoConfirmacion.Error,
                     owner: this);
@@ -385,7 +385,6 @@ namespace IngSoftValdezAlegre
         private void cerrarSesiónToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var t = GestorIdioma06AV.Instancia;
-            BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
             bool confirmado = ConfirmacionForm.Mostrar(
                 mensaje: t.Obtener("confirmar_cerrar_sesion"),
                 titulo: t.Obtener("cerrar_sesion"),
@@ -396,11 +395,24 @@ namespace IngSoftValdezAlegre
             if (!confirmado) return;
 
             Hide();
+
             var usuarioActual = UsuarioSesion06AV.Instancia().UsuarioActual;
             if (usuarioActual != null)
             {
-                bitacora.Logout(usuarioActual.Dni);
+                // Persistir idioma elegido durante la sesión
+                try
+                {
+                    new UsuariosBLL06AV().CambiarIdioma(usuarioActual.Dni, t.IdiomaActual);
+                }
+                catch
+                {
+                    // Si falla la persistencia del idioma, no bloqueamos el logout
+                }
+
+                // Registrar evento de logout en bitácora
+                new BitacoraBLL06AV().Logout(usuarioActual.Dni);
             }
+
             UsuarioSesion06AV.Instancia().CerrarSesion();
             var login = new FRMLogin();
             login.FormClosed += (s, args) => Close();
