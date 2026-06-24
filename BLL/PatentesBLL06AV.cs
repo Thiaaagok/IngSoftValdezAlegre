@@ -20,35 +20,5 @@ namespace BLL
             try { return MPP.ObtenerPorId(id); }
             catch (Exception) { throw; }
         }
-
-        public void Agregar(Patente06AV patente)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(patente.Id))
-                    throw new ArgumentException("La patente debe tener un Id.");
-                if (string.IsNullOrWhiteSpace(patente.Descripcion))
-                    throw new ArgumentException("La patente debe tener una descripción.");
-                MPP.Agregar(patente);
-            }
-            catch (Exception) { throw; }
-        }
-
-        public void Modificar(Patente06AV patente)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(patente.Descripcion))
-                    throw new ArgumentException("La patente debe tener una descripción.");
-                MPP.Modificar(patente);
-            }
-            catch (Exception) { throw; }
-        }
-
-        public void Eliminar(string id)
-        {
-            try { MPP.Eliminar(id); }
-            catch (Exception) { throw; }
-        }
     }
 }

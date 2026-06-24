@@ -19,7 +19,7 @@ namespace IngSoftValdezAlegre.Controles
         private List<Rol06AV> _roles = new List<Rol06AV>();
         private Rol06AV _rolPendiente;
         private bool _creando;
-        private bool _suspenderSeleccion;   // ← bloquea MostrarSeleccion durante recargas
+        private bool _suspenderSeleccion;   
 
         public RolesControl()
         {

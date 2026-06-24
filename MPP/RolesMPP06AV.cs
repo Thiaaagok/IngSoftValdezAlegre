@@ -11,7 +11,7 @@ namespace MPP
         private readonly PatenteMPP06AV _patenteMPP = new PatenteMPP06AV();
         private readonly FamiliaMPP06AV _familiaMPP = new FamiliaMPP06AV();
 
-        // ── CRUD Rol ─────────────────────────────────────────────────────────
+        // ── CRUD Rol ──────────────────────────────────────────────────────────
 
         public List<Rol06AV> ObtenerTodos()
         {
@@ -24,74 +24,46 @@ namespace MPP
 
         public Rol06AV ObtenerPorId(string id)
         {
-            var parametros = new Dictionary<string, object> { { "@id", id } };
-            DataTable tabla = _dal.ObtenerPorId(parametros);
+            DataTable tabla = _dal.ObtenerPorId(id);
             if (tabla.Rows.Count == 0) return null;
             return MapearRol(tabla.Rows[0]);
         }
 
         public void Agregar(Rol06AV rol)
         {
-            var parametros = new Dictionary<string, object>
-            {
-                { "@id", rol.Id },
-                { "@descripcion", rol.Descripcion },
-                { "@codigo", rol.Codigo }
-            };
-            _dal.Agregar(parametros);
+            _dal.Agregar(rol.Id, rol.Descripcion, rol.Codigo);
         }
 
         public void Modificar(Rol06AV rol)
         {
-            var parametros = new Dictionary<string, object>
-            {
-                { "@id", rol.Id },
-                { "@descripcion", rol.Descripcion }
-            };
-            _dal.Modificar(parametros);
+            _dal.Modificar(rol.Id, rol.Descripcion);
         }
 
         public void Eliminar(string id)
         {
-            _dal.Eliminar(new Dictionary<string, object> { { "@id", id } });
+            _dal.Eliminar(id);
         }
 
-        // ── Gestión de hijos ─────────────────────────────────────────────────
+        // ── Gestión de hijos ──────────────────────────────────────────────────
 
         public void AgregarPatente(string idRol, string idPatente)
         {
-            _dal.AgregarPatente(new Dictionary<string, object>
-            {
-                { "@idRol", idRol },
-                { "@idPatente", idPatente }
-            });
+            _dal.AgregarPatente(idRol, idPatente);
         }
 
         public void QuitarPatente(string idRol, string idPatente)
         {
-            _dal.QuitarPatente(new Dictionary<string, object>
-            {
-                { "@idRol", idRol },
-                { "@idPatente", idPatente }
-            });
+            _dal.QuitarPatente(idRol, idPatente);
         }
 
         public void AgregarFamilia(string idRol, string idFamilia)
         {
-            _dal.AgregarFamilia(new Dictionary<string, object>
-            {
-                { "@idRol", idRol },
-                { "@idFamilia", idFamilia }
-            });
+            _dal.AgregarFamilia(idRol, idFamilia);
         }
 
         public void QuitarFamilia(string idRol, string idFamilia)
         {
-            _dal.QuitarFamilia(new Dictionary<string, object>
-            {
-                { "@idRol", idRol },
-                { "@idFamilia", idFamilia }
-            });
+            _dal.QuitarFamilia(idRol, idFamilia);
         }
 
         // ── Mapeo ─────────────────────────────────────────────────────────────
@@ -104,18 +76,17 @@ namespace MPP
                 Id = id,
                 Descripcion = row["Descripcion"].ToString(),
                 Codigo = row.Table.Columns.Contains("Codigo")
-                    ? row["Codigo"].ToString()
-                    : id
+                                  ? row["Codigo"].ToString()
+                                  : id
             };
 
-            // Agregar patentes directas
-            var paramRol = new Dictionary<string, object> { { "@idRol", id } };
-            DataTable patentes = _dal.ObtenerPatentesPorRol(paramRol);
+            // Patentes directas
+            DataTable patentes = _dal.ObtenerPatentesPorRol(id);
             foreach (DataRow p in patentes.Rows)
                 rol.Agregar(_patenteMPP.Mapear(p));
 
-            // Agregar familias (con su árbol interno ya construido)
-            DataTable familias = _dal.ObtenerFamiliasPorRol(paramRol);
+            // Familias con su árbol interno ya construido
+            DataTable familias = _dal.ObtenerFamiliasPorRol(id);
             foreach (DataRow f in familias.Rows)
             {
                 var familia = _familiaMPP.ObtenerPorId(f["Id"].ToString());

@@ -10,89 +10,112 @@ namespace DAL
 {
     public class RolesDAL06AV
     {
-        // ── Roles ────────────────────────────────────────────────────────────
 
         public DataTable ObtenerTodos()
         {
-            return EjecutarQuery("SELECT Id, Descripcion, Codigo FROM Roles", null);
+            return EjecutarSP("sp_Roles_ObtenerTodos", null);
         }
 
-        public DataTable ObtenerPorId(Dictionary<string, object> parametros)
+        public DataTable ObtenerPorId(string id)
         {
-            return EjecutarQuery("SELECT Id, Descripcion, Codigo FROM Roles WHERE Id = @id", parametros);
+            return EjecutarSP("sp_Roles_ObtenerPorId", new Dictionary<string, object>
+            {
+                { "@Id", id }
+            });
         }
 
-        public void Agregar(Dictionary<string, object> parametros)
+        public void Agregar(string id, string descripcion, string codigo)
         {
-            EjecutarNonQuery("INSERT INTO Roles (Id, Descripcion, Codigo) VALUES (@id, @descripcion, @codigo)", parametros);
+            EjecutarSPNonQuery("sp_Roles_Agregar", new Dictionary<string, object>
+            {
+                { "@Id",          id          },
+                { "@Descripcion", descripcion },
+                { "@Codigo",      codigo      }
+            });
         }
 
-        public void Modificar(Dictionary<string, object> parametros)
+        public void Modificar(string id, string descripcion)
         {
-            EjecutarNonQuery("UPDATE Roles SET Descripcion = @descripcion WHERE Id = @id", parametros);
+            EjecutarSPNonQuery("sp_Roles_Modificar", new Dictionary<string, object>
+            {
+                { "@Id",          id          },
+                { "@Descripcion", descripcion }
+            });
         }
 
-        public void Eliminar(Dictionary<string, object> parametros)
+        public void Eliminar(string id)
         {
-            EjecutarNonQuery("DELETE FROM Roles WHERE Id = @id", parametros);
+            EjecutarSPNonQuery("sp_Roles_Eliminar", new Dictionary<string, object>
+            {
+                { "@Id", id }
+            });
         }
 
-        // ── Relación Rol → Patente ───────────────────────────────────────────
+        // ── Relación Rol → Patente ────────────────────────────────────────────
 
-        public DataTable ObtenerPatentesPorRol(Dictionary<string, object> parametros)
+        public DataTable ObtenerPatentesPorRol(string idRol)
         {
-            string query = @"SELECT p.Id, p.Descripcion
-                             FROM RolPatentes rp
-                             JOIN Patentes p ON p.Id = rp.IdPatente
-                             WHERE rp.IdRol = @idRol";
-            return EjecutarQuery(query, parametros);
+            return EjecutarSP("sp_Roles_ObtenerPatentes", new Dictionary<string, object>
+            {
+                { "@IdRol", idRol }
+            });
         }
 
-        public void AgregarPatente(Dictionary<string, object> parametros)
+        public void AgregarPatente(string idRol, string idPatente)
         {
-            EjecutarNonQuery(
-                "INSERT INTO RolPatentes (IdRol, IdPatente) VALUES (@idRol, @idPatente)",
-                parametros);
+            EjecutarSPNonQuery("sp_Roles_AgregarPatente", new Dictionary<string, object>
+            {
+                { "@IdRol",     idRol     },
+                { "@IdPatente", idPatente }
+            });
         }
 
-        public void QuitarPatente(Dictionary<string, object> parametros)
+        public void QuitarPatente(string idRol, string idPatente)
         {
-            EjecutarNonQuery(
-                "DELETE FROM RolPatentes WHERE IdRol = @idRol AND IdPatente = @idPatente",
-                parametros);
+            EjecutarSPNonQuery("sp_Roles_QuitarPatente", new Dictionary<string, object>
+            {
+                { "@IdRol",     idRol     },
+                { "@IdPatente", idPatente }
+            });
         }
 
-        // ── Relación Rol → Familia ───────────────────────────────────────────
+        // ── Relación Rol → Familia ────────────────────────────────────────────
 
-        public DataTable ObtenerFamiliasPorRol(Dictionary<string, object> parametros)
+        public DataTable ObtenerFamiliasPorRol(string idRol)
         {
-            string query = @"SELECT f.Id, f.Descripcion
-                             FROM RolFamilias rf
-                             JOIN Familias f ON f.Id = rf.IdFamilia
-                             WHERE rf.IdRol = @idRol";
-            return EjecutarQuery(query, parametros);
+            return EjecutarSP("sp_Roles_ObtenerFamilias", new Dictionary<string, object>
+            {
+                { "@IdRol", idRol }
+            });
         }
 
-        public void AgregarFamilia(Dictionary<string, object> parametros)
+        public void AgregarFamilia(string idRol, string idFamilia)
         {
-            EjecutarNonQuery(
-                "INSERT INTO RolFamilias (IdRol, IdFamilia) VALUES (@idRol, @idFamilia)",
-                parametros);
+            EjecutarSPNonQuery("sp_Roles_AgregarFamilia", new Dictionary<string, object>
+            {
+                { "@IdRol",     idRol     },
+                { "@IdFamilia", idFamilia }
+            });
         }
 
-        public void QuitarFamilia(Dictionary<string, object> parametros)
+        public void QuitarFamilia(string idRol, string idFamilia)
         {
-            EjecutarNonQuery(
-                "DELETE FROM RolFamilias WHERE IdRol = @idRol AND IdFamilia = @idFamilia",
-                parametros);
+            EjecutarSPNonQuery("sp_Roles_QuitarFamilia", new Dictionary<string, object>
+            {
+                { "@IdRol",     idRol     },
+                { "@IdFamilia", idFamilia }
+            });
         }
 
         #region Helpers
 
-        private DataTable EjecutarQuery(string query, Dictionary<string, object> parametros)
+        private DataTable EjecutarSP(string nombreSP, Dictionary<string, object> parametros)
         {
             SqlConnection conn = Conexion.Instancia.ObtenerConexion();
-            SqlCommand cmd = new SqlCommand(query, conn);
+            SqlCommand cmd = new SqlCommand(nombreSP, conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
             if (parametros != null)
                 foreach (var p in parametros)
                     cmd.Parameters.AddWithValue(p.Key, p.Value);
@@ -103,10 +126,13 @@ namespace DAL
             return tabla;
         }
 
-        private void EjecutarNonQuery(string query, Dictionary<string, object> parametros)
+        private void EjecutarSPNonQuery(string nombreSP, Dictionary<string, object> parametros)
         {
             SqlConnection conn = Conexion.Instancia.ObtenerConexion();
-            SqlCommand cmd = new SqlCommand(query, conn);
+            SqlCommand cmd = new SqlCommand(nombreSP, conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
             if (parametros != null)
                 foreach (var p in parametros)
                     cmd.Parameters.AddWithValue(p.Key, p.Value);

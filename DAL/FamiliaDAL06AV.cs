@@ -10,91 +10,112 @@ namespace DAL
 {
     public class FamiliaDAL06AV
     {
-        // ── Familias ────────────────────────────────────────────────────────
+        // ── Familias ─────────────────────────────────────────────────────────
 
         public DataTable ObtenerTodos()
         {
-            return EjecutarQuery("SELECT Id, Descripcion FROM Familias", null);
+            return EjecutarSP("sp_Familias_ObtenerTodos", null);
         }
 
-        public DataTable ObtenerPorId(Dictionary<string, object> parametros)
+        public DataTable ObtenerPorId(string id)
         {
-            return EjecutarQuery("SELECT Id, Descripcion FROM Familias WHERE Id = @id", parametros);
+            return EjecutarSP("sp_Familias_ObtenerPorId", new Dictionary<string, object>
+            {
+                { "@Id", id }
+            });
         }
 
-        public void Agregar(Dictionary<string, object> parametros)
+        public void Agregar(string id, string descripcion)
         {
-            EjecutarNonQuery("INSERT INTO Familias (Id, Descripcion) VALUES (@id, @descripcion)", parametros);
+            EjecutarSPNonQuery("sp_Familias_Agregar", new Dictionary<string, object>
+            {
+                { "@Id",          id          },
+                { "@Descripcion", descripcion }
+            });
         }
 
-        public void Modificar(Dictionary<string, object> parametros)
+        public void Modificar(string id, string descripcion)
         {
-            EjecutarNonQuery("UPDATE Familias SET Descripcion = @descripcion WHERE Id = @id", parametros);
+            EjecutarSPNonQuery("sp_Familias_Modificar", new Dictionary<string, object>
+            {
+                { "@Id",          id          },
+                { "@Descripcion", descripcion }
+            });
         }
 
-        public void Eliminar(Dictionary<string, object> parametros)
+        public void Eliminar(string id)
         {
-            EjecutarNonQuery("DELETE FROM Familias WHERE Id = @id", parametros);
+            EjecutarSPNonQuery("sp_Familias_Eliminar", new Dictionary<string, object>
+            {
+                { "@Id", id }
+            });
         }
 
-        // ── Relación Familia → Patente ───────────────────────────────────────
+        // ── Relación Familia → Patente ────────────────────────────────────────
 
-        /// <summary>Devuelve las patentes directas de una familia (no recursivo).</summary>
-        public DataTable ObtenerPatentesDeFamilia(Dictionary<string, object> parametros)
+        public DataTable ObtenerPatentesDeFamilia(string idFamilia)
         {
-            string query = @"SELECT p.Id, p.Descripcion
-                             FROM FamiliaPatentes fp
-                             JOIN Patentes p ON p.Id = fp.IdPatente
-                             WHERE fp.IdFamilia = @idFamilia";
-            return EjecutarQuery(query, parametros);
+            return EjecutarSP("sp_Familias_ObtenerPatentes", new Dictionary<string, object>
+            {
+                { "@IdFamilia", idFamilia }
+            });
         }
 
-        public void AgregarPatente(Dictionary<string, object> parametros)
+        public void AgregarPatente(string idFamilia, string idPatente)
         {
-            EjecutarNonQuery(
-                "INSERT INTO FamiliaPatentes (IdFamilia, IdPatente) VALUES (@idFamilia, @idPatente)",
-                parametros);
+            EjecutarSPNonQuery("sp_Familias_AgregarPatente", new Dictionary<string, object>
+            {
+                { "@IdFamilia", idFamilia },
+                { "@IdPatente", idPatente }
+            });
         }
 
-        public void QuitarPatente(Dictionary<string, object> parametros)
+        public void QuitarPatente(string idFamilia, string idPatente)
         {
-            EjecutarNonQuery(
-                "DELETE FROM FamiliaPatentes WHERE IdFamilia = @idFamilia AND IdPatente = @idPatente",
-                parametros);
+            EjecutarSPNonQuery("sp_Familias_QuitarPatente", new Dictionary<string, object>
+            {
+                { "@IdFamilia", idFamilia },
+                { "@IdPatente", idPatente }
+            });
         }
 
-        // ── Relación Familia → Familia hija ─────────────────────────────────
+        // ── Relación Familia → Familia hija ──────────────────────────────────
 
-        /// <summary>Devuelve las subfamilias directas de una familia.</summary>
-        public DataTable ObtenerSubfamiliasDeFamilia(Dictionary<string, object> parametros)
+        public DataTable ObtenerSubfamiliasDeFamilia(string idPadre)
         {
-            string query = @"SELECT f.Id, f.Descripcion
-                             FROM FamiliaFamilias ff
-                             JOIN Familias f ON f.Id = ff.IdHijo
-                             WHERE ff.IdPadre = @idPadre";
-            return EjecutarQuery(query, parametros);
+            return EjecutarSP("sp_Familias_ObtenerSubfamilias", new Dictionary<string, object>
+            {
+                { "@IdPadre", idPadre }
+            });
         }
 
-        public void AgregarSubfamilia(Dictionary<string, object> parametros)
+        public void AgregarSubfamilia(string idPadre, string idHijo)
         {
-            EjecutarNonQuery(
-                "INSERT INTO FamiliaFamilias (IdPadre, IdHijo) VALUES (@idPadre, @idHijo)",
-                parametros);
+            EjecutarSPNonQuery("sp_Familias_AgregarSubfamilia", new Dictionary<string, object>
+            {
+                { "@IdPadre", idPadre },
+                { "@IdHijo",  idHijo  }
+            });
         }
 
-        public void QuitarSubfamilia(Dictionary<string, object> parametros)
+        public void QuitarSubfamilia(string idPadre, string idHijo)
         {
-            EjecutarNonQuery(
-                "DELETE FROM FamiliaFamilias WHERE IdPadre = @idPadre AND IdHijo = @idHijo",
-                parametros);
+            EjecutarSPNonQuery("sp_Familias_QuitarSubfamilia", new Dictionary<string, object>
+            {
+                { "@IdPadre", idPadre },
+                { "@IdHijo",  idHijo  }
+            });
         }
 
         #region Helpers
 
-        private DataTable EjecutarQuery(string query, Dictionary<string, object> parametros)
+        private DataTable EjecutarSP(string nombreSP, Dictionary<string, object> parametros)
         {
             SqlConnection conn = Conexion.Instancia.ObtenerConexion();
-            SqlCommand cmd = new SqlCommand(query, conn);
+            SqlCommand cmd = new SqlCommand(nombreSP, conn)
+            {   
+                CommandType = CommandType.StoredProcedure
+            };
             if (parametros != null)
                 foreach (var p in parametros)
                     cmd.Parameters.AddWithValue(p.Key, p.Value);
@@ -105,10 +126,13 @@ namespace DAL
             return tabla;
         }
 
-        private void EjecutarNonQuery(string query, Dictionary<string, object> parametros)
+        private void EjecutarSPNonQuery(string nombreSP, Dictionary<string, object> parametros)
         {
             SqlConnection conn = Conexion.Instancia.ObtenerConexion();
-            SqlCommand cmd = new SqlCommand(query, conn);
+            SqlCommand cmd = new SqlCommand(nombreSP, conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
             if (parametros != null)
                 foreach (var p in parametros)
                     cmd.Parameters.AddWithValue(p.Key, p.Value);

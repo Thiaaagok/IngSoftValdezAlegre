@@ -76,7 +76,6 @@ namespace SER
                 var sesion = UsuarioSesion06AV.Instancia();
                 sesion.IniciarSesion(usuario, rol);
 
-                // Cargar patentes del rol (recursivo via SP)
                 var patentesMPP = new PatenteMPP06AV();
                 var patentes = patentesMPP.ObtenerPatentesPorRol(rol.Id);
                 sesion.CargarPatentes(patentes);

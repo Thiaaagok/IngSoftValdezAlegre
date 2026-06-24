@@ -12,73 +12,28 @@ namespace DAL
     {
         public DataTable ObtenerTodos()
         {
-            string query = "SELECT Id, Descripcion FROM Patentes";
-            return EjecutarQuery(query, null);
+            return EjecutarSP("sp_Patentes_ObtenerTodos", null);
         }
 
-        public DataTable ObtenerPorId(Dictionary<string, object> parametros)
+        public DataTable ObtenerPorId(string id)
         {
-            string query = "SELECT Id, Descripcion FROM Patentes WHERE Id = @id";
-            return EjecutarQuery(query, parametros);
+            return EjecutarSP("sp_Patentes_ObtenerPorId", new Dictionary<string, object>
+            {
+                { "@Id", id }
+            });
         }
 
-        public void Agregar(Dictionary<string, object> parametros)
-        {
-            string query = "INSERT INTO Patentes (Id, Descripcion) VALUES (@id, @descripcion)";
-            EjecutarNonQuery(query, parametros);
-        }
-
-        public void Modificar(Dictionary<string, object> parametros)
-        {
-            string query = "UPDATE Patentes SET Descripcion = @descripcion WHERE Id = @id";
-            EjecutarNonQuery(query, parametros);
-        }
-
-        public void Eliminar(Dictionary<string, object> parametros)
-        {
-            string query = "DELETE FROM Patentes WHERE Id = @id";
-            EjecutarNonQuery(query, parametros);
-        }
-
-        /// <summary>
-        /// Llama al SP recursivo que expande toda la jerarquía de familias
-        /// del rol y devuelve las patentes resultantes (sin duplicados).
-        /// </summary>
         public DataTable ObtenerPatentesPorRol(string idRol)
         {
-            var parametros = new Dictionary<string, object> { { "@IdRol", idRol } };
-            return EjecutarStoredProcedure("sp_ObtenerPatentesUsuario", parametros);
+            return EjecutarSP("sp_ObtenerPatentesUsuario", new Dictionary<string, object>
+            {
+                { "@IdRol", idRol }
+            });
         }
 
         #region Helpers
 
-        private DataTable EjecutarQuery(string query, Dictionary<string, object> parametros)
-        {
-            SqlConnection conn = Conexion.Instancia.ObtenerConexion();
-            SqlCommand cmd = new SqlCommand(query, conn);
-            if (parametros != null)
-                foreach (var p in parametros)
-                    cmd.Parameters.AddWithValue(p.Key, p.Value);
-            DataTable tabla = new DataTable();
-            conn.Open();
-            new SqlDataAdapter(cmd).Fill(tabla);
-            conn.Close();
-            return tabla;
-        }
-
-        private void EjecutarNonQuery(string query, Dictionary<string, object> parametros)
-        {
-            SqlConnection conn = Conexion.Instancia.ObtenerConexion();
-            SqlCommand cmd = new SqlCommand(query, conn);
-            if (parametros != null)
-                foreach (var p in parametros)
-                    cmd.Parameters.AddWithValue(p.Key, p.Value);
-            conn.Open();
-            cmd.ExecuteNonQuery();
-            conn.Close();
-        }
-
-        private DataTable EjecutarStoredProcedure(string nombreSP, Dictionary<string, object> parametros)
+        private DataTable EjecutarSP(string nombreSP, Dictionary<string, object> parametros)
         {
             SqlConnection conn = Conexion.Instancia.ObtenerConexion();
             SqlCommand cmd = new SqlCommand(nombreSP, conn)
