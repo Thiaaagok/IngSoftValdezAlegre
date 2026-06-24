@@ -36,13 +36,13 @@ namespace SER
             _hijos.Add(componente);
         }
 
-            /// <summary>
-            /// Agrega múltiples componentes validando todos antes de persistir ninguno.
-            /// Si alguno genera duplicado, no se agrega ninguno.
-            /// </summary>
-            public void AgregarRango(IEnumerable<IComponentePermiso06AV> componentes)
-            {
-                var acumuladas = ObtenerPatentes();
+        /// <summary>
+        /// Agrega múltiples componentes validando todos antes de persistir ninguno.
+        /// Si alguno genera duplicado, no se agrega ninguno.
+        /// </summary>
+        public void AgregarRango(IEnumerable<IComponentePermiso06AV> componentes)
+        {
+            var acumuladas = ObtenerPatentes();
             foreach (var componente in componentes)
             {
                 var duplicada = componente.ObtenerPatentes()

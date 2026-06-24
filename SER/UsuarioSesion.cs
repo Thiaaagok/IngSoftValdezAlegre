@@ -1,35 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BE
-{
-    public class UsuarioSesion
-    {
-        private static UsuarioSesion _Instancia;
-            
-        public Guid Id { get; set; }
-        // Falta pasar por proceso de encriptación
-        public string Contrasenia { get; set; }
-        public string Usuario { get; set; }
-        public Guid Rol { get; set; }
-        public string Idioma { get; set; }
-
-        private UsuarioSesion()
-        {
-
-        }
-
-        public static UsuarioSesion Instancia()
-        {
-            if( _Instancia == null)
-            {
-                _Instancia = new UsuarioSesion();
-            }
-            return _Instancia;
-        }
-    }
-}
+// Este archivo quedó vacío intencionalmente.
+//
+// Contenía una clase "UsuarioSesion" (namespace BE) que era un singleton legacy,
+// no utilizado por ningún otro archivo del proyecto y que ni siquiera estaba
+// incluido en SER_06AV.csproj (no se compilaba). El singleton de sesión real y
+// vigente es SER.UsuarioSesion06AV (ver UsuarioSesion06AV.cs), que es el que
+// usan FRMLogin, FRMMain y UsuariosBLL06AV.

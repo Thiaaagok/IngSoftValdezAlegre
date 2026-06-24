@@ -41,9 +41,10 @@ namespace SER
 
         public const string ES = "ES";
         public const string EN = "EN";
+        public const string PT = "PT";
         public const string IdiomaDefecto = ES;
 
-        public static readonly string[] IdiomasDisponibles = { ES, EN };
+        public static readonly string[] IdiomasDisponibles = { ES, EN, PT };
 
         /// <summary>
         /// Carpeta donde viven los archivos de traducción (relativa al ejecutable).

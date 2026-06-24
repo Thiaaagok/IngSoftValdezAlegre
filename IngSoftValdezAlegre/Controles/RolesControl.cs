@@ -455,6 +455,13 @@ namespace IngSoftValdezAlegre.Controles
             {
                 accion();
                 CargarDatos(idRol);
+
+                // El rol que se acaba de modificar es el mismo que tiene la sesión
+                // actual: sus patentes efectivas quedaron desactualizadas, así que
+                // se fuerza a volver a loguearse para que se recalculen.
+                var sesion = UsuarioSesion06AV.Instancia();
+                if (sesion.Rol != null && sesion.Rol.Id == idRol)
+                    (FindForm() as FRMMain)?.ForzarReloginPorCambioDeRol();
             }
             catch (Exception ex)
             {

@@ -95,6 +95,8 @@
   "idioma": "Language",
   "cambiar_idioma": "Change language",
   "idioma_guardado": "Language saved successfully.",
+  "menu_principal": "MAIN",
+  "sidebar_footer": "Management system",
 
   "tema": "Theme",
   "tema_claro": "☀ Light",
@@ -202,6 +204,13 @@
 
   "confirmar_cerrar_sesion": "Are you sure you want to sign out?",
   "si_cerrar": "Sign out",
+
+  "relogin": "Relogin",
+  "confirmar_relogin": "Do you want to sign out?",
+  "si_relogin": "Yes, sign out",
+  "sesion_activa_bloqueo": "There is already an active session on this system. A new one cannot start until the current session is closed.",
+  "exc_sesion_activa": "Login rejected: there is already an active session for the user with ID '{0}'. Close that session before starting a new one.",
+  "rol_modificado_relogin": "Your role was modified. For security, you need to sign in again so your permissions are refreshed.",
 
   "idioma_cambiado_sesion": "Language changed. It will be saved when you sign out.",
   "familia_sin_hijos": "A family must have at least one permission or subfamily before saving.",

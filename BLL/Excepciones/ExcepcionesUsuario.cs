@@ -78,6 +78,23 @@ namespace SER.Excepciones
         }
     }
 
+    /// <summary>
+    /// Se lanza al intentar iniciar sesión mientras el singleton UsuarioSesion06AV
+    /// ya tiene un usuario cargado. Demuestra que el singleton retiene su estado
+    /// (no se resetea solo) y que el sistema no permite una segunda sesión simultánea
+    /// hasta que esa sesión se cierre explícitamente con CerrarSesion().
+    /// </summary>
+    public class SesionActivaException : UsuarioException
+    {
+        public string DniSesionActiva { get; }
+
+        public SesionActivaException(string dniSesionActiva)
+            : base(GestorIdioma06AV.Instancia.Obtener("exc_sesion_activa", dniSesionActiva), "USR_SESION_ACTIVA")
+        {
+            DniSesionActiva = dniSesionActiva;
+        }
+    }
+
     public class UsuarioAccesoDatosException : UsuarioException
     {
         public UsuarioAccesoDatosException(string operacion, Exception inner)

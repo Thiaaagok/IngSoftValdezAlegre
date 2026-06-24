@@ -95,6 +95,8 @@
   "idioma": "Idioma",
   "cambiar_idioma": "Cambiar idioma",
   "idioma_guardado": "Idioma guardado correctamente.",
+  "menu_principal": "PRINCIPAL",
+  "sidebar_footer": "Planta de ensamblaje",
 
   "tema": "Tema",
   "tema_claro": "☀ Claro",
@@ -203,6 +205,13 @@
   "confirmar_cerrar_sesion": "¿Estás seguro que querés cerrar sesión?",
   "si_cerrar": "Sí, cerrar",
 
+  "relogin": "Relogin",
+  "confirmar_relogin": "¿Desea cerrar sesión?",
+  "si_relogin": "Sí, cerrar sesión",
+  "sesion_activa_bloqueo": "Ya hay una sesión activa en este sistema. No se puede iniciar otra hasta que se cierre la sesión actual.",
+  "exc_sesion_activa": "Login rechazado: ya existe una sesión activa para el usuario con DNI '{0}'. Cerrá esa sesión antes de iniciar una nueva.",
+  "rol_modificado_relogin": "Tu rol fue modificado. Por seguridad, tenés que volver a iniciar sesión para que se actualicen tus permisos.",
+
   "idioma_cambiado_sesion": "Idioma cambiado. Se guardará al cerrar sesión.",
   "familia_sin_hijos": "Una familia debe tener al menos una patente o subfamilia antes de guardar.",
   "rol_sin_hijos": "Un rol debe tener al menos una patente o familia antes de guardar.",
@@ -213,7 +222,7 @@
   "rol_creado": "Rol creado correctamente.",
   "rol_modificado": "Rol modificado correctamente.",
   "rol_eliminado": "Rol eliminado correctamente.",
-  "codigo": "Cdigo",
+  "codigo": "Código",
   "val_rol_descripcion_duplicada": "Ya existe un rol con la descripción '{0}'.",
   "val_familia_descripcion_duplicada": "Ya existe una familia con la descripción '{0}'."
 }

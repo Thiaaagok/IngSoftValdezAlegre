@@ -136,6 +136,17 @@ namespace IngSoftValdezAlegre
                     tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
                     owner: this);
             }
+            catch (SesionActivaException)
+            {
+                // El singleton UsuarioSesion06AV ya tiene un usuario cargado: ningún
+                // login nuevo se acepta hasta que esa sesión se cierre explícitamente.
+                var t = GestorIdioma06AV.Instancia;
+                ConfirmacionForm.MostrarInfo(
+                    t.Obtener("sesion_activa_bloqueo"),
+                    titulo: t.Obtener("acceso_denegado"),
+                    tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
+                    owner: this);
+            }
             catch (UsuarioNoEncontradoException)
             {
                 var t = GestorIdioma06AV.Instancia;

@@ -16,6 +16,10 @@ namespace SER
 
         // ── Bitácora ──
         VerBitacora,
-        ExportarBitacora
+        ExportarBitacora,
+
+        // ── Acceso a pantallas de permisos ──
+        GestionarRoles,
+        GestionarFamilias
     }
 }

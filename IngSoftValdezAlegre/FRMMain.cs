@@ -17,6 +17,7 @@ namespace IngSoftValdezAlegre
         private bool _sidebarExpandido = true;
         private Button _moduloActivo;
         private ToolStripMenuItem cambiarIdiomaToolStripMenuItem;
+        private ContextMenuStrip cmsIdiomas;
 
         public Usuario06AV Usuario = new Usuario06AV();
 
@@ -31,12 +32,22 @@ namespace IngSoftValdezAlegre
             GestorIdioma06AV.Instancia.IdiomaChanged += AplicarIdioma;
             FormClosed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
 
-            if (!EsAdministrador())
+            var sesion = UsuarioSesion06AV.Instancia();
+
+            if (!sesion.TienePermiso(PatenteEnum06AV.GestionarRoles))
             {
                 rolesBTN.Enabled = false;
                 rolesBTN.Visible = false;
+            }
+
+            if (!sesion.TienePermiso(PatenteEnum06AV.GestionarFamilias))
+            {
                 familiasBTN.Enabled = false;
                 familiasBTN.Visible = false;
+            }
+
+            if (!EsAdministrador())
+            {
                 bitacoraBTN.Enabled = false;
                 bitacoraBTN.Visible = false;
             }
@@ -51,10 +62,8 @@ namespace IngSoftValdezAlegre
 
             Text = "PC Forge / Clinica";
             lblSistema.Text = "PC FORGE/CLINICA";
-            lblMenuPrincipal.Text = t.IdiomaActual == GestorIdioma06AV.ES ? "PRINCIPAL" : "MAIN";
-            lblSidebarFooter.Text = t.IdiomaActual == GestorIdioma06AV.ES
-                ? "Planta de ensamblaje"
-                : "Management system";
+            lblMenuPrincipal.Text = t.Obtener("menu_principal");
+            lblSidebarFooter.Text = t.Obtener("sidebar_footer");
 
             ConfigurarBotonModulo(usuariosBTN, t.Obtener("usuarios"), "\uE716");
             ConfigurarBotonModulo(rolesBTN, t.Obtener("titulo_roles"), "\uE8D7");
@@ -62,6 +71,7 @@ namespace IngSoftValdezAlegre
             ConfigurarBotonModulo(bitacoraBTN, t.Obtener("bitacora"), "\uE9D5");
 
             cambiarContraseñaToolStripMenuItem.Text = t.Obtener("cambiar_contrasenia");
+            reloginToolStripMenuItem.Text = t.Obtener("relogin");
             btnCerrarSesion.Text = t.Obtener("cerrar_sesion");
             btnIdioma.Text = t.IdiomaActual;
 
@@ -78,6 +88,8 @@ namespace IngSoftValdezAlegre
             {
                 cambiarIdiomaToolStripMenuItem.Text = t.Obtener("cambiar_idioma");
             }
+
+            ConstruirMenuIdiomas();
 
             toolTipMain.SetToolTip(btnIdioma, t.Obtener("cambiar_idioma"));
             toolTipMain.SetToolTip(btnCerrarSesion, t.Obtener("cerrar_sesion"));
@@ -313,22 +325,48 @@ namespace IngSoftValdezAlegre
             ctxMenuUsuario.Show(panel4, new Point(panel4.Width - ctxMenuUsuario.Width, panel4.Height + 2));
         }
 
+        // Hay más de dos idiomas disponibles (ES/EN/PT), así que el botón y el ítem
+        // de menú despliegan un listado en vez de alternar entre dos opciones fijas.
         private void btnIdioma_Click(object sender, EventArgs e)
         {
-            CambiarIdiomaActual();
+            cmsIdiomas.Show(btnIdioma, new Point(0, btnIdioma.Height));
         }
 
         private void cambiarIdiomaToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            CambiarIdiomaActual();
+            cmsIdiomas.Show(Cursor.Position);
         }
 
-        private void CambiarIdiomaActual()
+        /// <summary>
+        /// Crea, una sola vez, el menú con todos los idiomas en SER.GestorIdioma06AV.IdiomasDisponibles.
+        /// Si se agrega un idioma nuevo (otro .json + otra constante), aparece solo, sin tocar este método.
+        /// </summary>
+        private void ConstruirMenuIdiomas()
+        {
+            if (cmsIdiomas != null) return;
+
+            cmsIdiomas = new ContextMenuStrip();
+
+            var nombres = new System.Collections.Generic.Dictionary<string, string>
+            {
+                { GestorIdioma06AV.ES, "Español" },
+                { GestorIdioma06AV.EN, "English" },
+                { GestorIdioma06AV.PT, "Português" }
+            };
+
+            foreach (string codigo in GestorIdioma06AV.IdiomasDisponibles)
+            {
+                string texto = nombres.TryGetValue(codigo, out var n) ? n : codigo;
+                var item = new ToolStripMenuItem(texto) { Tag = codigo };
+                item.Click += (s, e) => CambiarIdiomaA(((ToolStripMenuItem)s).Tag.ToString());
+                cmsIdiomas.Items.Add(item);
+            }
+        }
+
+        private void CambiarIdiomaA(string nuevo)
         {
             var t = GestorIdioma06AV.Instancia;
-            string nuevo = t.IdiomaActual == GestorIdioma06AV.ES
-                ? GestorIdioma06AV.EN
-                : GestorIdioma06AV.ES;
+            if (t.IdiomaActual == nuevo) return;
 
             try
             {
@@ -380,6 +418,52 @@ namespace IngSoftValdezAlegre
             var login = new FRMLogin();
             login.Show();
             Close();
+        }
+
+        /// <summary>
+        /// Se llama cuando se le agregan o quitan patentes/familias al rol que
+        /// tiene asignado el usuario de la sesión actual. Las patentes efectivas
+        /// quedaron cacheadas en UsuarioSesion06AV al momento del login, así que
+        /// hay que cerrar sesión y obligar a loguearse de nuevo para que se
+        /// recalculen (CargarPatentes se llama otra vez dentro de Login).
+        /// </summary>
+        public void ForzarReloginPorCambioDeRol()
+        {
+            var t = GestorIdioma06AV.Instancia;
+            ConfirmacionForm.MostrarInfo(
+                t.Obtener("rol_modificado_relogin"),
+                titulo: t.Obtener("aviso"),
+                tipo: ConfirmacionForm.TipoConfirmacion.Advertencia,
+                owner: this);
+
+            CerrarSesionYVolverALogin();
+        }
+
+        /// <summary>
+        /// "Relogin": es como cerrar sesión a nivel de pantalla, pero a propósito
+        /// NO se llama a UsuarioSesion06AV.Instancia().CerrarSesion(). El singleton
+        /// se queda con el usuario, rol y patentes cargados. Sirve para demostrar
+        /// que el singleton retiene su estado: cualquier intento de login posterior
+        /// (propio o de otro usuario) va a ser rechazado por UsuariosBLL06AV.Login,
+        /// que verifica si ya hay una sesión activa antes de autenticar a nadie.
+        /// </summary>
+        private void reloginToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var t = GestorIdioma06AV.Instancia;
+            bool confirmado = ConfirmacionForm.Mostrar(
+                mensaje: t.Obtener("confirmar_relogin"),
+                titulo: t.Obtener("relogin"),
+                textoSi: t.Obtener("si_relogin"),
+                textoNo: t.Obtener("cancelar"),
+                owner: this);
+
+            if (!confirmado) return;
+
+            Hide();
+
+            var login = new FRMLogin();
+            login.FormClosed += (s, args) => Close();
+            login.Show();
         }
 
         private void cerrarSesiónToolStripMenuItem_Click(object sender, EventArgs e)

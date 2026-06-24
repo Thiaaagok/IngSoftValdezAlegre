@@ -52,6 +52,7 @@ namespace IngSoftValdezAlegre
             this.lblSidebarFooter = new System.Windows.Forms.Label();
             this.ctxMenuUsuario = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.cambiarContraseñaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.reloginToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolTipMain = new System.Windows.Forms.ToolTip(this.components);
             this.pnlTopBar.SuspendLayout();
             this.flpTopActions.SuspendLayout();
@@ -325,17 +326,25 @@ namespace IngSoftValdezAlegre
             // ctxMenuUsuario
             // 
             this.ctxMenuUsuario.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.cambiarContraseñaToolStripMenuItem});
+            this.cambiarContraseñaToolStripMenuItem,
+            this.reloginToolStripMenuItem});
             this.ctxMenuUsuario.Name = "ctxMenuUsuario";
-            this.ctxMenuUsuario.Size = new System.Drawing.Size(183, 26);
-            // 
+            this.ctxMenuUsuario.Size = new System.Drawing.Size(183, 48);
+            //
             // cambiarContraseñaToolStripMenuItem
-            // 
+            //
             this.cambiarContraseñaToolStripMenuItem.Name = "cambiarContraseñaToolStripMenuItem";
             this.cambiarContraseñaToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
             this.cambiarContraseñaToolStripMenuItem.Text = "Cambiar Contraseña";
             this.cambiarContraseñaToolStripMenuItem.Click += new System.EventHandler(this.cambiarContraseñaToolStripMenuItem_Click);
-            // 
+            //
+            // reloginToolStripMenuItem
+            //
+            this.reloginToolStripMenuItem.Name = "reloginToolStripMenuItem";
+            this.reloginToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+            this.reloginToolStripMenuItem.Text = "Relogin";
+            this.reloginToolStripMenuItem.Click += new System.EventHandler(this.reloginToolStripMenuItem_Click);
+            //
             // FRMMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -381,6 +390,7 @@ namespace IngSoftValdezAlegre
         private System.Windows.Forms.Button opcionesUsuarioBTN;
         private System.Windows.Forms.ContextMenuStrip ctxMenuUsuario;
         private System.Windows.Forms.ToolStripMenuItem cambiarContraseñaToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem reloginToolStripMenuItem;
         private System.Windows.Forms.FlowLayoutPanel flpModulos;
         private System.Windows.Forms.Button btnToggleSidebar;
         private System.Windows.Forms.FlowLayoutPanel flpTopActions;

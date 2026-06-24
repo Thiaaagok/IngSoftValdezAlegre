@@ -26,6 +26,13 @@ namespace SER
             if (string.IsNullOrWhiteSpace(contrasenia))
                 throw new UsuarioValidacionException("contrasenia", t.Obtener("val_contrasenia_vacia"));
 
+            // Guarda de sesión única: el singleton UsuarioSesion06AV conserva su estado
+            // entre pantallas (lo demuestra "Relogin"). Si ya hay un usuario cargado ahí,
+            // no se permite ningún login nuevo hasta que esa sesión se cierre.
+            var sesionActiva = UsuarioSesion06AV.Instancia();
+            if (sesionActiva.UsuarioActual != null)
+                throw new SesionActivaException(sesionActiva.UsuarioActual.Dni);
+
             BitacoraBLL06AV bitacora = new BitacoraBLL06AV();
             EncriptacionSER06AV enc = new EncriptacionSER06AV();
             UsuariosMPP06AV UsuariosMPP = new UsuariosMPP06AV();
