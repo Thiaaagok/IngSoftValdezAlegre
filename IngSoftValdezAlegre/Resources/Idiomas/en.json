@@ -224,5 +224,17 @@
   "rol_eliminado": "Role deleted successfully.",
   "codigo": "Code",
   "val_rol_descripcion_duplicada": "A role with the description '{0}' already exists.",
-  "val_familia_descripcion_duplicada": "A group with the description '{0}' already exists."
+  "val_familia_descripcion_duplicada": "A group with the description '{0}' already exists.",
+
+  "admin": "Admin",
+  "id": "Id",
+  "titulo_patentes": "Permissions",
+  "ayuda_patentes": "A permission is the atomic right of the system. Its Id must match a value of the PatenteEnum06AV enum.",
+  "patente_creada": "Permission created successfully.",
+  "patente_modificada": "Permission updated successfully.",
+  "patente_eliminada": "Permission deleted successfully.",
+  "confirmar_eliminar_patente": "Do you want to delete the selected permission?",
+  "eliminar_patente": "Delete permission",
+  "val_patente_descripcion_duplicada": "A permission with the description '{0}' already exists.",
+  "val_patente_id_duplicado": "A permission with the Id '{0}' already exists."
 }

@@ -36,6 +36,12 @@ namespace MPP
             return lista;
         }
 
+        public void Agregar(Patente06AV patente) => _dal.Agregar(patente.Id, patente.Descripcion);
+
+        public void Modificar(Patente06AV patente) => _dal.Modificar(patente.Id, patente.Descripcion);
+
+        public void Eliminar(string id) => _dal.Eliminar(id);
+
         // ── Mapeo ─────────────────────────────────────────────────────────────
 
         public Patente06AV Mapear(DataRow row)

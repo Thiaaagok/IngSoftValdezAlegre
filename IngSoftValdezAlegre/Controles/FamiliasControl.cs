@@ -17,6 +17,7 @@ namespace IngSoftValdezAlegre.Controles
 
         private List<Familia06AV> _familias = new List<Familia06AV>();
         private Familia06AV _familiaPendiente;
+        private List<IComponentePermiso06AV> _hijosOriginales;
         private bool _creando;
         private bool _suspenderSeleccion; 
 
@@ -55,10 +56,10 @@ namespace IngSoftValdezAlegre.Controles
             btnQuitar.Click += (s, e) => QuitarSeleccionado();
             txtDescripcion.TextChanged += (s, e) =>
             {
-                if (_creando && _familiaPendiente != null)
+                if (_familiaPendiente != null)
                 {
                     _familiaPendiente.Descripcion = string.IsNullOrWhiteSpace(txtDescripcion.Text)
-                        ? GestorIdioma06AV.Instancia.Obtener("nueva_familia")
+                        ? (_creando ? GestorIdioma06AV.Instancia.Obtener("nueva_familia") : txtDescripcion.Text)
                         : txtDescripcion.Text.Trim();
                     DibujarArbol(_familiaPendiente);
                 }
@@ -192,11 +193,25 @@ namespace IngSoftValdezAlegre.Controles
             if (_creando) return;
 
             Familia06AV familia = ObtenerFamiliaSeleccionada();
-            if (familia == null) { LimpiarEditor(); return; }
+            if (familia == null)
+            {
+                LimpiarEditor();
+                _familiaPendiente = null;
+                _hijosOriginales = null;
+                return;
+            }
 
             txtDescripcion.Text = familia.Descripcion;
             CargarComboSubfamilias(familia.Id);
-            DibujarArbol(familia);
+
+            // Se trabaja sobre una copia en memoria: agregar/quitar patentes y
+            // subfamilias no toca la base hasta que el usuario presiona Guardar.
+            _hijosOriginales = new List<IComponentePermiso06AV>(familia.Hijos);
+            _familiaPendiente = new Familia06AV { Id = familia.Id, Descripcion = familia.Descripcion };
+            if (_hijosOriginales.Count > 0)
+                _familiaPendiente.AgregarRango(_hijosOriginales);
+
+            DibujarArbol(_familiaPendiente);
         }
 
         private Familia06AV ObtenerFamiliaSeleccionada()
@@ -261,7 +276,7 @@ namespace IngSoftValdezAlegre.Controles
                 return;
             }
 
-            if (_creando && (_familiaPendiente == null || !_familiaPendiente.Hijos.Any()))
+            if (_familiaPendiente == null || !_familiaPendiente.Hijos.Any())
             {
                 MostrarError(t.Obtener("familia_sin_hijos"));
                 return;
@@ -287,13 +302,17 @@ namespace IngSoftValdezAlegre.Controles
                 {
                     Familia06AV seleccionada = ObtenerFamiliaSeleccionada();
                     if (seleccionada == null) return;
+                    string idFamilia = seleccionada.Id;
                     seleccionada.Descripcion = txtDescripcion.Text.Trim();
                     _familiasSer.Modificar(seleccionada);
-                    idFinal = seleccionada.Id;
+
+                    PersistirDiferencias(idFamilia, _hijosOriginales ?? new List<IComponentePermiso06AV>(), _familiaPendiente.Hijos);
+                    idFinal = idFamilia;
                 }
 
                 _creando = false;
                 _familiaPendiente = null;
+                _hijosOriginales = null;
 
                 CargarDatos(idFinal);
 
@@ -339,39 +358,17 @@ namespace IngSoftValdezAlegre.Controles
         private void AgregarPatente()
         {
             if (cmbPatentes.SelectedValue == null) return;
-
-            if (_creando)
-            {
-                Patente06AV patente = cmbPatentes.SelectedItem as Patente06AV;
-                if (patente == null) return;
-                AgregarPendiente(patente);
-                return;
-            }
-
-            Familia06AV familia = ObtenerFamiliaSeleccionada();
-            if (familia == null) return;
-            EjecutarAccion(
-                () => _familiasSer.AgregarPatente(familia.Id, cmbPatentes.SelectedValue.ToString()),
-                familia.Id);
+            Patente06AV patente = cmbPatentes.SelectedItem as Patente06AV;
+            if (patente == null) return;
+            AgregarPendiente(patente);
         }
 
         private void AgregarSubfamilia()
         {
             if (cmbSubfamilias.SelectedValue == null) return;
-
-            if (_creando)
-            {
-                Familia06AV subfamilia = cmbSubfamilias.SelectedItem as Familia06AV;
-                if (subfamilia == null) return;
-                AgregarPendiente(subfamilia);
-                return;
-            }
-
-            Familia06AV familia = ObtenerFamiliaSeleccionada();
-            if (familia == null) return;
-            EjecutarAccion(
-                () => _familiasSer.AgregarSubfamilia(familia.Id, cmbSubfamilias.SelectedValue.ToString()),
-                familia.Id);
+            Familia06AV subfamilia = cmbSubfamilias.SelectedItem as Familia06AV;
+            if (subfamilia == null) return;
+            AgregarPendiente(subfamilia);
         }
 
         private void QuitarSeleccionado()
@@ -380,26 +377,13 @@ namespace IngSoftValdezAlegre.Controles
             NodoPermiso tag = arbol.SelectedNode.Tag as NodoPermiso;
             if (tag == null || arbol.SelectedNode.Parent == null) return;
 
-            if (_creando)
+            if (arbol.SelectedNode.Parent.Parent != null)
             {
-                if (arbol.SelectedNode.Parent.Parent != null)
-                {
-                    MostrarError(GestorIdioma06AV.Instancia.Obtener("solo_hijos_directos_familia"));
-                    return;
-                }
-                QuitarPendiente(tag);
+                MostrarError(GestorIdioma06AV.Instancia.Obtener("solo_hijos_directos_familia"));
                 return;
             }
 
-            Familia06AV familia = ObtenerFamiliaSeleccionada();
-            if (familia == null) return;
-
-            if (tag.Tipo == "Patente" && arbol.SelectedNode.Parent.Parent == null)
-                EjecutarAccion(() => _familiasSer.QuitarPatente(familia.Id, tag.Id), familia.Id);
-            else if (tag.Tipo == "Familia" && arbol.SelectedNode.Parent.Parent == null)
-                EjecutarAccion(() => _familiasSer.QuitarSubfamilia(familia.Id, tag.Id), familia.Id);
-            else
-                MostrarError(GestorIdioma06AV.Instancia.Obtener("solo_hijos_directos_familia"));
+            QuitarPendiente(tag);
         }
 
         // ── Pendientes (modo Nuevo) ──────────────────────────────────────────
@@ -458,20 +442,33 @@ namespace IngSoftValdezAlegre.Controles
         // ── Helpers ──────────────────────────────────────────────────────────
 
         /// <summary>
-        /// Ejecuta una acción sobre la BLL, recarga y reposiciona manteniendo el foco.
+        /// Compara los hijos originales (en base) contra los hijos pendientes
+        /// (en memoria) y persiste solo las diferencias.
         /// </summary>
-        private void EjecutarAccion(Action accion, string idFamilia)
+        private void PersistirDiferencias(string idFamilia, List<IComponentePermiso06AV> originales, IReadOnlyList<IComponentePermiso06AV> actuales)
         {
-            try
+            var aQuitar = originales.Where(o => !actuales.Any(a => Coinciden(a, o))).ToList();
+            var aAgregar = actuales.Where(a => !originales.Any(o => Coinciden(a, o))).ToList();
+
+            foreach (IComponentePermiso06AV hijo in aQuitar)
             {
-                accion();
-                CargarDatos(idFamilia);
+                if (hijo is Patente06AV patente)
+                    _familiasSer.QuitarPatente(idFamilia, patente.Id);
+                else if (hijo is Familia06AV sub)
+                    _familiasSer.QuitarSubfamilia(idFamilia, sub.Id);
             }
-            catch (Exception ex)
+
+            foreach (IComponentePermiso06AV hijo in aAgregar)
             {
-                MostrarError(ex.Message);
+                if (hijo is Patente06AV patente)
+                    _familiasSer.AgregarPatente(idFamilia, patente.Id);
+                else if (hijo is Familia06AV sub)
+                    _familiasSer.AgregarSubfamilia(idFamilia, sub.Id);
             }
         }
+
+        private static bool Coinciden(IComponentePermiso06AV a, IComponentePermiso06AV b)
+            => a.GetType() == b.GetType() && a.Id == b.Id;
 
         private void LimpiarEditor()
         {

@@ -20,6 +20,7 @@ namespace SER
 
         // ── Acceso a pantallas de permisos ──
         GestionarRoles,
-        GestionarFamilias
+        GestionarFamilias,
+        GestionarPatentes
     }
 }

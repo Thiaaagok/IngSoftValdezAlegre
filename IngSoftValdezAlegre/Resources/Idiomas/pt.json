@@ -224,5 +224,17 @@
   "rol_eliminado": "Função excluída com sucesso.",
   "codigo": "Código",
   "val_rol_descripcion_duplicada": "Já existe uma função com a descrição '{0}'.",
-  "val_familia_descripcion_duplicada": "Já existe uma família com a descrição '{0}'."
+  "val_familia_descripcion_duplicada": "Já existe uma família com a descrição '{0}'.",
+
+  "admin": "Admin",
+  "id": "Id",
+  "titulo_patentes": "Permissões",
+  "ayuda_patentes": "Uma permissão é o direito atômico do sistema. Seu Id deve coincidir com um valor do enum PatenteEnum06AV.",
+  "patente_creada": "Permissão criada com sucesso.",
+  "patente_modificada": "Permissão atualizada com sucesso.",
+  "patente_eliminada": "Permissão excluída com sucesso.",
+  "confirmar_eliminar_patente": "Deseja excluir a permissão selecionada?",
+  "eliminar_patente": "Excluir permissão",
+  "val_patente_descripcion_duplicada": "Já existe uma permissão com a descrição '{0}'.",
+  "val_patente_id_duplicado": "Já existe uma permissão com o Id '{0}'."
 }

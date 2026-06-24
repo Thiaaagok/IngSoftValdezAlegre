@@ -27,6 +27,32 @@ namespace DAL
             });
         }
 
+        public void Agregar(string id, string descripcion)
+        {
+            EjecutarSPNonQuery("sp_Patentes_Agregar", new Dictionary<string, object>
+            {
+                { "@Id",          id          },
+                { "@Descripcion", descripcion }
+            });
+        }
+
+        public void Modificar(string id, string descripcion)
+        {
+            EjecutarSPNonQuery("sp_Patentes_Modificar", new Dictionary<string, object>
+            {
+                { "@Id",          id          },
+                { "@Descripcion", descripcion }
+            });
+        }
+
+        public void Eliminar(string id)
+        {
+            EjecutarSPNonQuery("sp_Patentes_Eliminar", new Dictionary<string, object>
+            {
+                { "@Id", id }
+            });
+        }
+
         #region Helpers
 
         private DataTable EjecutarSP(string nombreSP, Dictionary<string, object> parametros)
@@ -44,6 +70,21 @@ namespace DAL
             new SqlDataAdapter(cmd).Fill(tabla);
             conn.Close();
             return tabla;
+        }
+
+        private void EjecutarSPNonQuery(string nombreSP, Dictionary<string, object> parametros)
+        {
+            SqlConnection conn = Conexion.Instancia.ObtenerConexion();
+            SqlCommand cmd = new SqlCommand(nombreSP, conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+            if (parametros != null)
+                foreach (var p in parametros)
+                    cmd.Parameters.AddWithValue(p.Key, p.Value);
+            conn.Open();
+            cmd.ExecuteNonQuery();
+            conn.Close();
         }
 
         #endregion

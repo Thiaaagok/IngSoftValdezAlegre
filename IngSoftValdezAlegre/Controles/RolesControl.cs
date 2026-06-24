@@ -18,8 +18,9 @@ namespace IngSoftValdezAlegre.Controles
 
         private List<Rol06AV> _roles = new List<Rol06AV>();
         private Rol06AV _rolPendiente;
+        private List<IComponentePermiso06AV> _hijosOriginales;
         private bool _creando;
-        private bool _suspenderSeleccion;   
+        private bool _suspenderSeleccion;
 
         public RolesControl()
         {
@@ -56,10 +57,10 @@ namespace IngSoftValdezAlegre.Controles
             btnQuitar.Click += (s, e) => QuitarSeleccionado();
             txtDescripcion.TextChanged += (s, e) =>
             {
-                if (_creando && _rolPendiente != null)
+                if (_rolPendiente != null)
                 {
                     _rolPendiente.Descripcion = string.IsNullOrWhiteSpace(txtDescripcion.Text)
-                        ? GestorIdioma06AV.Instancia.Obtener("nuevo_rol")
+                        ? (_creando ? GestorIdioma06AV.Instancia.Obtener("nuevo_rol") : txtDescripcion.Text)
                         : txtDescripcion.Text.Trim();
                     DibujarArbol(_rolPendiente);
                 }
@@ -186,10 +187,24 @@ namespace IngSoftValdezAlegre.Controles
             if (_creando) return;
 
             Rol06AV rol = ObtenerRolSeleccionado();
-            if (rol == null) { LimpiarEditor(); return; }
+            if (rol == null)
+            {
+                LimpiarEditor();
+                _rolPendiente = null;
+                _hijosOriginales = null;
+                return;
+            }
 
             txtDescripcion.Text = rol.Descripcion;
-            DibujarArbol(rol);
+
+            // Se trabaja sobre una copia en memoria: agregar/quitar patentes y
+            // familias no toca la base hasta que el usuario presiona Guardar.
+            _hijosOriginales = new List<IComponentePermiso06AV>(rol.Hijos);
+            _rolPendiente = new Rol06AV { Id = rol.Id, Descripcion = rol.Descripcion };
+            if (_hijosOriginales.Count > 0)
+                _rolPendiente.AgregarRango(_hijosOriginales);
+
+            DibujarArbol(_rolPendiente);
         }
 
         private Rol06AV ObtenerRolSeleccionado()
@@ -253,7 +268,7 @@ namespace IngSoftValdezAlegre.Controles
                 return;
             }
 
-            if (_creando && (_rolPendiente == null || !_rolPendiente.Hijos.Any()))
+            if (_rolPendiente == null || !_rolPendiente.Hijos.Any())
             {
                 MostrarError(t.Obtener("rol_sin_hijos"));
                 return;
@@ -263,6 +278,7 @@ namespace IngSoftValdezAlegre.Controles
             {
                 bool creando = _creando;
                 string idFinal;
+                bool rolDeSesionAfectado = false;
 
                 if (_creando)
                 {
@@ -279,13 +295,32 @@ namespace IngSoftValdezAlegre.Controles
                 {
                     Rol06AV seleccionado = ObtenerRolSeleccionado();
                     if (seleccionado == null) return;
+                    string idRol = seleccionado.Id;
                     seleccionado.Descripcion = txtDescripcion.Text.Trim();
                     _rolesSer.Modificar(seleccionado);
-                    idFinal = seleccionado.Id;
+
+                    bool hijosCambiaron = PersistirDiferencias(idRol, _hijosOriginales ?? new List<IComponentePermiso06AV>(), _rolPendiente.Hijos);
+                    idFinal = idRol;
+
+                    if (hijosCambiaron)
+                    {
+                        var sesion = UsuarioSesion06AV.Instancia();
+                        if (sesion.Rol != null && sesion.Rol.Id == idRol)
+                            rolDeSesionAfectado = true;
+                    }
                 }
 
                 _creando = false;
                 _rolPendiente = null;
+                _hijosOriginales = null;
+
+                if (rolDeSesionAfectado)
+                {
+                    // Las patentes efectivas del rol de la sesión actual quedaron
+                    // desactualizadas: se fuerza a volver a loguearse para recalcularlas.
+                    (FindForm() as FRMMain)?.ForzarReloginPorCambioDeRol();
+                    return;
+                }
 
                 CargarDatos(idFinal);
 
@@ -331,39 +366,17 @@ namespace IngSoftValdezAlegre.Controles
         private void AgregarPatente()
         {
             if (cmbPatentes.SelectedValue == null) return;
-
-            if (_creando)
-            {
-                Patente06AV patente = cmbPatentes.SelectedItem as Patente06AV;
-                if (patente == null) return;
-                AgregarPendiente(patente);
-                return;
-            }
-
-            Rol06AV rol = ObtenerRolSeleccionado();
-            if (rol == null) return;
-            EjecutarAccion(
-                () => _rolesSer.AgregarPatente(rol.Id, cmbPatentes.SelectedValue.ToString()),
-                rol.Id);
+            Patente06AV patente = cmbPatentes.SelectedItem as Patente06AV;
+            if (patente == null) return;
+            AgregarPendiente(patente);
         }
 
         private void AgregarFamilia()
         {
             if (cmbFamilias.SelectedValue == null) return;
-
-            if (_creando)
-            {
-                Familia06AV familia = cmbFamilias.SelectedItem as Familia06AV;
-                if (familia == null) return;
-                AgregarPendiente(familia);
-                return;
-            }
-
-            Rol06AV rol = ObtenerRolSeleccionado();
-            if (rol == null) return;
-            EjecutarAccion(
-                () => _rolesSer.AgregarFamilia(rol.Id, cmbFamilias.SelectedValue.ToString()),
-                rol.Id);
+            Familia06AV familia = cmbFamilias.SelectedItem as Familia06AV;
+            if (familia == null) return;
+            AgregarPendiente(familia);
         }
 
         private void QuitarSeleccionado()
@@ -372,26 +385,13 @@ namespace IngSoftValdezAlegre.Controles
             NodoPermiso tag = arbol.SelectedNode.Tag as NodoPermiso;
             if (tag == null || arbol.SelectedNode.Parent == null) return;
 
-            if (_creando)
+            if (arbol.SelectedNode.Parent.Parent != null)
             {
-                if (arbol.SelectedNode.Parent.Parent != null)
-                {
-                    MostrarError(GestorIdioma06AV.Instancia.Obtener("solo_hijos_directos_rol"));
-                    return;
-                }
-                QuitarPendiente(tag);
+                MostrarError(GestorIdioma06AV.Instancia.Obtener("solo_hijos_directos_rol"));
                 return;
             }
 
-            Rol06AV rol = ObtenerRolSeleccionado();
-            if (rol == null) return;
-
-            if (tag.Tipo == "Patente" && arbol.SelectedNode.Parent.Parent == null)
-                EjecutarAccion(() => _rolesSer.QuitarPatente(rol.Id, tag.Id), rol.Id);
-            else if (tag.Tipo == "Familia" && arbol.SelectedNode.Parent.Parent == null)
-                EjecutarAccion(() => _rolesSer.QuitarFamilia(rol.Id, tag.Id), rol.Id);
-            else
-                MostrarError(GestorIdioma06AV.Instancia.Obtener("solo_hijos_directos_rol"));
+            QuitarPendiente(tag);
         }
 
         // ── Pendientes (modo Nuevo) ──────────────────────────────────────────
@@ -449,25 +449,41 @@ namespace IngSoftValdezAlegre.Controles
 
         // ── Helpers ──────────────────────────────────────────────────────────
 
-        private void EjecutarAccion(Action accion, string idRol)
+        /// <summary>
+        /// Compara los hijos originales (en base) contra los hijos pendientes
+        /// (en memoria) y persiste solo las diferencias. Devuelve true si hubo
+        /// algún cambio efectivo.
+        /// </summary>
+        private bool PersistirDiferencias(string idRol, List<IComponentePermiso06AV> originales, IReadOnlyList<IComponentePermiso06AV> actuales)
         {
-            try
-            {
-                accion();
-                CargarDatos(idRol);
+            bool cambios = false;
 
-                // El rol que se acaba de modificar es el mismo que tiene la sesión
-                // actual: sus patentes efectivas quedaron desactualizadas, así que
-                // se fuerza a volver a loguearse para que se recalculen.
-                var sesion = UsuarioSesion06AV.Instancia();
-                if (sesion.Rol != null && sesion.Rol.Id == idRol)
-                    (FindForm() as FRMMain)?.ForzarReloginPorCambioDeRol();
-            }
-            catch (Exception ex)
+            var aQuitar = originales.Where(o => !actuales.Any(a => Coinciden(a, o))).ToList();
+            var aAgregar = actuales.Where(a => !originales.Any(o => Coinciden(a, o))).ToList();
+
+            foreach (IComponentePermiso06AV hijo in aQuitar)
             {
-                MostrarError(ex.Message);
+                if (hijo is Patente06AV patente)
+                    _rolesSer.QuitarPatente(idRol, patente.Id);
+                else if (hijo is Familia06AV familia)
+                    _rolesSer.QuitarFamilia(idRol, familia.Id);
+                cambios = true;
             }
+
+            foreach (IComponentePermiso06AV hijo in aAgregar)
+            {
+                if (hijo is Patente06AV patente)
+                    _rolesSer.AgregarPatente(idRol, patente.Id);
+                else if (hijo is Familia06AV familia)
+                    _rolesSer.AgregarFamilia(idRol, familia.Id);
+                cambios = true;
+            }
+
+            return cambios;
         }
+
+        private static bool Coinciden(IComponentePermiso06AV a, IComponentePermiso06AV b)
+            => a.GetType() == b.GetType() && a.Id == b.Id;
 
         private void LimpiarEditor()
         {

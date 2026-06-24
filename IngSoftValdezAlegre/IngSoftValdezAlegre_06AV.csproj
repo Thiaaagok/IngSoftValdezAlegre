@@ -76,6 +76,12 @@
     <Compile Include="Controles\RolesControl.Designer.cs">
       <DependentUpon>RolesControl.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controles\PatentesControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\PatentesControl.Designer.cs">
+      <DependentUpon>PatentesControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controles\UsuariosControl.cs">
       <SubType>UserControl</SubType>
     </Compile>

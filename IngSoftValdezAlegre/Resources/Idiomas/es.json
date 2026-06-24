@@ -224,5 +224,17 @@
   "rol_eliminado": "Rol eliminado correctamente.",
   "codigo": "Código",
   "val_rol_descripcion_duplicada": "Ya existe un rol con la descripción '{0}'.",
-  "val_familia_descripcion_duplicada": "Ya existe una familia con la descripción '{0}'."
+  "val_familia_descripcion_duplicada": "Ya existe una familia con la descripción '{0}'.",
+
+  "admin": "Admin",
+  "id": "Id",
+  "titulo_patentes": "Patentes",
+  "ayuda_patentes": "Una patente es el permiso atómico del sistema. Su Id debe coincidir con un valor del enum PatenteEnum06AV.",
+  "patente_creada": "Patente creada correctamente.",
+  "patente_modificada": "Patente modificada correctamente.",
+  "patente_eliminada": "Patente eliminada correctamente.",
+  "confirmar_eliminar_patente": "¿Desea eliminar la patente seleccionada?",
+  "eliminar_patente": "Eliminar patente",
+  "val_patente_descripcion_duplicada": "Ya existe una patente con la descripción '{0}'.",
+  "val_patente_id_duplicado": "Ya existe una patente con el Id '{0}'."
 }

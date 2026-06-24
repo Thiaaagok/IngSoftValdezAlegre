@@ -46,6 +46,12 @@ namespace IngSoftValdezAlegre
                 familiasBTN.Visible = false;
             }
 
+            if (!sesion.TienePermiso(PatenteEnum06AV.GestionarPatentes))
+            {
+                patentesBTN.Enabled = false;
+                patentesBTN.Visible = false;
+            }
+
             if (!EsAdministrador())
             {
                 bitacoraBTN.Enabled = false;
@@ -68,6 +74,7 @@ namespace IngSoftValdezAlegre
             ConfigurarBotonModulo(usuariosBTN, t.Obtener("usuarios"), "\uE716");
             ConfigurarBotonModulo(rolesBTN, t.Obtener("titulo_roles"), "\uE8D7");
             ConfigurarBotonModulo(familiasBTN, t.Obtener("titulo_familias"), "\uE902");
+            ConfigurarBotonModulo(patentesBTN, t.Obtener("titulo_patentes"), "\uE8A4");
             ConfigurarBotonModulo(bitacoraBTN, t.Obtener("bitacora"), "\uE9D5");
 
             cambiarContraseñaToolStripMenuItem.Text = t.Obtener("cambiar_contrasenia");
@@ -293,6 +300,12 @@ namespace IngSoftValdezAlegre
         {
             SeleccionarModulo(familiasBTN);
             MostrarControl(new FamiliasControl());
+        }
+
+        private void patentesBTN_Click(object sender, EventArgs e)
+        {
+            SeleccionarModulo(patentesBTN);
+            MostrarControl(new PatentesControl());
         }
 
         private void btnToggleSidebar_Click(object sender, EventArgs e)
