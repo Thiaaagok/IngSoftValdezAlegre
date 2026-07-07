@@ -236,5 +236,18 @@
   "confirmar_eliminar_patente": "Do you want to delete the selected permission?",
   "eliminar_patente": "Delete permission",
   "val_patente_descripcion_duplicada": "A permission with the description '{0}' already exists.",
-  "val_patente_id_duplicado": "A permission with the Id '{0}' already exists."
+  "val_patente_id_duplicado": "A permission with the Id '{0}' already exists.",
+  "dv_titulo": "Data inconsistency",
+  "dv_intro": "An inconsistency was detected in the database. Choose how to continue.",
+  "dv_tablas_afectadas": "Details of the detected differences:",
+  "dv_inconsistencia_generica": "The verification digits do not match the stored ones.",
+  "dv_recalcular": "Recalculate the DV",
+  "dv_restore": "Restore database (Restore)",
+  "dv_salir": "Exit",
+  "dv_recalculado": "The Verification Digit was recalculated. The inconsistency was accepted and normalized.",
+  "dv_restore_titulo": "Select the backup to restore",
+  "dv_restore_confirmar": "The database will be restored from the selected backup. Data created after that backup will be lost. Continue?",
+  "dv_restore_ok": "The database was restored successfully.",
+  "dv_restore_error": "The database could not be restored.",
+  "login_inconsistencia_usuario": "An inconsistency was detected in the system data. Please contact the administrator. The system will now close."
 }

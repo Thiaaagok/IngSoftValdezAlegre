@@ -100,6 +100,12 @@
     <Compile Include="FRMMain.Designer.cs">
       <DependentUpon>FRMMain.cs</DependentUpon>
     </Compile>
+    <Compile Include="FRMReparacionDV.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FRMReparacionDV.Designer.cs">
+      <DependentUpon>FRMReparacionDV.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Tema.cs" />
     <Compile Include="FRMCambiarContrasenia.cs">
@@ -118,6 +124,9 @@
     <EmbeddedResource Include="Controles\FamiliasControl.resx">
       <DependentUpon>FamiliasControl.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Controles\PatentesControl.resx">
+      <DependentUpon>PatentesControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controles\RolesControl.resx">
       <DependentUpon>RolesControl.cs</DependentUpon>
     </EmbeddedResource>
@@ -132,6 +141,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FRMMain.resx">
       <DependentUpon>FRMMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FRMReparacionDV.resx">
+      <DependentUpon>FRMReparacionDV.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

@@ -125,6 +125,42 @@ namespace SER
             }
         }
 
+        /// <summary>
+        /// Verifica credenciales de forma liviana (sin iniciar sesión ni registrar en
+        /// bitácora) y devuelve true solo si corresponden a un usuario cuyo rol tiene,
+        /// entre sus patentes efectivas, la patente indicada.
+        ///
+        /// Se usa en la REVISIÓN de integridad del Login: el acceso al GUI de Reparación
+        /// no depende del nombre del rol sino de tener la patente que lo habilita
+        /// (<see cref="PatenteEnum06AV.RepararIntegridad"/>). Las patentes se resuelven
+        /// con el SP recursivo (igual que el Login), por lo que no depende de construir
+        /// el árbol del rol.
+        /// </summary>
+        public bool TienePatente(string login, string contrasenia, PatenteEnum06AV patente)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(login) || string.IsNullOrWhiteSpace(contrasenia))
+                    return false;
+
+                var usuario = new UsuariosMPP06AV().ObtenerPorLogin(login);
+                if (usuario == null) return false;
+
+                var enc = new EncriptacionSER06AV();
+                if (enc.Encriptar(contrasenia) != usuario.Contrasenia) return false;
+
+                var patentes = new PatenteMPP06AV().ObtenerPatentesPorRol(usuario.IdRol);
+                if (patentes == null) return false;
+
+                string id = patente.ToString();
+                return patentes.Any(p => string.Equals(p.Id, id, StringComparison.Ordinal));
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         #endregion
 
         #region Obtener
@@ -183,6 +219,9 @@ namespace SER
 
         #endregion
 
+        // Recalcula el DV tras cada persistencia (no rompe la operación si falla).
+        private void RecalcularIntegridad() => new IntegridadBLL06AV().RecalcularSeguro();
+
         #region Alta
         public bool CrearUsuario(string dni, string nombre, string apellido, string email, string rol, string dniOperador)
         {
@@ -218,6 +257,7 @@ namespace SER
                 };
 
                 bool resultado = MPP.CrearUsuario(usuario);
+                RecalcularIntegridad();
                 bitacora.Alta($"Usuario: {dni}", ModuloBitacora.Usuarios, dniOperador);
                 return resultado;
             }
@@ -260,6 +300,7 @@ namespace SER
                 usuario.Email = enc.EncriptarReversible(usuario.Email);
 
                 bool resultado = MPP.EditarUsuario(usuario);
+                RecalcularIntegridad();
                 bitacora.Modificacion($"Usuario: {usuario.Dni}", ModuloBitacora.Usuarios, dniOperador);
                 return resultado;
             }
@@ -290,6 +331,7 @@ namespace SER
                     throw new UsuarioEstadoInvalidoException(dni, "Inactivo", "EliminarUsuario");
 
                 bool resultado = MPP.EliminarUsuario(dni);
+                RecalcularIntegridad();
                 bitacora.Baja($"Usuario: {dni}", ModuloBitacora.Usuarios, dniOperador);
                 return resultado;
             }
@@ -320,6 +362,7 @@ namespace SER
                     throw new UsuarioEstadoInvalidoException(dni, "Activo", "ReactivarUsuario");
 
                 bool resultado = MPP.ReactivarUsuario(dni);
+                RecalcularIntegridad();
                 bitacora.Modificacion($"Usuario: {dni} reactivado", ModuloBitacora.Usuarios, dniOperador);
                 return resultado;
             }
@@ -350,6 +393,7 @@ namespace SER
                     throw new UsuarioEstadoInvalidoException(dni, "Inactivo", "DesactivarUsuario");
 
                 bool resultado = MPP.DesactivarUsuario(dni);
+                RecalcularIntegridad();
                 bitacora.Baja($"Usuario: {dni} desactivado", ModuloBitacora.Usuarios, dniOperador);
                 return resultado;
             }
@@ -383,6 +427,7 @@ namespace SER
                     throw new UsuarioEstadoInvalidoException(dni, "Inactivo", "BloquearUsuario");
 
                 bool resultado = MPP.BloquearUsuario(dni);
+                RecalcularIntegridad();
                 bitacora.Modificacion($"Usuario: {dni} bloqueado", ModuloBitacora.Usuarios, dniOperador);
                 return resultado;
             }
@@ -414,6 +459,7 @@ namespace SER
                 string contraseniaBase = SetearContrasenia(dni, usuario.Apellido);
                 bool resultado = MPP.DesbloquearUsuario(dni, contraseniaBase);
                 MPP.LimpiarIntentosFallidos(dni);
+                RecalcularIntegridad();
            
                 bitacora.Modificacion(
                     $"Usuario: {dni} desbloqueado. Se le requerirá cambiar contraseña.",
@@ -461,6 +507,7 @@ namespace SER
 
                 bool resultado = MPP.CambiarContraseña(dni, contraseniaActualHash, contraseniaNuevaHash);
                 MPP.LimpiarIntentosFallidos(dni);
+                RecalcularIntegridad();
                 bitacora.Modificacion($"Usuario: {dni} cambio contraseña", ModuloBitacora.Usuarios, dni);
                 return resultado;
             }
@@ -507,6 +554,7 @@ namespace SER
                         sesion.UsuarioActual.Idioma = idioma;
 
                     bitacora.Modificacion($"Usuario {dni} cambió idioma a '{idioma}'", ModuloBitacora.Usuarios, dni);
+                    RecalcularIntegridad();
                 }
 
                 return resultado;

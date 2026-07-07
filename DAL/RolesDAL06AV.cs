@@ -47,8 +47,6 @@ namespace DAL
             });
         }
 
-        // ── Relación Rol → Patente ────────────────────────────────────────────
-
         public DataTable ObtenerPatentesPorRol(string idRol)
         {
             return EjecutarSP("sp_Roles_ObtenerPatentes", new Dictionary<string, object>
@@ -74,8 +72,6 @@ namespace DAL
                 { "@IdPatente", idPatente }
             });
         }
-
-        // ── Relación Rol → Familia ────────────────────────────────────────────
 
         public DataTable ObtenerFamiliasPorRol(string idRol)
         {

@@ -276,6 +276,10 @@ namespace IngSoftValdezAlegre
             panelPrincipal.Controls.Clear();
             control.Dock = DockStyle.Fill;
             panelPrincipal.Controls.Add(control);
+
+            // El control recién mostrado siempre queda en el idioma activo de la sesión.
+            if (control is IIdiomaAplicable06AV aplicable)
+                aplicable.AplicarIdioma();
         }
 
         private void bitacoraBTN_Click(object sender, EventArgs e)

@@ -6,8 +6,6 @@ namespace DAL
 {
     public class FamiliaDAL06AV
     {
-        // ── Familias ─────────────────────────────────────────────────────────
-
         public DataTable ObtenerTodos()
         {
             return EjecutarSP("sp_Familias_ObtenerTodos", null);
@@ -47,8 +45,6 @@ namespace DAL
             });
         }
 
-        // ── Relación Familia → Patente ────────────────────────────────────────
-
         public DataTable ObtenerPatentesDeFamilia(string idFamilia)
         {
             return EjecutarSP("sp_Familias_ObtenerPatentes", new Dictionary<string, object>
@@ -74,8 +70,6 @@ namespace DAL
                 { "@IdPatente", idPatente }
             });
         }
-
-        // ── Relación Familia → Familia hija ──────────────────────────────────
 
         public DataTable ObtenerSubfamiliasDeFamilia(string idPadre)
         {

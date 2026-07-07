@@ -26,6 +26,7 @@ namespace IngSoftValdezAlegre.Controles
             InitializeComponent();
             ConectarEventos();
             AplicarTema();
+            ConfigurarColumnas();
             AplicarIdioma();
             AjustarLayout();
             Resize += (s, e) => AjustarLayout();
@@ -103,7 +104,16 @@ namespace IngSoftValdezAlegre.Controles
 
             if (grilla.Columns["Id"] != null) grilla.Columns["Id"].HeaderText = "Id";
             if (grilla.Columns["Descripcion"] != null) grilla.Columns["Descripcion"].HeaderText = t.Obtener("descripcion");
-            if (grilla.Columns["Hijos"] != null) grilla.Columns["Hijos"].Visible = false;
+        }
+
+        // AutoGenerateColumns=false evita que el binding genere una columna extra
+        // por la propiedad de colección 'Hijos' al re-vincular la grilla.
+        private void ConfigurarColumnas()
+        {
+            grilla.AutoGenerateColumns = false;
+            grilla.Columns.Clear();
+            grilla.Columns.Add(new DataGridViewTextBoxColumn { Name = "Id", HeaderText = "Id", DataPropertyName = "Id", FillWeight = 40 });
+            grilla.Columns.Add(new DataGridViewTextBoxColumn { Name = "Descripcion", HeaderText = "Descripción", DataPropertyName = "Descripcion", FillWeight = 100 });
         }
 
         private void AjustarLayout()
@@ -143,7 +153,6 @@ namespace IngSoftValdezAlegre.Controles
             txtMensaje.SetBounds(accionesX, y + 258, accionesW, Math.Max(90, alto - y - 266));
         }
 
-        // ── Carga de datos ───────────────────────────────────────────────────
 
         private void CargarDatos(string idSeleccionar = null)
         {
@@ -185,7 +194,6 @@ namespace IngSoftValdezAlegre.Controles
             cmbSubfamilias.DataSource = candidatas;
         }
 
-        // ── Selección ────────────────────────────────────────────────────────
 
         private void MostrarSeleccion()
         {
@@ -246,7 +254,6 @@ namespace IngSoftValdezAlegre.Controles
             MostrarSeleccion();
         }
 
-        // ── ABM ──────────────────────────────────────────────────────────────
 
         private void Nuevo()
         {
@@ -353,7 +360,6 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
-        // ── Agregar / Quitar hijos ───────────────────────────────────────────
 
         private void AgregarPatente()
         {
@@ -386,7 +392,6 @@ namespace IngSoftValdezAlegre.Controles
             QuitarPendiente(tag);
         }
 
-        // ── Pendientes (modo Nuevo) ──────────────────────────────────────────
 
         private void AgregarPendiente(IComponentePermiso06AV componente)
         {
@@ -439,7 +444,6 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
-        // ── Helpers ──────────────────────────────────────────────────────────
 
         /// <summary>
         /// Compara los hijos originales (en base) contra los hijos pendientes

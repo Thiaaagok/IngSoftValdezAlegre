@@ -1,26 +1,28 @@
 namespace SER
 {
     /// <summary>
-    /// Identificadores de permisos del sistema.
-    /// IMPORTANTE: el nombre de cada valor debe ser idéntico al Id
+    /// Identificadores de permisos. El nombre de cada valor debe ser idéntico al Id
     /// de la tabla Patentes en la base de datos.
     /// </summary>
     public enum PatenteEnum06AV
     {
-        // ── Usuarios ──
+        // Usuarios
         VerUsuarios,
         CrearUsuarios,
         EditarUsuarios,
         ActDesactivarUsuarios,
         DesbloquearUsuarios,
 
-        // ── Bitácora ──
+        // Bitácora
         VerBitacora,
         ExportarBitacora,
 
-        // ── Acceso a pantallas de permisos ──
+        // Acceso a pantallas de permisos
         GestionarRoles,
         GestionarFamilias,
-        GestionarPatentes
+        GestionarPatentes,
+
+        // Habilita el GUI de Reparación del Dígito Verificador
+        RepararIntegridad
     }
 }

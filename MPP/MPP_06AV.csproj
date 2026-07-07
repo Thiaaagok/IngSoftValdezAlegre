@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BitacoraMPP06AV.cs" />
+    <Compile Include="IntegridadMPP06AV.cs" />
     <Compile Include="PatenteMPP06AV.cs" />
     <Compile Include="FamiliaMPP06AV.cs" />
     <Compile Include="RolesMPP06AV.cs" />

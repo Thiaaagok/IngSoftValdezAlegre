@@ -10,13 +10,11 @@ namespace IngSoftValdezAlegre
     /// </summary>
     internal static class Tema
     {
-        // ── Estado del tema ──────────────────────────────────────────────────
         private static bool _oscuro = false;
         public static bool EsOscuro => _oscuro;
 
         public static void ToggleTema() => _oscuro = !_oscuro;
 
-        // ── Paleta primitiva (fija) ──────────────────────────────────────────
         // Neutros
         public static readonly Color Grafito950 = Color.FromArgb(2, 6, 23);
         public static readonly Color Grafito900 = Color.FromArgb(15, 23, 42);
@@ -67,7 +65,6 @@ namespace IngSoftValdezAlegre
         public static readonly Color Gris900  = Grafito900;
         public static readonly Color Amber400 = Amber500;
 
-        // ── Colores semánticos dinámicos ─────────────────────────────────────
         public static Color FondoApp      => _oscuro ? Grafito900            : Acero100;
         public static Color FondoPanel    => _oscuro ? Grafito800            : Color.White;
         public static Color FondoElevado  => _oscuro ? Grafito800            : Color.White;
@@ -92,7 +89,6 @@ namespace IngSoftValdezAlegre
         public static Color Seleccion     => _oscuro ? Acero700              : Cian100;
         public static Color FondoCabecera => _oscuro ? Acero700              : Grafito900;
 
-        // ── Tipografias (fijas) ──────────────────────────────────────────────
         public static readonly Font FuenteRegular = new Font("Segoe UI", 9.5f, FontStyle.Regular);
         public static readonly Font FuenteBold    = new Font("Segoe UI Semibold", 9.5f, FontStyle.Bold);
         public static readonly Font FuenteTitulo  = new Font("Segoe UI Semibold", 15f, FontStyle.Bold);
@@ -100,7 +96,6 @@ namespace IngSoftValdezAlegre
         public static readonly Font FuenteMenu    = new Font("Segoe UI", 10.5f, FontStyle.Regular);
         public static readonly Font FuenteMini    = new Font("Segoe UI Semibold", 8.25f, FontStyle.Bold);
 
-        // ── Métodos de aplicación ────────────────────────────────────────────
         public static void AplicarFormulario(Form form)
         {
             form.BackColor = FondoApp;

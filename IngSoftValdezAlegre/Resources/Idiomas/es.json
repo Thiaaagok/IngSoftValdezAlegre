@@ -236,5 +236,18 @@
   "confirmar_eliminar_patente": "¿Desea eliminar la patente seleccionada?",
   "eliminar_patente": "Eliminar patente",
   "val_patente_descripcion_duplicada": "Ya existe una patente con la descripción '{0}'.",
-  "val_patente_id_duplicado": "Ya existe una patente con el Id '{0}'."
+  "val_patente_id_duplicado": "Ya existe una patente con el Id '{0}'.",
+  "dv_titulo": "Inconsistencia de datos",
+  "dv_intro": "Se detectó una inconsistencia en los datos de la base. Elegí cómo continuar.",
+  "dv_tablas_afectadas": "Detalle de las diferencias detectadas:",
+  "dv_inconsistencia_generica": "Los dígitos verificadores no coinciden con los almacenados.",
+  "dv_recalcular": "Recalcular el DV",
+  "dv_restore": "Restaurar la base (Restore)",
+  "dv_salir": "Salir",
+  "dv_recalculado": "Se recalculó el Dígito Verificador. La inconsistencia fue aceptada y normalizada.",
+  "dv_restore_titulo": "Seleccioná el backup a restaurar",
+  "dv_restore_confirmar": "Se va a restaurar la base desde el backup elegido. Se perderán los datos posteriores a ese respaldo. ¿Continuar?",
+  "dv_restore_ok": "La base de datos se restauró correctamente.",
+  "dv_restore_error": "No se pudo restaurar la base de datos.",
+  "login_inconsistencia_usuario": "Se detectó una inconsistencia en los datos del sistema. Contactá al administrador. El sistema se cerrará."
 }

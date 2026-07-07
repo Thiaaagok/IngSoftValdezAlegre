@@ -10,8 +10,6 @@ namespace MPP
         private readonly FamiliaDAL06AV _dal = new FamiliaDAL06AV();
         private readonly PatenteMPP06AV _patenteMPP = new PatenteMPP06AV();
 
-        // ── CRUD Familia ──────────────────────────────────────────────────────
-
         public List<Familia06AV> ObtenerTodos()
         {
             DataTable tabla = _dal.ObtenerTodos();
@@ -70,8 +68,6 @@ namespace MPP
         {
             _dal.Eliminar(id);
         }
-
-        // ── Gestión de hijos ──────────────────────────────────────────────────
 
         public void AgregarPatente(string idFamilia, string idPatente)
         {

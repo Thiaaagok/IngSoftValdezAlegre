@@ -19,6 +19,9 @@ namespace BLL
 
         public Rol06AV ObtenerPorId(string id) => _mpp.ObtenerPorId(id);
 
+        // Recalcula el DV tras cada persistencia (no rompe la operación si falla).
+        private void RecalcularIntegridad() => new IntegridadBLL06AV().RecalcularSeguro();
+
         public void Agregar(Rol06AV rol)
         {
             if (string.IsNullOrWhiteSpace(rol.Id))
@@ -32,6 +35,7 @@ namespace BLL
                 rol.Codigo = GenerarCodigo(rol.Id);
 
             _mpp.Agregar(rol);
+            RecalcularIntegridad();
         }
 
         public void Modificar(Rol06AV rol)
@@ -42,6 +46,7 @@ namespace BLL
             ValidarDescripcionUnica(rol.Descripcion, idExcluir: rol.Id);
 
             _mpp.Modificar(rol);
+            RecalcularIntegridad();
         }
 
         /// <summary>
@@ -68,9 +73,8 @@ namespace BLL
             }
 
             _mpp.Eliminar(id);
+            RecalcularIntegridad();
         }
-
-        // ── Gestión de hijos ─────────────────────────────────────────────────
 
         /// <summary>
         /// Agrega una patente directa al rol, validando que no quede duplicada
@@ -94,14 +98,22 @@ namespace BLL
 
             rol.Agregar(patente);
             _mpp.AgregarPatente(idRol, idPatente);
+            RecalcularIntegridad();
         }
 
-        public void QuitarPatente(string idRol, string idPatente) => _mpp.QuitarPatente(idRol, idPatente);
+        public void QuitarPatente(string idRol, string idPatente)
+        {
+            _mpp.QuitarPatente(idRol, idPatente);
+            RecalcularIntegridad();
+        }
 
         /// <summary>
-        /// Agrega una familia directa al rol, validando que tenga patentes efectivas,
-        /// que no sea ya subfamilia de otra familia del sistema, y que ninguna de sus
-        /// patentes quede duplicada dentro del rol.
+        /// Agrega una familia directa al rol, validando que tenga patentes efectivas
+        /// y que ninguna de sus patentes quede duplicada dentro del rol.
+        ///
+        /// Que la familia sea además subfamilia de otra familia NO impide usarla como
+        /// familia "padre" dentro de un rol: son ubicaciones independientes en el árbol
+        /// de permisos. La única restricción real es que no se dupliquen patentes.
         /// </summary>
         public void AgregarFamilia(string idRol, string idFamilia)
         {
@@ -116,20 +128,6 @@ namespace BLL
             if (!familia.ObtenerPatentes().Any())
                 throw new InvalidOperationException("No se puede agregar una familia sin patentes efectivas.");
 
-            // Verificar que la familia no sea ya subfamilia de otra familia en el sistema
-            var todasFamilias = familiasBLL.ObtenerTodos();
-            var familiasPadre = todasFamilias
-                .Where(f => f.Hijos.Any(h => h is Familia06AV sf &&
-                                              string.Equals(sf.Id, idFamilia, StringComparison.OrdinalIgnoreCase)))
-                .ToList();
-
-            if (familiasPadre.Any())
-            {
-                string lista = string.Join(", ", familiasPadre.Select(f => $"'{f.Descripcion}'"));
-                throw new InvalidOperationException(
-                    $"No se puede agregar '{familia.Descripcion}' directamente al rol porque ya es subfamilia de: {lista}.");
-            }
-
             foreach (Patente06AV patente in familia.ObtenerPatentes())
             {
                 string rutaDuplicada = BuscarRutaPatente(rol, patente.Id);
@@ -140,11 +138,14 @@ namespace BLL
 
             rol.Agregar(familia);
             _mpp.AgregarFamilia(idRol, idFamilia);
+            RecalcularIntegridad();
         }
 
-        public void QuitarFamilia(string idRol, string idFamilia) => _mpp.QuitarFamilia(idRol, idFamilia);
-
-        // ── Helpers ──────────────────────────────────────────────────────────
+        public void QuitarFamilia(string idRol, string idFamilia)
+        {
+            _mpp.QuitarFamilia(idRol, idFamilia);
+            RecalcularIntegridad();
+        }
 
         private void ValidarDescripcionUnica(string descripcion, string idExcluir)
         {

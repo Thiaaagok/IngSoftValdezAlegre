@@ -19,6 +19,9 @@ namespace BLL
 
         public Patente06AV ObtenerPorId(string id) => _mpp.ObtenerPorId(id);
 
+        // Recalcula el DV tras cada persistencia (no rompe la operación si falla).
+        private void RecalcularIntegridad() => new IntegridadBLL06AV().RecalcularSeguro();
+
         public void Agregar(Patente06AV patente)
         {
             if (string.IsNullOrWhiteSpace(patente.Id))
@@ -33,6 +36,7 @@ namespace BLL
             ValidarDescripcionUnica(patente.Descripcion, idExcluir: null);
 
             _mpp.Agregar(patente);
+            RecalcularIntegridad();
         }
 
         public void Modificar(Patente06AV patente)
@@ -43,6 +47,7 @@ namespace BLL
             ValidarDescripcionUnica(patente.Descripcion, idExcluir: patente.Id);
 
             _mpp.Modificar(patente);
+            RecalcularIntegridad();
         }
 
         /// <summary>
@@ -82,9 +87,9 @@ namespace BLL
             }
 
             _mpp.Eliminar(id);
+            RecalcularIntegridad();
         }
 
-        // ── Helpers ──────────────────────────────────────────────────────────
 
         private bool ContienePatenteDirecta(IEnumerable<IComponentePermiso06AV> hijos, string idPatente)
             => hijos.Any(h => h is Patente06AV p &&

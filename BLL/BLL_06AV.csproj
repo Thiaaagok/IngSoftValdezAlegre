@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="BitacoraBLL06AV.cs" />
     <Compile Include="FamiliasBLL06AV.cs" />
+    <Compile Include="IntegridadBLL06AV.cs" />
     <Compile Include="PatentesBLL06AV.cs" />
     <Compile Include="Excepciones\ExcepcionesBitacora.cs" />
     <Compile Include="Excepciones\ExcepcionesUsuario.cs" />

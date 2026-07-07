@@ -1,7 +1,9 @@
-﻿using IngSoftValdezAlegre.Common;
+﻿using BLL;
+using IngSoftValdezAlegre.Common;
 using IngSoftValdezAlegre.Controles;
 using SER;
 using SER.Excepciones;
+using SER.Integridad;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -75,6 +77,44 @@ namespace IngSoftValdezAlegre
 
             try
             {
+                // REVISIÓN: se verifica la consistencia antes de autenticar. Si la propia
+                // verificación falla (p. ej. BD inaccesible), se continúa y el Login maneja el error.
+                var integridad = new IntegridadBLL06AV();
+                ResultadoVerificacion06AV revision = null;
+                try { revision = integridad.Verificar(); }
+                catch { revision = null; }
+
+                if (revision != null && revision.SinLineaBase)
+                {
+                    try { integridad.Recalcular(); } catch { }
+                }
+                else if (revision != null && !revision.EsConsistente)
+                {
+                    var ti = GestorIdioma06AV.Instancia;
+
+                    // Solo quien tiene la patente RepararIntegridad accede al GUI de Reparación.
+                    if (new UsuariosBLL06AV().TienePatente(login, contrasenia, PatenteEnum06AV.RepararIntegridad))
+                    {
+                        using (var frm = new FRMReparacionDV(revision))
+                            frm.ShowDialog(this);
+
+                        LoginTextBox.Clear();
+                        ContraseniaTextBox.Clear();
+                        LoginTextBox.Focus();
+                        return;
+                    }
+
+                    // Usuario común: se muestra el mensaje y se sale del sistema.
+                    ConfirmacionForm.MostrarInfo(
+                        ti.Obtener("login_inconsistencia_usuario"),
+                        titulo: ti.Obtener("dv_titulo"),
+                        tipo: ConfirmacionForm.TipoConfirmacion.Error,
+                        owner: this);
+                    Close();
+                    Application.Exit();
+                    return;
+                }
+
                 UsuariosBLL06AV SER = new UsuariosBLL06AV();
                 Usuario06AV usuario = SER.Login(login, contrasenia);
 

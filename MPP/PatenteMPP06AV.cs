@@ -9,8 +9,6 @@ namespace MPP
     {
         private readonly PatentesDAL06AV _dal = new PatentesDAL06AV();
 
-        // ── CRUD Patente ──────────────────────────────────────────────────────
-
         public List<Patente06AV> ObtenerTodos()
         {
             DataTable tabla = _dal.ObtenerTodos();
@@ -41,8 +39,6 @@ namespace MPP
         public void Modificar(Patente06AV patente) => _dal.Modificar(patente.Id, patente.Descripcion);
 
         public void Eliminar(string id) => _dal.Eliminar(id);
-
-        // ── Mapeo ─────────────────────────────────────────────────────────────
 
         public Patente06AV Mapear(DataRow row)
         {

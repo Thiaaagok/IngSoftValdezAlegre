@@ -19,6 +19,9 @@ namespace BLL
 
         public Familia06AV ObtenerPorId(string id) => _mpp.ObtenerPorId(id);
 
+        // Recalcula el DV tras cada persistencia (no rompe la operación si falla).
+        private void RecalcularIntegridad() => new IntegridadBLL06AV().RecalcularSeguro();
+
         public void Agregar(Familia06AV familia)
         {
             if (string.IsNullOrWhiteSpace(familia.Id))
@@ -29,6 +32,7 @@ namespace BLL
             ValidarDescripcionUnica(familia.Descripcion, idExcluir: null);
 
             _mpp.Agregar(familia);
+            RecalcularIntegridad();
         }
 
         public void Modificar(Familia06AV familia)
@@ -39,6 +43,7 @@ namespace BLL
             ValidarDescripcionUnica(familia.Descripcion, idExcluir: familia.Id);
 
             _mpp.Modificar(familia);
+            RecalcularIntegridad();
         }
 
         /// <summary>
@@ -99,9 +104,8 @@ namespace BLL
             }
 
             _mpp.Eliminar(id);
+            RecalcularIntegridad();
         }
-
-        // ── Agregar / Quitar patentes y subfamilias ──────────────────────────
 
         /// <summary>
         /// Agrega una patente directa a la familia, validando que no quede duplicada
@@ -128,9 +132,14 @@ namespace BLL
             ValidarPatentesEnRolesQueContienenFamilia(idFamilia, new[] { patente });
 
             _mpp.AgregarPatente(idFamilia, idPatente);
+            RecalcularIntegridad();
         }
 
-        public void QuitarPatente(string idFamilia, string idPatente) => _mpp.QuitarPatente(idFamilia, idPatente);
+        public void QuitarPatente(string idFamilia, string idPatente)
+        {
+            _mpp.QuitarPatente(idFamilia, idPatente);
+            RecalcularIntegridad();
+        }
 
         /// <summary>
         /// Agrega una subfamilia, validando que no se generen ciclos, que la subfamilia
@@ -183,11 +192,15 @@ namespace BLL
             ValidarPatentesEnRolesQueContienenFamilia(idPadre, hijo.ObtenerPatentes());
 
             _mpp.AgregarSubfamilia(idPadre, idHijo);
+            RecalcularIntegridad();
         }
 
-        public void QuitarSubfamilia(string idPadre, string idHijo) => _mpp.QuitarSubfamilia(idPadre, idHijo);
+        public void QuitarSubfamilia(string idPadre, string idHijo)
+        {
+            _mpp.QuitarSubfamilia(idPadre, idHijo);
+            RecalcularIntegridad();
+        }
 
-        // ── Validaciones cruzadas ────────────────────────────────────────────
 
         private void ValidarDescripcionUnica(string descripcion, string idExcluir)
         {
