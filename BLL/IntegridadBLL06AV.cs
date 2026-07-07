@@ -3,14 +3,6 @@ using SER.Integridad;
 
 namespace BLL
 {
-    /// <summary>
-    /// Reglas de negocio del Dígito Verificador (DV):
-    ///   GENERACIÓN → Recalcular(): recalcula y persiste el DVH/DVV de todas las tablas.
-    ///                Debe invocarse después de cada persistencia.
-    ///   REVISIÓN   → Verificar(): genera el OBJETO DV en memoria y lo compara con el
-    ///                almacenado. Se ejecuta al iniciar sesión.
-    ///   REPARACIÓN → Recalcular() (acepta/normaliza) o Restaurar() (vuelve a un backup).
-    /// </summary>
     public class IntegridadBLL06AV
     {
         private readonly IntegridadMPP06AV _mpp = new IntegridadMPP06AV();
@@ -21,10 +13,6 @@ namespace BLL
             _mpp.Persistir(obj);
         }
 
-        /// <summary>
-        /// Recalcular sin propagar excepciones: para engancharse tras cada ABM sin
-        /// arriesgar la operación de negocio. Si falla, se detecta en la próxima REVISIÓN.
-        /// </summary>
         public void RecalcularSeguro()
         {
             try { Recalcular(); }
@@ -44,7 +32,6 @@ namespace BLL
             ObjetoDV06AV generado = _mpp.Generar();
             ObjetoDV06AV almacenado = _mpp.ObtenerAlmacenado();
 
-            // Sin línea base (primera ejecución): no es inconsistencia.
             if (almacenado.Tablas.Count == 0)
             {
                 resultado.SinLineaBase = true;
