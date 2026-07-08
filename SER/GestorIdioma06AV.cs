@@ -50,8 +50,35 @@ namespace SER
         /// Carpeta donde viven los archivos de traducción (relativa al ejecutable).
         /// Estructura esperada: Resources/Idiomas/es.json, Resources/Idiomas/en.json
         /// </summary>
-        string raizProyecto = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.FullName;
         private string CarpetaIdiomas;
+
+        /// <summary>
+        /// Resuelve la carpeta de idiomas de forma robusta, para que funcione tanto en
+        /// desarrollo como en una instalación distribuida. Prioridad:
+        ///   1) Resources\Idiomas junto al ejecutable (caso instalado / desplegado).
+        ///   2) Subiendo hacia la raíz del proyecto (caso ejecución desde Visual Studio).
+        /// </summary>
+        private static string ResolverCarpetaIdiomas()
+        {
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+
+            string juntoExe = Path.Combine(baseDir, "Resources", "Idiomas");
+            if (Directory.Exists(juntoExe)) return juntoExe;
+
+            try
+            {
+                var dir = new DirectoryInfo(baseDir);
+                for (int i = 0; i < 5 && dir != null; i++)
+                {
+                    string candidato = Path.Combine(dir.FullName, "Resources", "Idiomas");
+                    if (Directory.Exists(candidato)) return candidato;
+                    dir = dir.Parent;
+                }
+            }
+            catch { /* si algo falla se usa la ruta junto al exe */ }
+
+            return juntoExe;
+        }
 
         #endregion
 
@@ -120,7 +147,7 @@ namespace SER
         /// </summary>
         private void CargarTraducciones()
         {
-            CarpetaIdiomas = Path.Combine(raizProyecto,"Resources", "Idiomas");
+            CarpetaIdiomas = ResolverCarpetaIdiomas();
             foreach (string codigo in IdiomasDisponibles)
             {
                 string ruta = Path.Combine(CarpetaIdiomas, codigo.ToLower() + ".json");

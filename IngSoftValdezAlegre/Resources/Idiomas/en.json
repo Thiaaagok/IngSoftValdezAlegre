@@ -249,5 +249,18 @@
   "dv_restore_confirmar": "The database will be restored from the selected backup. Data created after that backup will be lost. Continue?",
   "dv_restore_ok": "The database was restored successfully.",
   "dv_restore_error": "The database could not be restored.",
+  "backup_menu": "Backup management",
+  "backup_titulo": "Backup Management",
+  "backup_intro": "In addition to the automatic backup every 3 hours, you can create a manual one at any time (saved to {0}\\) or restore the database from a .bak file.",
+  "backup_generar": "Create Backup",
+  "backup_restaurar": "Choose file and restore",
+  "backup_restaurar_titulo": "Choose the backup file (.bak) to restore",
+  "backup_restaurar_confirmar": "The database will be restored from the selected backup. Data created after that backup will be lost. Continue?",
+  "backup_generado_ok": "Backup created successfully at:\n{0}",
+  "backup_generar_error": "The backup could not be created.",
+  "backup_restaurado_ok": "The database was restored successfully.",
+  "backup_restaurar_error": "The database could not be restored.",
+  "backup_sin_respaldos": "There are no backups in the default folder yet.",
+  "backup_estado": "There are {0} backup(s). Latest: {1} ({2}).",
   "login_inconsistencia_usuario": "An inconsistency was detected in the system data. Please contact the administrator. The system will now close."
 }

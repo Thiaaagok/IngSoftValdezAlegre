@@ -249,5 +249,18 @@
   "dv_restore_confirmar": "Se va a restaurar la base desde el backup elegido. Se perderán los datos posteriores a ese respaldo. ¿Continuar?",
   "dv_restore_ok": "La base de datos se restauró correctamente.",
   "dv_restore_error": "No se pudo restaurar la base de datos.",
+  "backup_menu": "Gestión de backups",
+  "backup_titulo": "Gestión de Backups",
+  "backup_intro": "Además del backup automático cada 3 horas, podés generar uno manual en cualquier momento (se guarda en {0}\\) o restaurar la base desde un archivo .bak.",
+  "backup_generar": "Generar Backup",
+  "backup_restaurar": "Elegir archivo y restaurar",
+  "backup_restaurar_titulo": "Elegí el archivo de backup (.bak) a restaurar",
+  "backup_restaurar_confirmar": "Se va a restaurar la base desde el backup elegido. Se perderán los datos posteriores a ese respaldo. ¿Continuar?",
+  "backup_generado_ok": "Backup generado correctamente en:\n{0}",
+  "backup_generar_error": "No se pudo generar el backup.",
+  "backup_restaurado_ok": "La base de datos se restauró correctamente.",
+  "backup_restaurar_error": "No se pudo restaurar la base de datos.",
+  "backup_sin_respaldos": "Todavía no hay backups en la carpeta por defecto.",
+  "backup_estado": "Hay {0} backup(s). Último: {1} ({2}).",
   "login_inconsistencia_usuario": "Se detectó una inconsistencia en los datos del sistema. Contactá al administrador. El sistema se cerrará."
 }

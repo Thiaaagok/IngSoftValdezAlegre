@@ -55,6 +55,7 @@
     <Compile Include="Integridad\Calculadores06AV.cs" />
     <Compile Include="Integridad\MotorDigitoVerificador06AV.cs" />
     <Compile Include="Integridad\ObjetoDV06AV.cs" />
+    <Compile Include="Integridad\InfoBackup06AV.cs" />
     <Compile Include="Interfaces\IIdiomaAplicable06AV.cs" />
     <Compile Include="IComponentePermiso06AV.cs" />
     <Compile Include="Generador\GeneradorID.cs" />

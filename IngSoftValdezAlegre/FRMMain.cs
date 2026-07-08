@@ -19,6 +19,11 @@ namespace IngSoftValdezAlegre
         private ToolStripMenuItem cambiarIdiomaToolStripMenuItem;
         private ContextMenuStrip cmsIdiomas;
 
+        // Backup automático cada 3 horas (solo administrador).
+        private const int IntervaloAutoBackupMs = 3 * 60 * 60 * 1000;
+        private System.Windows.Forms.Timer _timerAutoBackup;
+        private ToolStripMenuItem gestionBackupsToolStripMenuItem;
+
         public Usuario06AV Usuario = new Usuario06AV();
 
         public FRMMain()
@@ -60,6 +65,51 @@ namespace IngSoftValdezAlegre
 
             SeleccionarModulo(usuariosBTN);
             MostrarControl(new UsuariosControl());
+
+            ConfigurarGestionBackups();
+        }
+
+        /// <summary>
+        /// Habilita la Gestión de Backups y el backup automático cada 3 horas.
+        /// Solo el administrador puede generar/restaurar backups, así que tanto la
+        /// opción de menú como el timer se activan únicamente para ese rol.
+        /// </summary>
+        private void ConfigurarGestionBackups()
+        {
+            if (!EsAdministrador()) return;
+
+            var t = GestorIdioma06AV.Instancia;
+
+            // Opción de menú "Gestión de backups" en el menú del usuario.
+            gestionBackupsToolStripMenuItem = new ToolStripMenuItem(t.Obtener("backup_menu"));
+            gestionBackupsToolStripMenuItem.Click += (s, e) =>
+            {
+                using (var f = new FRMGestionBackup())
+                    f.ShowDialog(this);
+            };
+            ctxMenuUsuario.Items.Add(gestionBackupsToolStripMenuItem);
+
+            // Backup automático cada 3 horas.
+            _timerAutoBackup = new System.Windows.Forms.Timer { Interval = IntervaloAutoBackupMs };
+            _timerAutoBackup.Tick += (s, e) => EjecutarBackupAutomatico();
+            _timerAutoBackup.Start();
+            FormClosed += (s, e) => _timerAutoBackup?.Stop();
+        }
+
+        /// <summary>
+        /// Backup automático silencioso en la carpeta por defecto. Un fallo acá no
+        /// debe interrumpir al usuario, por eso se traga la excepción.
+        /// </summary>
+        private void EjecutarBackupAutomatico()
+        {
+            try
+            {
+                new IntegridadBLL06AV().RespaldarEnCarpetaPorDefecto();
+            }
+            catch
+            {
+                // Silencioso: el backup automático es "best effort".
+            }
         }
 
         public void AplicarIdioma()
@@ -79,6 +129,8 @@ namespace IngSoftValdezAlegre
 
             cambiarContraseñaToolStripMenuItem.Text = t.Obtener("cambiar_contrasenia");
             reloginToolStripMenuItem.Text = t.Obtener("relogin");
+            if (gestionBackupsToolStripMenuItem != null)
+                gestionBackupsToolStripMenuItem.Text = t.Obtener("backup_menu");
             btnCerrarSesion.Text = t.Obtener("cerrar_sesion");
             btnIdioma.Text = t.IdiomaActual;
 
