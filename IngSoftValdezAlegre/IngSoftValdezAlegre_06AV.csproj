@@ -76,6 +76,27 @@
     <Compile Include="Controles\RolesControl.Designer.cs">
       <DependentUpon>RolesControl.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controles\ClientesControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\ComponentesControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\InsumosControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\ProveedoresControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\LineasEnsamblajeControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\ProduccionControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\ComprasControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="Controles\PatentesControl.cs">
       <SubType>UserControl</SubType>
     </Compile>

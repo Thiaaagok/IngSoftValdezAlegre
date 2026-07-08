@@ -44,6 +44,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BitacoraDAL06AV.cs" />
+    <Compile Include="ClientesDAL06AV.cs" />
+    <Compile Include="ComponentesDAL06AV.cs" />
+    <Compile Include="InsumosDAL06AV.cs" />
+    <Compile Include="ProveedoresDAL06AV.cs" />
+    <Compile Include="LineasEnsamblajeDAL06AV.cs" />
+    <Compile Include="ProduccionDAL06AV.cs" />
+    <Compile Include="ComprasDAL06AV.cs" />
     <Compile Include="FamiliaDAL06AV.cs" />
     <Compile Include="IntegridadDAL06AV.cs" />
     <Compile Include="PatentesDAL06AV.cs" />

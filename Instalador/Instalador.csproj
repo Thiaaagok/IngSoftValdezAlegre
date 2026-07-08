@@ -102,6 +102,34 @@
       <Link>Scripts\11_seed_patente_reparar_integridad.sql</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\SQL\20_pcfactory_clientes.sql">
+      <Link>Scripts\20_pcfactory_clientes.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SQL\21_pcfactory_componentes.sql">
+      <Link>Scripts\21_pcfactory_componentes.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SQL\22_pcfactory_insumos.sql">
+      <Link>Scripts\22_pcfactory_insumos.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SQL\23_pcfactory_proveedores.sql">
+      <Link>Scripts\23_pcfactory_proveedores.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SQL\24_pcfactory_lineas.sql">
+      <Link>Scripts\24_pcfactory_lineas.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SQL\25_pcfactory_produccion.sql">
+      <Link>Scripts\25_pcfactory_produccion.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SQL\26_pcfactory_compras.sql">
+      <Link>Scripts\26_pcfactory_compras.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

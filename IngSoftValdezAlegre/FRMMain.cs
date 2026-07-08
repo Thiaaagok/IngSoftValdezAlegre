@@ -63,10 +63,35 @@ namespace IngSoftValdezAlegre
                 bitacoraBTN.Visible = false;
             }
 
+            ConfigurarModulosPcFactory();
+
             SeleccionarModulo(usuariosBTN);
             MostrarControl(new UsuariosControl());
 
             ConfigurarGestionBackups();
+        }
+
+        /// <summary>
+        /// Agrega dinámicamente al sidebar los módulos del dominio PC Factory (ABM de
+        /// datos maestros). Se apoyan en el mismo FlowLayoutPanel y estilo que el resto.
+        /// </summary>
+        private void ConfigurarModulosPcFactory()
+        {
+            AgregarModuloPcFactory("Clientes", "", () => new Controles.ClientesControl());
+            AgregarModuloPcFactory("Componentes", "", () => new Controles.ComponentesControl());
+            AgregarModuloPcFactory("Insumos", "", () => new Controles.InsumosControl());
+            AgregarModuloPcFactory("Proveedores", "", () => new Controles.ProveedoresControl());
+            AgregarModuloPcFactory("Líneas de ensamblaje", "", () => new Controles.LineasEnsamblajeControl());
+            AgregarModuloPcFactory("Produccion", "", () => new Controles.ProduccionControl());
+            AgregarModuloPcFactory("Compras", "", () => new Controles.ComprasControl());
+        }
+
+        private void AgregarModuloPcFactory(string texto, string icono, System.Func<UserControl> crear)
+        {
+            var btn = new Button();
+            ConfigurarBotonModulo(btn, texto, icono);
+            btn.Click += (s, e) => { SeleccionarModulo(btn); MostrarControl(crear()); };
+            flpModulos.Controls.Add(btn);
         }
 
         /// <summary>

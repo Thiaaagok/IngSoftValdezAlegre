@@ -43,6 +43,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BitacoraMPP06AV.cs" />
+    <Compile Include="ClientesMPP06AV.cs" />
+    <Compile Include="ComponentesMPP06AV.cs" />
+    <Compile Include="InsumosMPP06AV.cs" />
+    <Compile Include="ProveedoresMPP06AV.cs" />
+    <Compile Include="LineasEnsamblajeMPP06AV.cs" />
+    <Compile Include="ProduccionMPP06AV.cs" />
+    <Compile Include="ComprasMPP06AV.cs" />
     <Compile Include="IntegridadMPP06AV.cs" />
     <Compile Include="PatenteMPP06AV.cs" />
     <Compile Include="FamiliaMPP06AV.cs" />
@@ -51,6 +58,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\BE\BE_06AV.csproj">
+      <Project>{b2d14455-f2ec-4381-b7fe-a9e5496f593c}</Project>
+      <Name>BE_06AV</Name>
+    </ProjectReference>
     <ProjectReference Include="..\DAL\DAL_06AV.csproj">
       <Project>{587d07d4-43b3-47bd-abb8-644a8a853501}</Project>
       <Name>DAL_06AV</Name>
