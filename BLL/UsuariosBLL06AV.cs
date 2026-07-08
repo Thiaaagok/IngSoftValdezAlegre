@@ -542,6 +542,13 @@ namespace SER
                 if (usuario == null)
                     throw new UsuarioNoEncontradoException(dni);
 
+                // Si el idioma no cambió, no se toca la base. Esto evita un recálculo
+                // innecesario del Dígito Verificador que, como efecto colateral, "aceptaría"
+                // cualquier alteración externa de los datos hecha durante la sesión (p. ej.
+                // al cerrar sesión se persiste el idioma actual, que normalmente es el mismo).
+                if (string.Equals(usuario.Idioma, idioma, StringComparison.OrdinalIgnoreCase))
+                    return true;
+
                 bool resultado = MPP.CambiarIdioma(dni, idioma);
 
                 if (resultado)
