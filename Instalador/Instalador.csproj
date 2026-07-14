@@ -47,8 +47,12 @@
     <Compile Include="InstaladorBLL06AV.cs" />
     <Compile Include="InstaladorTest06AV.cs" />
     <Compile Include="ConfiguradorApp06AV.cs" />
-    <Compile Include="FrmConexion06AV.cs" />
-    <Compile Include="FrmProgreso06AV.cs" />
+    <Compile Include="FrmConexion06AV.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmProgreso06AV.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

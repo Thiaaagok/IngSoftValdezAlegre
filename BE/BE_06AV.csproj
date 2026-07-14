@@ -53,6 +53,7 @@
     <Compile Include="Proveedor06AV.cs" />
     <Compile Include="DetalleInsumo06AV.cs" />
     <Compile Include="OrdenCompra06AV.cs" />
+    <Compile Include="ModeloEstandar06AV.cs" />
     <Compile Include="PedidoCotizacion06AV.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

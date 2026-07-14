@@ -11,13 +11,7 @@ namespace BLL
     {
         private readonly IntegridadMPP06AV _mpp = new IntegridadMPP06AV();
 
-        /// <summary>
-        /// Carpeta por defecto donde se guardan los backups (manuales y automáticos).
-        /// El nombre del sistema es "GestionUsuario", por eso la subcarpeta.
-        /// </summary>
         public const string CarpetaBackupPorDefecto = @"C:\Backups\GestionUsuario";
-
-        /// <summary>Extensión estándar de los archivos de backup de SQL Server.</summary>
         public const string ExtensionBackup = ".bak";
 
         public void Recalcular()
@@ -81,13 +75,6 @@ namespace BLL
             return resultado;
         }
 
-        // ─────────────────────────────────────────────────────────────
-        //  BACKUP / RESTORE
-        // ─────────────────────────────────────────────────────────────
-
-        /// <summary>
-        /// Devuelve (creándola si hace falta) la carpeta por defecto para los backups.
-        /// </summary>
         public string ObtenerCarpetaBackupPorDefecto()
         {
             if (!Directory.Exists(CarpetaBackupPorDefecto))
@@ -95,26 +82,16 @@ namespace BLL
             return CarpetaBackupPorDefecto;
         }
 
-        /// <summary>
-        /// Genera un nombre de archivo de backup en el que se lee fácilmente la fecha
-        /// y hora de creación. Ej.: "GestionUsuario_Backup_2026-07-08_23-45-10.bak".
-        /// </summary>
         public string GenerarNombreArchivoBackup(DateTime? momento = null)
         {
             DateTime m = momento ?? DateTime.Now;
             return $"GestionUsuario_Backup_{m:yyyy-MM-dd_HH-mm-ss}{ExtensionBackup}";
         }
 
-        /// <summary>Ruta completa por defecto (carpeta por defecto + nombre con fecha/hora).</summary>
         public string GenerarRutaBackupPorDefecto()
         {
             return Path.Combine(ObtenerCarpetaBackupPorDefecto(), GenerarNombreArchivoBackup());
         }
-
-        /// <summary>
-        /// Realiza un backup en la ruta indicada. Se asegura de que la carpeta destino
-        /// exista y de que el archivo tenga extensión .bak. Devuelve la ruta usada.
-        /// </summary>
         public string Respaldar(string ruta)
         {
             if (string.IsNullOrWhiteSpace(ruta))
@@ -130,10 +107,6 @@ namespace BLL
             return ruta;
         }
 
-        /// <summary>
-        /// Backup "de un solo clic": lo guarda en la carpeta por defecto con un nombre
-        /// que incluye fecha y hora. Devuelve la ruta del archivo generado.
-        /// </summary>
         public string RespaldarEnCarpetaPorDefecto()
         {
             string ruta = GenerarRutaBackupPorDefecto();
@@ -141,11 +114,6 @@ namespace BLL
             return ruta;
         }
 
-        /// <summary>
-        /// Restaura la base desde el backup indicado. NO se puede restaurar si no se
-        /// eligió un archivo o si el archivo no existe: en ese caso se lanza excepción.
-        /// El archivo puede estar en cualquier ubicación de la computadora.
-        /// </summary>
         public void Restaurar(string ruta)
         {
             if (string.IsNullOrWhiteSpace(ruta))
@@ -159,10 +127,6 @@ namespace BLL
             _mpp.Restaurar(ruta);
         }
 
-        /// <summary>
-        /// Lista los backups (.bak) existentes en la carpeta indicada (o la de defecto),
-        /// del más nuevo al más viejo. Sirve para saber si hay algún backup disponible.
-        /// </summary>
         public IList<InfoBackup06AV> ListarBackups(string carpeta = null)
         {
             carpeta = string.IsNullOrWhiteSpace(carpeta) ? CarpetaBackupPorDefecto : carpeta;
@@ -183,7 +147,6 @@ namespace BLL
                 .ToList();
         }
 
-        /// <summary>True si existe al menos un backup en la carpeta indicada (o la de defecto).</summary>
         public bool HayBackupsDisponibles(string carpeta = null)
         {
             return ListarBackups(carpeta).Count > 0;

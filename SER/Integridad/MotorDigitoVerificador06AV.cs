@@ -5,12 +5,6 @@ using System.Text;
 
 namespace SER.Integridad
 {
-    /// <summary>
-    /// Aplica el esquema de la especificación sobre el contenido de una tabla:
-    ///   DVH = suma de un dígito por REGISTRO (calculado sobre sus columnas).
-    ///   DVV = suma de un dígito por COLUMNA (calculado sobre todos sus registros).
-    /// El dígito por grupo lo produce la estrategia <see cref="ICalculadorDigito06AV"/>.
-    /// </summary>
     public sealed class MotorDigitoVerificador06AV
     {
         private readonly ICalculadorDigito06AV _calculador;
@@ -28,11 +22,6 @@ namespace SER.Integridad
             dvv = 0;
             if (tabla == null) return;
 
-            // IMPORTANTE: el DVV concatena los valores de cada columna en el orden de las
-            // filas. Como el contenido se lee con "SELECT *" (sin ORDER BY), SQL Server no
-            // garantiza un orden fijo de filas, y eso haría que el mismo dato produzca DVV
-            // distintos entre corridas (inconsistencias falsas). Por eso ordenamos las
-            // filas por su contenido completo, de forma determinista, antes de calcular.
             var filas = new List<DataRow>();
             foreach (DataRow f in tabla.Rows)
                 filas.Add(f);

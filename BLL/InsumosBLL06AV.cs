@@ -1,12 +1,12 @@
 using BE;
 using BLL.Excepciones;
 using MPP;
+using SER;
 using System;
 using System.Collections.Generic;
 
 namespace BLL
 {
-    /// <summary>Lógica de negocio del ABM de Insumos (PC Factory), incluye bajo stock (RFN2).</summary>
     public class InsumosBLL06AV
     {
         private readonly InsumosMPP06AV _mpp = new InsumosMPP06AV();
@@ -17,7 +17,6 @@ namespace BLL
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudieron obtener los insumos.", ex); }
         }
 
-        /// <summary>Insumos con stock por debajo (o en) el mínimo, para alertar al repositor.</summary>
         public List<Insumo06AV> ObtenerBajoStock()
         {
             try { return _mpp.ObtenerBajoStock(); }
@@ -38,6 +37,8 @@ namespace BLL
                 throw new DuplicadoException06AV($"Ya existe un insumo con el código {i.Codigo}.");
             try { _mpp.Agregar(i); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo crear el insumo.", ex); }
+
+            AuditoriaPcFactory06AV.Alta($"Insumo: {i.Codigo}", ModuloBitacora.Insumos);
         }
 
         public void Modificar(Insumo06AV i)
@@ -47,6 +48,8 @@ namespace BLL
                 throw new NoEncontradoException06AV($"No existe un insumo con el código {i.Codigo}.");
             try { _mpp.Modificar(i); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo modificar el insumo.", ex); }
+
+            AuditoriaPcFactory06AV.Modificacion($"Insumo: {i.Codigo}", ModuloBitacora.Insumos);
         }
 
         public void Eliminar(string codigo)
@@ -57,6 +60,8 @@ namespace BLL
             try { _mpp.Eliminar(codigo); }
             catch (PcFactoryException06AV) { throw; }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo eliminar el insumo.", ex); }
+
+            AuditoriaPcFactory06AV.Baja($"Insumo: {codigo}", ModuloBitacora.Insumos);
         }
 
         private void Validar(Insumo06AV i)

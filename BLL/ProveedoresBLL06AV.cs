@@ -1,12 +1,12 @@
 using BE;
 using BLL.Excepciones;
 using MPP;
+using SER;
 using System;
 using System.Collections.Generic;
 
 namespace BLL
 {
-    /// <summary>Lógica de negocio del ABM de Proveedores (PC Factory).</summary>
     public class ProveedoresBLL06AV
     {
         private readonly ProveedoresMPP06AV _mpp = new ProveedoresMPP06AV();
@@ -30,6 +30,8 @@ namespace BLL
                 throw new DuplicadoException06AV($"Ya existe un proveedor con el CUIT {p.Cuit}.");
             try { _mpp.Agregar(p); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo crear el proveedor.", ex); }
+
+            AuditoriaPcFactory06AV.Alta($"Proveedor CUIT: {p.Cuit}", ModuloBitacora.Proveedores);
         }
 
         public void Modificar(Proveedor06AV p)
@@ -44,6 +46,8 @@ namespace BLL
 
             try { _mpp.Modificar(p); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo modificar el proveedor.", ex); }
+
+            AuditoriaPcFactory06AV.Modificacion($"Proveedor #{p.Id}", ModuloBitacora.Proveedores);
         }
 
         public void Eliminar(int id)
@@ -53,6 +57,8 @@ namespace BLL
             try { _mpp.Eliminar(id); }
             catch (PcFactoryException06AV) { throw; }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo eliminar el proveedor.", ex); }
+
+            AuditoriaPcFactory06AV.Baja($"Proveedor #{id}", ModuloBitacora.Proveedores);
         }
 
         private void Validar(Proveedor06AV p)

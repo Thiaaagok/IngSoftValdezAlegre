@@ -40,6 +40,10 @@ namespace SER
         Computadoras = 22,
         Ventas = 23,
         Compras = 24,
+        Componentes = 25,
+        Insumos = 26,
+        LineasEnsamblaje = 27,
+        Produccion = 28,
 
         Reportes = 31,
     }

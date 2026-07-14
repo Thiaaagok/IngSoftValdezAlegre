@@ -44,6 +44,12 @@ namespace MPP
             _dal.Eliminar(codigo);
         }
 
+        /// <summary>Descuenta <paramref name="cantidad"/> unidades del stock del componente.</summary>
+        public void DescontarStock(string codigo, int cantidad)
+        {
+            _dal.DescontarStock(codigo, cantidad);
+        }
+
         private Componente06AV Mapear(DataRow row)
         {
             return new Componente06AV

@@ -3,6 +3,8 @@ using IngSoftValdezAlegre.Common;
 using IngSoftValdezAlegre.Controles;
 using SER;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
@@ -18,6 +20,7 @@ namespace IngSoftValdezAlegre
         private Button _moduloActivo;
         private ToolStripMenuItem cambiarIdiomaToolStripMenuItem;
         private ContextMenuStrip cmsIdiomas;
+        private Button btnTema;   // toggle de tema claro/oscuro (topbar)
 
         // Backup automático cada 3 horas (solo administrador).
         private const int IntervaloAutoBackupMs = 3 * 60 * 60 * 1000;
@@ -33,79 +36,222 @@ namespace IngSoftValdezAlegre
             CargarSesionEnEncabezado();
             AplicarIdioma();
 
-            // Observer: suscribirse al cambio de idioma
             GestorIdioma06AV.Instancia.IdiomaChanged += AplicarIdioma;
             FormClosed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
 
-            var sesion = UsuarioSesion06AV.Instancia();
+            Tema.TemaChanged += RefrescarTema;
+            FormClosed += (s, e) => Tema.TemaChanged -= RefrescarTema;
 
-            if (!sesion.TienePermiso(PatenteEnum06AV.GestionarRoles))
-            {
-                rolesBTN.Enabled = false;
-                rolesBTN.Visible = false;
-            }
-
-            if (!sesion.TienePermiso(PatenteEnum06AV.GestionarFamilias))
-            {
-                familiasBTN.Enabled = false;
-                familiasBTN.Visible = false;
-            }
-
-            if (!sesion.TienePermiso(PatenteEnum06AV.GestionarPatentes))
-            {
-                patentesBTN.Enabled = false;
-                patentesBTN.Visible = false;
-            }
-
-            if (!EsAdministrador())
-            {
-                bitacoraBTN.Enabled = false;
-                bitacoraBTN.Visible = false;
-            }
-
-            ConfigurarModulosPcFactory();
-
-            SeleccionarModulo(usuariosBTN);
             MostrarControl(new UsuariosControl());
 
             ConfigurarGestionBackups();
         }
 
-        /// <summary>
-        /// Agrega dinámicamente al sidebar los módulos del dominio PC Factory (ABM de
-        /// datos maestros). Se apoyan en el mismo FlowLayoutPanel y estilo que el resto.
-        /// </summary>
-        private void ConfigurarModulosPcFactory()
+        
+        private void ConstruirMenuAgrupado()
         {
-            AgregarModuloPcFactory("Clientes", "", () => new Controles.ClientesControl());
-            AgregarModuloPcFactory("Componentes", "", () => new Controles.ComponentesControl());
-            AgregarModuloPcFactory("Insumos", "", () => new Controles.InsumosControl());
-            AgregarModuloPcFactory("Proveedores", "", () => new Controles.ProveedoresControl());
-            AgregarModuloPcFactory("Líneas de ensamblaje", "", () => new Controles.LineasEnsamblajeControl());
-            AgregarModuloPcFactory("Produccion", "", () => new Controles.ProduccionControl());
-            AgregarModuloPcFactory("Compras", "", () => new Controles.ComprasControl());
+            flpModulos.Controls.Clear();
+
+            AgregarGrupo("menu_grp_admin", "\uE713", new List<ItemMenu>
+            {
+                Item("usuarios", "\uE716", null, false, () => new Controles.UsuariosControl()),
+                Item("titulo_roles", "\uE902", PatenteEnum06AV.GestionarRoles, false, () => new Controles.RolesControl()),
+                Item("titulo_familias", "\uE8FD", PatenteEnum06AV.GestionarFamilias, false, () => new Controles.FamiliasControl()),
+                Item("titulo_patentes", "\uE8D7", PatenteEnum06AV.GestionarPatentes, false, () => new Controles.PatentesControl()),
+                Item("bitacora", "\uE9D5", null, true, () => new Controles.BitacoraControl()),
+                ItemAccion("backup_menu", "\uE777", null, true, () => { using (var f = new FRMGestionBackup()) f.ShowDialog(this); }),
+            });
+
+            AgregarGrupo("menu_grp_maestro", "\uE8F1", new List<ItemMenu>
+            {
+                Item("pcf_menu_clientes", "\uE716", PatenteEnum06AV.GestionarClientes, false, () => new Controles.ClientesControl()),
+                Item("pcf_menu_proveedores", "\uE8D7", PatenteEnum06AV.GestionarProveedores, false, () => new Controles.ProveedoresControl()),
+                Item("pcf_menu_componentes", "\uE950", PatenteEnum06AV.GestionarComponentes, false, () => new Controles.ComponentesControl()),
+                Item("pcf_menu_insumos", "\uE7B8", PatenteEnum06AV.GestionarInsumos, false, () => new Controles.InsumosControl()),
+                Item("pcf_menu_lineas", "\uE9F5", PatenteEnum06AV.GestionarLineasEnsamblaje, false, () => new Controles.LineasEnsamblajeControl()),
+                Item("pcf_menu_modelos", "\uE8A4", PatenteEnum06AV.GestionarModelosEstandar, false, () => new Controles.ModelosEstandarControl()),
+            });
+
+            AgregarGrupo("menu_grp_compra", "\uE7BF", new List<ItemMenu>
+            {
+                Item("pcf_menu_compras", "\uE9D5", PatenteEnum06AV.GestionarCompras, false, () => new Controles.ComprasControl()),
+                Item("menu_consultar_stock", "\uE7B8", PatenteEnum06AV.GestionarComponentes, false, () => new Controles.ConsultarStockControl()),
+                Item("menu_generar_factura", "\uE8A5", PatenteEnum06AV.GestionarProduccion, false, () => new Controles.FacturasControl()),
+            });
+
+            AgregarGrupo("menu_grp_venta", "\uE719", new List<ItemMenu>
+            {
+                Item("pcf_menu_produccion", "\uE713", PatenteEnum06AV.GestionarProduccion, false, () => new Controles.ProduccionControl()),
+                Item("menu_facturas", "\uE8A5", PatenteEnum06AV.GestionarProduccion, false, () => new Controles.FacturasControl()),
+            });
+
+            AgregarGrupo("menu_grp_ayuda", "\uE897", new List<ItemMenu>
+            {
+                ItemAccion("menu_acerca_de", "\uE946", null, false, MostrarAcercaDe),
+            });
         }
 
-        private void AgregarModuloPcFactory(string texto, string icono, System.Func<UserControl> crear)
+        private static ItemMenu Item(string clave, string icono, PatenteEnum06AV? patente, bool soloAdmin, Func<UserControl> crear)
+            => new ItemMenu { Clave = clave, Icono = icono, Patente = patente, SoloAdmin = soloAdmin, Crear = crear };
+
+        private static ItemMenu ItemAccion(string clave, string icono, PatenteEnum06AV? patente, bool soloAdmin, Action accion)
+            => new ItemMenu { Clave = clave, Icono = icono, Patente = patente, SoloAdmin = soloAdmin, Accion = accion };
+
+        private void AgregarGrupo(string claveHeader, string icono, List<ItemMenu> items)
         {
-            var btn = new Button();
-            ConfigurarBotonModulo(btn, texto, icono);
-            btn.Click += (s, e) => { SeleccionarModulo(btn); MostrarControl(crear()); };
-            flpModulos.Controls.Add(btn);
+            var sesion = UsuarioSesion06AV.Instancia();
+            var visibles = items.Where(it =>
+                (it.Patente == null || sesion.TienePermiso(it.Patente.Value)) &&
+                (!it.SoloAdmin || EsAdministrador())).ToList();
+            if (visibles.Count == 0) return;
+
+            var grupo = new GrupoSidebar(GestorIdioma06AV.Instancia.Obtener(claveHeader), icono);
+            var header = new Button { Tag = grupo };
+            ConfigurarBotonGrupo(header);
+            header.Click += (s, e) =>
+            {
+                grupo.Expandido = !grupo.Expandido;
+                foreach (var h in grupo.Hijos) h.Visible = grupo.Expandido;
+                RenderizarGrupo(header);
+            };
+            flpModulos.Controls.Add(header);
+
+            foreach (var it in visibles)
+            {
+                var btn = new Button { Visible = grupo.Expandido };
+                ConfigurarBotonModulo(btn, GestorIdioma06AV.Instancia.Obtener(it.Clave), it.Icono);
+                var itLocal = it;
+                btn.Click += (s, e) =>
+                {
+                    if (itLocal.Crear != null) { SeleccionarModulo(btn); MostrarControl(itLocal.Crear()); }
+                    else itLocal.Accion?.Invoke();
+                };
+                grupo.Hijos.Add(btn);
+                flpModulos.Controls.Add(btn);
+            }
+
+            RenderizarGrupo(header);
         }
 
-        /// <summary>
-        /// Habilita la Gestión de Backups y el backup automático cada 3 horas.
-        /// Solo el administrador puede generar/restaurar backups, así que tanto la
-        /// opción de menú como el timer se activan únicamente para ese rol.
-        /// </summary>
+        private void ConfigurarBotonGrupo(Button btn)
+        {
+            btn.Height = 40;
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 0;
+            btn.Font = new Font("Segoe UI Semibold", 9.5f, FontStyle.Bold);
+            btn.Cursor = Cursors.Hand;
+            btn.TabStop = false;
+            btn.UseVisualStyleBackColor = false;
+            btn.BackColor = Tema.FondoElevado;
+            btn.ForeColor = Tema.Primario;
+            btn.FlatAppearance.MouseOverBackColor = Tema.Acero50;
+            btn.FlatAppearance.MouseDownBackColor = Tema.Seleccion;
+        }
+
+        private void RenderizarGrupo(Button btn)
+        {
+            if (!(btn.Tag is GrupoSidebar g)) return;
+            btn.Width = AnchoBotonSidebar();
+            btn.Padding = _sidebarExpandido ? new Padding(10, 0, 0, 0) : Padding.Empty;
+            string chevron = g.Expandido ? "\u25BE  " : "\u25B8  ";
+            btn.Text = _sidebarExpandido ? chevron + g.Texto.ToUpperInvariant() : string.Empty;
+            btn.TextAlign = _sidebarExpandido ? ContentAlignment.MiddleLeft : ContentAlignment.MiddleCenter;
+            btn.ImageAlign = _sidebarExpandido ? ContentAlignment.MiddleLeft : ContentAlignment.MiddleCenter;
+            btn.TextImageRelation = TextImageRelation.ImageBeforeText;
+            Image ant = btn.Image;
+            btn.Image = CrearIconoModulo(g.Icono, btn.ForeColor);
+            ant?.Dispose();
+        }
+
+        private int AnchoBotonSidebar() =>
+            Math.Max(44, pnlSidebar.Width - pnlSidebar.Padding.Left - pnlSidebar.Padding.Right - SystemInformation.VerticalScrollBarWidth);
+
+        /// <summary>Crea (una sola vez) el botón de tema claro/oscuro en la barra superior.</summary>
+        private void CrearBotonTema()
+        {
+            if (btnTema != null) return;
+
+            btnTema = new Button
+            {
+                Size = new Size(40, 34),
+                Margin = new Padding(0, 0, 10, 0),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                TabStop = false
+            };
+            btnTema.Click += (s, e) => Tema.ToggleTema();
+            ConfigurarBotonTopbar(btnTema, Tema.FondoElevado, Tema.Acero700);
+            btnTema.Font = new Font("Segoe UI Symbol", 12f);
+            ActualizarTextoBotonTema();
+
+            flpTopActions.Controls.Add(btnTema);
+            flpTopActions.Controls.SetChildIndex(btnTema, 0);   // primero (a la izquierda del idioma)
+            toolTipMain.SetToolTip(btnTema, GestorIdioma06AV.Instancia.Obtener("cambiar_tema"));
+        }
+
+        /// <summary>El botón muestra el modo al que se cambiaría: sol si está oscuro, luna si está claro.</summary>
+        private void ActualizarTextoBotonTema()
+        {
+            if (btnTema != null)
+                btnTema.Text = Tema.EsOscuro ? "☀" : "☾";   // ☀ / ☾
+        }
+
+        private void RefrescarTema()
+        {
+            BackColor = Tema.FondoApp;
+            pnlTopBar.BackColor = Tema.FondoElevado;
+            pnlShell.BackColor = Tema.FondoApp;
+            panelPrincipal.BackColor = Tema.FondoApp;
+            pnlSidebar.BackColor = Tema.FondoElevado;
+            lblSistema.ForeColor = Tema.TextoFuerte;
+
+            ConfigurarBotonTopbar(btnToggleSidebar, Tema.FondoElevado, Tema.Acero700);
+            ConfigurarBotonTopbar(opcionesUsuarioBTN, Tema.FondoElevado, Tema.Acero700);
+            ConfigurarBotonTopbar(btnIdioma, Tema.PrimarioSuave, Tema.Primario);
+            ConfigurarBotonTopbar(btnCerrarSesion, Tema.FondoElevado, Tema.Peligro);
+            if (btnTema != null)
+            {
+                ConfigurarBotonTopbar(btnTema, Tema.FondoElevado, Tema.Acero700);
+                btnTema.Font = new Font("Segoe UI Symbol", 12f);
+                ActualizarTextoBotonTema();
+            }
+
+            ConfigurarPanelUsuario();
+            ConfigurarMenuUsuario();
+
+            foreach (Control c in flpModulos.Controls)
+                if (c is Button b)
+                {
+                    if (b.Tag is GrupoSidebar)
+                    {
+                        b.BackColor = Tema.FondoElevado;
+                        b.ForeColor = Tema.Primario;
+                        b.FlatAppearance.MouseOverBackColor = Tema.Acero50;
+                        RenderizarGrupo(b);
+                    }
+                    else RenderizarBotonModulo(b);
+                }
+
+            if (panelPrincipal.Controls.Count > 0 && panelPrincipal.Controls[0] is UserControl uc)
+                Tema.AplicarControl(uc);
+
+            Invalidate(true);
+        }
+
+        private void MostrarAcercaDe()
+        {
+            ConfirmacionForm.MostrarInfo(
+                "PC Forge / Cl\u00EDnica\nSistema de gesti\u00F3n de ensamblaje de PC.\nTrabajo Pr\u00E1ctico de Ingenier\u00EDa de Software.",
+                GestorIdioma06AV.Instancia.Obtener("menu_grp_ayuda"),
+                ConfirmacionForm.TipoConfirmacion.Info, this);
+        }
+
         private void ConfigurarGestionBackups()
         {
             if (!EsAdministrador()) return;
 
             var t = GestorIdioma06AV.Instancia;
 
-            // Opción de menú "Gestión de backups" en el menú del usuario.
             gestionBackupsToolStripMenuItem = new ToolStripMenuItem(t.Obtener("backup_menu"));
             gestionBackupsToolStripMenuItem.Click += (s, e) =>
             {
@@ -114,17 +260,12 @@ namespace IngSoftValdezAlegre
             };
             ctxMenuUsuario.Items.Add(gestionBackupsToolStripMenuItem);
 
-            // Backup automático cada 3 horas.
             _timerAutoBackup = new System.Windows.Forms.Timer { Interval = IntervaloAutoBackupMs };
             _timerAutoBackup.Tick += (s, e) => EjecutarBackupAutomatico();
             _timerAutoBackup.Start();
             FormClosed += (s, e) => _timerAutoBackup?.Stop();
         }
 
-        /// <summary>
-        /// Backup automático silencioso en la carpeta por defecto. Un fallo acá no
-        /// debe interrumpir al usuario, por eso se traga la excepción.
-        /// </summary>
         private void EjecutarBackupAutomatico()
         {
             try
@@ -133,7 +274,6 @@ namespace IngSoftValdezAlegre
             }
             catch
             {
-                // Silencioso: el backup automático es "best effort".
             }
         }
 
@@ -146,11 +286,7 @@ namespace IngSoftValdezAlegre
             lblMenuPrincipal.Text = t.Obtener("menu_principal");
             lblSidebarFooter.Text = t.Obtener("sidebar_footer");
 
-            ConfigurarBotonModulo(usuariosBTN, t.Obtener("usuarios"), "\uE716");
-            ConfigurarBotonModulo(rolesBTN, t.Obtener("titulo_roles"), "\uE8D7");
-            ConfigurarBotonModulo(familiasBTN, t.Obtener("titulo_familias"), "\uE902");
-            ConfigurarBotonModulo(patentesBTN, t.Obtener("titulo_patentes"), "\uE8A4");
-            ConfigurarBotonModulo(bitacoraBTN, t.Obtener("bitacora"), "\uE9D5");
+            ConstruirMenuAgrupado();
 
             cambiarContraseñaToolStripMenuItem.Text = t.Obtener("cambiar_contrasenia");
             reloginToolStripMenuItem.Text = t.Obtener("relogin");
@@ -201,6 +337,8 @@ namespace IngSoftValdezAlegre
             ConfigurarBotonTopbar(btnIdioma, Tema.PrimarioSuave, Tema.Primario);
             ConfigurarBotonTopbar(btnCerrarSesion, Tema.FondoElevado, Tema.Peligro);
 
+            CrearBotonTema();
+
             ConfigurarPanelUsuario();
             ConfigurarMenuUsuario();
             AjustarSidebar();
@@ -243,7 +381,7 @@ namespace IngSoftValdezAlegre
         private void ConfigurarBotonModulo(Button btn, string texto, string icono)
         {
             btn.Tag = new ModuloSidebar(texto, icono);
-            btn.Width = Math.Max(44, pnlSidebar.Width - pnlSidebar.Padding.Left - pnlSidebar.Padding.Right);
+            btn.Width = Math.Max(44, pnlSidebar.Width - pnlSidebar.Padding.Left - pnlSidebar.Padding.Right - SystemInformation.VerticalScrollBarWidth);
             btn.Height = 42;
             btn.FlatStyle = FlatStyle.Flat;
             btn.FlatAppearance.BorderSize = 0;
@@ -273,12 +411,12 @@ namespace IngSoftValdezAlegre
             btn.ImageAlign = _sidebarExpandido ? ContentAlignment.MiddleLeft : ContentAlignment.MiddleCenter;
             btn.Padding = _sidebarExpandido ? new Padding(16, 0, 0, 0) : Padding.Empty;
             btn.BackColor = activo ? Tema.PrimarioSuave : Tema.FondoElevado;
-            btn.ForeColor = activo ? Tema.Primario : Tema.Acero700;
+            btn.ForeColor = activo ? Tema.Primario : Tema.Texto;
             btn.FlatAppearance.MouseOverBackColor = activo
                 ? Tema.PrimarioSuave
-                : Tema.Acero50;
+                : Tema.Seleccion;
             btn.FlatAppearance.MouseDownBackColor = Tema.Seleccion;
-            btn.Width = Math.Max(44, pnlSidebar.Width - pnlSidebar.Padding.Left - pnlSidebar.Padding.Right);
+            btn.Width = Math.Max(44, pnlSidebar.Width - pnlSidebar.Padding.Left - pnlSidebar.Padding.Right - SystemInformation.VerticalScrollBarWidth);
 
             Image imagenAnterior = btn.Image;
             btn.Image = CrearIconoModulo(modulo.Icono, btn.ForeColor);
@@ -409,7 +547,8 @@ namespace IngSoftValdezAlegre
             {
                 if (c is Button btn)
                 {
-                    RenderizarBotonModulo(btn);
+                    if (btn.Tag is GrupoSidebar) RenderizarGrupo(btn);
+                    else RenderizarBotonModulo(btn);
                 }
             }
         }
@@ -584,7 +723,6 @@ namespace IngSoftValdezAlegre
                 }
                 catch
                 {
-                    // Si falla la persistencia del idioma, no bloqueamos el logout
                 }
 
                 // Registrar evento de logout en bitácora
@@ -638,6 +776,27 @@ namespace IngSoftValdezAlegre
 
             public string Texto { get; }
             public string Icono { get; }
+        }
+
+        /// <summary>Definición de un ítem del menú agrupado (submenú).</summary>
+        private sealed class ItemMenu
+        {
+            public string Clave;
+            public string Icono;
+            public PatenteEnum06AV? Patente;   // null = sin gating por patente
+            public bool SoloAdmin;             // true = solo para administradores
+            public Func<UserControl> Crear;    // control a mostrar
+            public Action Accion;              // acción alternativa (p. ej. abrir un diálogo)
+        }
+
+        /// <summary>Encabezado desplegable de un grupo del menú lateral.</summary>
+        private sealed class GrupoSidebar
+        {
+            public GrupoSidebar(string texto, string icono) { Texto = texto; Icono = icono; Expandido = false; }
+            public string Texto;
+            public string Icono;
+            public bool Expandido;
+            public readonly List<Button> Hijos = new List<Button>();
         }
 
     }

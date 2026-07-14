@@ -3,15 +3,11 @@ using System.Linq;
 
 namespace BE
 {
-    /// <summary>
-    /// Computadora solicitada por un cliente. Puede ser un modelo estándar predefinido
-    /// o una configuración personalizada. En ambos casos se compone de componentes.
-    /// </summary>
     public class Computadora06AV
     {
         public int Id { get; set; }
 
-        /// <summary>Nombre del modelo (para las estándar, p. ej. "PC Gamer Nivel 1").</summary>
+        /// <summary>Nombre del modelo (para las estándar, ej: "PC Gamer Nivel 1").</summary>
         public string Nombre { get; set; }
 
         public TipoConfiguracion06AV TipoConfiguracion { get; set; }

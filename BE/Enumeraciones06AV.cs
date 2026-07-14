@@ -34,8 +34,8 @@ namespace BE
     /// <summary>Tipo de pago que hace el cliente sobre una orden.</summary>
     public enum TipoPago06AV
     {
-        Sena,       // 50% inicial
-        SaldoFinal  // 50% restante al retirar
+        Sena,       
+        SaldoFinal  
     }
 
     /// <summary>Estados de un Pedido de Cotización (RFN2).</summary>

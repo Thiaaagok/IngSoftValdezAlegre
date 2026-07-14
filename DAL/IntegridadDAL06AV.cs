@@ -18,6 +18,7 @@ namespace DAL
         /// </summary>
         public static readonly string[] TablasProtegidas =
         {
+            // ── Seguridad / permisos ─────────────────────────────
             "Usuarios",
             "Roles",
             "Familias",
@@ -25,7 +26,23 @@ namespace DAL
             "RolPatentes",
             "RolFamilias",
             "FamiliaPatentes",
-            "FamiliaFamilias"
+            "FamiliaFamilias",
+
+            // ── PC Factory: datos maestros y transaccionales ─────
+            "Clientes",
+            "Componentes",
+            "Insumos",
+            "Proveedores",
+            "LineasEnsamblaje",
+            "Computadoras",
+            "ComputadoraComponentes",
+            "OrdenesProduccion",
+            "Pagos",
+            "OrdenesCompra",
+            "OrdenCompraDetalle",
+            "PedidosCotizacion",
+            "ModelosEstandar",
+            "ModeloEstandarComponentes"
         };
 
         public void AsegurarEstructura()

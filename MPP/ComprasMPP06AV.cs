@@ -65,7 +65,7 @@ namespace MPP
         // ── Cotización ───────────────────────────────────────────
         public void AgregarCotizacion(PedidoCotizacion06AV cot)
         {
-            cot.Numero = _dal.AgregarCotizacion(cot.NumeroCompra, cot.Proveedor.Id);
+            cot.Numero = _dal.AgregarCotizacion(cot.NumeroCompra, cot.Proveedor.Id, cot.Costo, cot.Condiciones);
         }
 
         public List<PedidoCotizacion06AV> ObtenerCotizaciones()
@@ -115,6 +115,8 @@ namespace MPP
                 Proveedor = _proveedores.ObtenerPorId(Convert.ToInt32(row["IdProveedor"])),
                 FechaEmision = Convert.ToDateTime(row["FechaEmision"]),
                 Estado = (EstadoCotizacion06AV)Convert.ToInt32(row["Estado"]),
+                Costo = row.Table.Columns.Contains("Costo") && row["Costo"] != DBNull.Value ? Convert.ToDecimal(row["Costo"]) : 0m,
+                Condiciones = row.Table.Columns.Contains("Condiciones") && row["Condiciones"] != DBNull.Value ? row["Condiciones"].ToString() : "",
                 InsumosPedidos = ObtenerDetalle(numeroCompra)
             };
         }

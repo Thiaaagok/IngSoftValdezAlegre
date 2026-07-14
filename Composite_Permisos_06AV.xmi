@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmi:version="2.1" xmlns:uml="http://schema.omg.org/spec/UML/2.1" xmlns:xmi="http://schema.omg.org/spec/XMI/2.1">
+  <xmi:Documentation exporter="Enterprise Architect" exporterVersion="6.5"/>
+  <uml:Model xmi:type="uml:Model" name="EA_Model" visibility="public">
+    <packagedElement xmi:type="uml:Package" xmi:id="pkg_SER" name="SER" visibility="public">
+      <packagedElement xmi:type="uml:Interface" xmi:id="SER_IComponentePermiso06AV" name="IComponentePermiso06AV" visibility="public">
+        <ownedAttribute xmi:type="uml:Property" xmi:id="SER_IComponentePermiso06AV_Id" name="Id" visibility="public" type="pt_string"/>
+        <ownedAttribute xmi:type="uml:Property" xmi:id="SER_IComponentePermiso06AV_Desc" name="Descripcion" visibility="public" type="pt_string"/>
+        <ownedOperation xmi:type="uml:Operation" xmi:id="SER_IComponentePermiso06AV_Op1" name="ObtenerPatentes" visibility="public">
+          <ownedParameter xmi:type="uml:Parameter" xmi:id="SER_IComponentePermiso06AV_Op1_ret" direction="return" type="pt_hashset_pat"/>
+        </ownedOperation>
+      </packagedElement>
+      <packagedElement xmi:type="uml:Class" xmi:id="SER_Patente06AV" name="Patente06AV" visibility="public">
+        <interfaceRealization xmi:type="uml:InterfaceRealization" xmi:id="SER_Patente06AV_real" name="" client="SER_Patente06AV" supplier="SER_IComponentePermiso06AV" contract="SER_IComponentePermiso06AV"/>
+        <ownedAttribute xmi:type="uml:Property" xmi:id="SER_Patente06AV_Id" name="Id" visibility="public" type="pt_string"/>
+        <ownedAttribute xmi:type="uml:Property" xmi:id="SER_Patente06AV_Desc" name="Descripcion" visibility="public" type="pt_string"/>
+        <ownedOperation xmi:type="uml:Operation" xmi:id="SER_Patente06AV_Op1" name="ObtenerPatentes" visibility="public">
+          <ownedParameter xmi:type="uml:Parameter" xmi:id="SER_Patente06AV_Op1_ret" direction="return" type="pt_hashset_pat"/>
+        </ownedOperation>
+      </packagedElement>
+      <packagedElement xmi:type="uml:Class" xmi:id="SER_ComponentePermisoCompuesto06AV" name="ComponentePermisoCompuesto06AV" visibility="public" isAbstract="true">
+        <interfaceRealization xmi:type="uml:InterfaceRealization" xmi:id="SER_ComponentePermisoCompuesto06AV_real" name="" client="SER_ComponentePermisoCompuesto06AV" supplier="SER_IComponentePermiso06AV" contract="SER_IComponentePermiso06AV"/>
+        <ownedAttribute xmi:type="uml:Property" xmi:id="SER_ComponentePermisoCompuesto06AV_Id" name="Id" visibility="public" type="pt_string"/>
+        <ownedAttribute xmi:type="uml:Property" xmi:id="SER_ComponentePermisoCompuesto06AV_Desc" name="Descripcion" visibility="public" type="pt_string"/>
+        <ownedAttribute xmi:type="uml:Property" xmi:id="SER_ComponentePermisoCompuesto06AV_Hijos" name="Hijos" visibility="public" type="pt_irolist_icomp" isReadOnly="true"/>
+        <ownedOperation xmi:type="uml:Operation" xmi:id="SER_ComponentePermisoCompuesto06AV_Op1" name="ObtenerPatentes" visibility="public">
+          <ownedParameter xmi:type="uml:Parameter" xmi:id="SER_ComponentePermisoCompuesto06AV_Op1_ret" direction="return" type="pt_hashset_pat"/>
+        </ownedOperation>
+        <ownedOperation xmi:type="uml:Operation" xmi:id="SER_ComponentePermisoCompuesto06AV_Op2" name="Agregar" visibility="public">
+          <ownedParameter xmi:type="uml:Parameter" xmi:id="SER_ComponentePermisoCompuesto06AV_Op2_p0" name="componente" direction="in" type="SER_IComponentePermiso06AV"/>
+          <ownedParameter xmi:type="uml:Parameter" xmi:id="SER_ComponentePermisoCompuesto06AV_Op2_ret" direction="return" type="pt_void"/>
+        </ownedOperation>
+        <ownedOperation xmi:type="uml:Operation" xmi:id="SER_ComponentePermisoCompuesto06AV_Op3" name="AgregarRango" visibility="public">
+          <ownedParameter xmi:type="uml:Parameter" xmi:id="SER_ComponentePermisoCompuesto06AV_Op3_p0" name="componentes" direction="in" type="pt_ienum_icomp"/>
+          <ownedParameter xmi:type="uml:Parameter" xmi:id="SER_ComponentePermisoCompuesto06AV_Op3_ret" direction="return" type="pt_void"/>
+        </ownedOperation>
+        <ownedOperation xmi:type="uml:Operation" xmi:id="SER_ComponentePermisoCompuesto06AV_Op4" name="Quitar" visibility="public">
+          <ownedParameter xmi:type="uml:Parameter" xmi:id="SER_ComponentePermisoCompuesto06AV_Op4_p0" name="componente" direction="in" type="SER_IComponentePermiso06AV"/>
+          <ownedParameter xmi:type="uml:Parameter" xmi:id="SER_ComponentePermisoCompuesto06AV_Op4_ret" direction="return" type="pt_void"/>
+        </ownedOperation>
+        <ownedOperation xmi:type="uml:Operation" xmi:id="SER_ComponentePermisoCompuesto06AV_Op5" name="NombreContenedor" visibility="protected" isAbstract="true">
+          <ownedParameter xmi:type="uml:Parameter" xmi:id="SER_ComponentePermisoCompuesto06AV_Op5_ret" direction="return" type="pt_string"/>
+        </ownedOperation>
+      </packagedElement>
+      <packagedElement xmi:type="uml:Class" xmi:id="SER_Rol06AV" name="Rol06AV" visibility="public">
+        <generalization xmi:type="uml:Generalization" xmi:id="SER_Rol06AV_gen" general="SER_ComponentePermisoCompuesto06AV"/>
+        <ownedAttribute xmi:type="uml:Property" xmi:id="SER_Rol06AV_Codigo" name="Codigo" visibility="public" type="pt_string"/>
+        <ownedOperation xmi:type="uml:Operation" xmi:id="SER_Rol06AV_Op1" name="NombreContenedor" visibility="protected">
+          <ownedParameter xmi:type="uml:Parameter" xmi:id="SER_Rol06AV_Op1_ret" direction="return" type="pt_string"/>
+        </ownedOperation>
+      </packagedElement>
+      <packagedElement xmi:type="uml:Class" xmi:id="SER_Familia06AV" name="Familia06AV" visibility="public">
+        <generalization xmi:type="uml:Generalization" xmi:id="SER_Familia06AV_gen" general="SER_ComponentePermisoCompuesto06AV"/>
+        <ownedOperation xmi:type="uml:Operation" xmi:id="SER_Familia06AV_Op1" name="NombreContenedor" visibility="protected">
+          <ownedParameter xmi:type="uml:Parameter" xmi:id="SER_Familia06AV_Op1_ret" direction="return" type="pt_string"/>
+        </ownedOperation>
+      </packagedElement>
+      <packagedElement xmi:type="uml:Association" xmi:id="assoc_hijos" name="" visibility="public">
+        <memberEnd xmi:idref="assoc_hijos_part"/>
+        <memberEnd xmi:idref="assoc_hijos_whole"/>
+        <ownedEnd xmi:type="uml:Property" xmi:id="assoc_hijos_part" name="_hijos" visibility="protected" type="SER_IComponentePermiso06AV" association="assoc_hijos" aggregation="none">
+          <lowerValue xmi:type="uml:LiteralInteger" xmi:id="assoc_hijos_part_lo" value="0"/>
+          <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="assoc_hijos_part_up" value="*"/>
+        </ownedEnd>
+        <ownedEnd xmi:type="uml:Property" xmi:id="assoc_hijos_whole" name="" visibility="public" type="SER_ComponentePermisoCompuesto06AV" association="assoc_hijos" aggregation="shared"/>
+      </packagedElement>
+      <packagedElement xmi:type="uml:PrimitiveType" xmi:id="pt_string" name="string" visibility="public"/>
+      <packagedElement xmi:type="uml:PrimitiveType" xmi:id="pt_void" name="void" visibility="public"/>
+      <packagedElement xmi:type="uml:PrimitiveType" xmi:id="pt_hashset_pat" name="HashSet&lt;Patente06AV&gt;" visibility="public"/>
+      <packagedElement xmi:type="uml:PrimitiveType" xmi:id="pt_list_icomp" name="List&lt;IComponentePermiso06AV&gt;" visibility="public"/>
+      <packagedElement xmi:type="uml:PrimitiveType" xmi:id="pt_irolist_icomp" name="IReadOnlyList&lt;IComponentePermiso06AV&gt;" visibility="public"/>
+      <packagedElement xmi:type="uml:PrimitiveType" xmi:id="pt_ienum_icomp" name="IEnumerable&lt;IComponentePermiso06AV&gt;" visibility="public"/>
+    </packagedElement>
+  </uml:Model>
+  <xmi:Extension extender="Enterprise Architect" extenderID="6.5">
+    <elements>
+      <element xmi:idref="SER_IComponentePermiso06AV" xmi:type="uml:Class" name="IComponentePermiso06AV" scope="public">
+        <model package="pkg_SER" ea_localid="3356" ea_eleType="element"/>
+        <properties documentation="" isSpecification="false" sType="Interface" nType="0" scope="public" isRoot="false" isLeaf="false" isAbstract="false" isActive="false"/>
+        <project author="Cowork" version="1.0" phase="1.0" created="2026-07-12 19:25:01" modified="2026-07-12 19:25:01" complexity="1" status="Proposed"/>
+        <code gentype="C#"/>
+        <style appearance="BackColor=-1;BorderColor=-1;BorderWidth=-1;FontColor=-1;VSwimLanes=1;HSwimLanes=1;BorderStyle=0;"/>
+        <tags/>
+        <xrefs/>
+        <extendedProperties tagged="0" package_name="SER"/>
+      </element>
+      <element xmi:idref="SER_Patente06AV" xmi:type="uml:Class" name="Patente06AV" scope="public">
+        <model package="pkg_SER" ea_localid="3203" ea_eleType="element"/>
+        <properties documentation="" isSpecification="false" sType="Class" nType="0" scope="public" isRoot="false" isLeaf="false" isAbstract="false" isActive="false"/>
+        <project author="Cowork" version="1.0" phase="1.0" created="2026-07-12 19:25:01" modified="2026-07-12 19:25:01" complexity="1" status="Proposed"/>
+        <code gentype="C#"/>
+        <style appearance="BackColor=-1;BorderColor=-1;BorderWidth=-1;FontColor=-1;VSwimLanes=1;HSwimLanes=1;BorderStyle=0;"/>
+        <tags/>
+        <xrefs/>
+        <extendedProperties tagged="0" package_name="SER"/>
+      </element>
+      <element xmi:idref="SER_ComponentePermisoCompuesto06AV" xmi:type="uml:Class" name="ComponentePermisoCompuesto06AV" scope="public">
+        <model package="pkg_SER" ea_localid="8113" ea_eleType="element"/>
+        <properties documentation="" isSpecification="false" sType="Class" nType="0" scope="public" isRoot="false" isLeaf="false" isAbstract="true" isActive="false"/>
+        <project author="Cowork" version="1.0" phase="1.0" created="2026-07-12 19:25:01" modified="2026-07-12 19:25:01" complexity="1" status="Proposed"/>
+        <code gentype="C#"/>
+        <style appearance="BackColor=-1;BorderColor=-1;BorderWidth=-1;FontColor=-1;VSwimLanes=1;HSwimLanes=1;BorderStyle=0;"/>
+        <tags/>
+        <xrefs/>
+        <extendedProperties tagged="0" package_name="SER"/>
+      </element>
+      <element xmi:idref="SER_Rol06AV" xmi:type="uml:Class" name="Rol06AV" scope="public">
+        <model package="pkg_SER" ea_localid="6480" ea_eleType="element"/>
+        <properties documentation="" isSpecification="false" sType="Class" nType="0" scope="public" isRoot="false" isLeaf="false" isAbstract="false" isActive="false"/>
+        <project author="Cowork" version="1.0" phase="1.0" created="2026-07-12 19:25:01" modified="2026-07-12 19:25:01" complexity="1" status="Proposed"/>
+        <code gentype="C#"/>
+        <style appearance="BackColor=-1;BorderColor=-1;BorderWidth=-1;FontColor=-1;VSwimLanes=1;HSwimLanes=1;BorderStyle=0;"/>
+        <tags/>
+        <xrefs/>
+        <extendedProperties tagged="0" package_name="SER"/>
+      </element>
+      <element xmi:idref="SER_Familia06AV" xmi:type="uml:Class" name="Familia06AV" scope="public">
+        <model package="pkg_SER" ea_localid="7130" ea_eleType="element"/>
+        <properties documentation="" isSpecification="false" sType="Class" nType="0" scope="public" isRoot="false" isLeaf="false" isAbstract="false" isActive="false"/>
+        <project author="Cowork" version="1.0" phase="1.0" created="2026-07-12 19:25:01" modified="2026-07-12 19:25:01" complexity="1" status="Proposed"/>
+        <code gentype="C#"/>
+        <style appearance="BackColor=-1;BorderColor=-1;BorderWidth=-1;FontColor=-1;VSwimLanes=1;HSwimLanes=1;BorderStyle=0;"/>
+        <tags/>
+        <xrefs/>
+        <extendedProperties tagged="0" package_name="SER"/>
+      </element>
+    </elements>
+    <connectors>
+      <connector xmi:idref="SER_Patente06AV_real">
+        <source xmi:idref="SER_Patente06AV">
+          <model ea_localid="0" type="Class"/>
+          <role name="" visibility="Public" targetScope="instance"/>
+          <type multiplicity="" aggregation="none" containment="Unspecified"/>
+          <style/>
+          <documentation/>
+          <xrefs/>
+          <properties ea_type="Realisation" direction="Source -&gt; Destination"/>
+          <modifiers/>
+          <appearance linemode="3" linecolor="-1" linewidth="0" seqno="0" headStyle="0" lineStyle="0"/>
+          <labels/>
+        </source>
+        <target xmi:idref="SER_IComponentePermiso06AV">
+          <model ea_localid="0" type="Class"/>
+          <role visibility="Public" targetScope="instance"/>
+          <type multiplicity="" aggregation="none" containment="Unspecified"/>
+          <style/>
+          <documentation/>
+          <xrefs/>
+          <properties ea_type="Realisation" direction="Source -&gt; Destination"/>
+          <modifiers/>
+          <appearance linemode="3" linecolor="-1" linewidth="0" seqno="0" headStyle="0" lineStyle="0"/>
+          <labels/>
+        </target>
+        <properties ea_type="Realisation" direction="Source -&gt; Destination"/>
+        <appearance linemode="3" linecolor="-1" linewidth="0" seqno="0" headStyle="0" lineStyle="0"/>
+        <labels/>
+        <extendedProperties/>
+      </connector>
+      <connector xmi:idref="SER_ComponentePermisoCompuesto06AV_real">
+        <source xmi:idref="SER_ComponentePermisoCompuesto06AV">
+          <model ea_localid="0" type="Class"/>
+          <role name="" visibility="Public" targetScope="instance"/>
+          <type multiplicity="" aggregation="none" containment="Unspecified"/>
+          <style/>
+          <documentation/>
+          <xrefs/>
+          <properties ea_type="Realisation" direction="Source -&gt; Destination"/>
+          <modifiers/>
+          <appearance linemode="3" linecolor="-1" linewidth="0" seqno="0" headStyle="0" lineStyle="0"/>
+          <labels/>
+        </source>
+        <target xmi:idref="SER_IComponentePermiso06AV">
+          <model ea_localid="0" type="Class"/>
+          <role visibility="Public" targetScope="instance"/>
+          <type multiplicity="" aggregation="none" containment="Unspecified"/>
+          <style/>
+          <documentation/>
+          <xrefs/>
+          <properties ea_type="Realisation" direction="Source -&gt; Destination"/>
+          <modifiers/>
+          <appearance linemode="3" linecolor="-1" linewidth="0" seqno="0" headStyle="0" lineStyle="0"/>
+          <labels/>
+        </target>
+        <properties ea_type="Realisation" direction="Source -&gt; Destination"/>
+        <appearance linemode="3" linecolor="-1" linewidth="0" seqno="0" headStyle="0" lineStyle="0"/>
+        <labels/>
+        <extendedProperties/>
+      </connector>
+      <connector xmi:idref="SER_Rol06AV_gen">
+        <source xmi:idref="SER_Rol06AV">
+          <model ea_localid="0" type="Class"/>
+          <role name="" visibility="Public" targetScope="instance"/>
+          <type multiplicity="" aggregation="none" containment="Unspecified"/>
+          <style/>
+          <documentation/>
+          <xrefs/>
+          <properties ea_type="Generalization" direction="Source -&gt; Destination"/>
+          <modifiers/>
+          <appearance linemode="3" linecolor="-1" linewidth="0" seqno="0" headStyle="0" lineStyle="0"/>
+          <labels/>
+        </source>
+        <target xmi:idref="SER_ComponentePermisoCompuesto06AV">
+          <model ea_localid="0" type="Class"/>
+          <role visibility="Public" targetScope="instance"/>
+          <type multiplicity="" aggregation="none" containment="Unspecified"/>
+          <style/>
+          <documentation/>
+          <xrefs/>
+          <properties ea_type="Generalization" direction="Source -&gt; Destination"/>
+          <modifiers/>
+          <appearance linemode="3" linecolor="-1" linewidth="0" seqno="0" headStyle="0" lineStyle="0"/>
+          <labels/>
+        </target>
+        <properties ea_type="Generalization" direction="Source -&gt; Destination"/>
+        <appearance linemode="3" linecolor="-1" linewidth="0" seqno="0" headStyle="0" lineStyle="0"/>
+        <labels/>
+        <extendedProperties/>
+      </connector>
+      <connector xmi:idref="SER_Familia06AV_gen">
+        <source xmi:idref="SER_Familia06AV">
+          <model ea_localid="0" type="Class"/>
+          <role name="" visibility="Public" targetScope="instance"/>
+          <type multiplicity="" aggregation="none" containment="Unspecified"/>
+          <style/>
+          <documentation/>
+          <xrefs/>
+          <properties ea_type="Generalization" direction="Source -&gt; Destination"/>
+          <modifiers/>
+          <appearance linemode="3" linecolor="-1" linewidth="0" seqno="0" headStyle="0" lineStyle="0"/>
+          <labels/>
+        </source>
+        <target xmi:idref="SER_ComponentePermisoCompuesto06AV">
+          <model ea_localid="0" type="Class"/>
+          <role visibility="Public" targetScope="instance"/>
+          <type multiplicity="" aggregation="none" containment="Unspecified"/>
+          <style/>
+          <documentation/>
+          <xrefs/>
+          <properties ea_type="Generalization" direction="Source -&gt; Destination"/>
+          <modifiers/>
+          <appearance linemode="3" linecolor="-1" linewidth="0" seqno="0" headStyle="0" lineStyle="0"/>
+          <labels/>
+        </target>
+        <properties ea_type="Generalization" direction="Source -&gt; Destination"/>
+        <appearance linemode="3" linecolor="-1" linewidth="0" seqno="0" headStyle="0" lineStyle="0"/>
+        <labels/>
+        <extendedProperties/>
+      </connector>
+      <connector xmi:idref="assoc_hijos">
+        <source xmi:idref="SER_IComponentePermiso06AV">
+          <model ea_localid="0" type="Class"/>
+          <role name="_hijos" visibility="Public" targetScope="instance"/>
+          <type multiplicity="0..*" aggregation="none" containment="Unspecified"/>
+          <style/>
+          <documentation/>
+          <xrefs/>
+          <properties ea_type="Aggregation" direction="Source -&gt; Destination"/>
+          <modifiers/>
+          <appearance linemode="3" linecolor="-1" linewidth="0" seqno="0" headStyle="0" lineStyle="0"/>
+          <labels/>
+        </source>
+        <target xmi:idref="SER_ComponentePermisoCompuesto06AV">
+          <model ea_localid="0" type="Class"/>
+          <role visibility="Public" targetScope="instance"/>
+          <type multiplicity="" aggregation="shared" containment="Unspecified"/>
+          <style/>
+          <documentation/>
+          <xrefs/>
+          <properties ea_type="Aggregation" direction="Source -&gt; Destination"/>
+          <modifiers/>
+          <appearance linemode="3" linecolor="-1" linewidth="0" seqno="0" headStyle="0" lineStyle="0"/>
+          <labels/>
+        </target>
+        <properties ea_type="Aggregation" direction="Source -&gt; Destination"/>
+        <appearance linemode="3" linecolor="-1" linewidth="0" seqno="0" headStyle="0" lineStyle="0"/>
+        <labels/>
+        <extendedProperties/>
+      </connector>
+    </connectors>
+    <diagrams>
+      <diagram xmi:id="EAID_Diagrama_Composite">
+        <model package="pkg_SER" localID="1" owner="pkg_SER"/>
+        <properties name="Composite - Permisos (SER)" type="Logical"/>
+        <project author="Cowork" version="1.0" created="2026-07-12 19:25:01" modified="2026-07-12 19:25:01"/>
+        <style1 value="ShowPrivate=1;ShowProtected=1;ShowPublic=1;HideRelationships=0;Locked=0;Border=1;HighlightForeign=1;PackageContents=1;SequenceNotes=0;ScalePrintImage=0;PPgs.cx=1;PPgs.cy=1;DocSize.cx=826;DocSize.cy=1169;ShowDetails=0;Orientation=P;Zoom=100;ShowTags=0;OpParams=1;VisibleAttributeDetail=0;ShowOpRetType=1;ShowIcons=1;CollabNums=0;HideProps=0;ShowReqs=0;ShowCons=0;PaperSize=1;HideParents=0;UseAlias=0;ShowGmtNotes=0;"/>
+        <elements>
+        <element geometry="Left=430;Top=40;Right=690;Bottom=170;" subject="SER_IComponentePermiso06AV" seqno="1" style="DUID=00000001;"/>
+        <element geometry="Left=90;Top=300;Right=320;Bottom=430;" subject="SER_Patente06AV" seqno="2" style="DUID=00000001;"/>
+        <element geometry="Left=430;Top=300;Right=790;Bottom=560;" subject="SER_ComponentePermisoCompuesto06AV" seqno="3" style="DUID=00000001;"/>
+        <element geometry="Left=330;Top=660;Right=560;Bottom=800;" subject="SER_Rol06AV" seqno="4" style="DUID=00000001;"/>
+        <element geometry="Left=620;Top=660;Right=860;Bottom=790;" subject="SER_Familia06AV" seqno="5" style="DUID=00000001;"/>
+        </elements>
+      </diagram>
+    </diagrams>
+  </xmi:Extension>
+</xmi:XMI>

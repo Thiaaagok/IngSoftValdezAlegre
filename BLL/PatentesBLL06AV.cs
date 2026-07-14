@@ -6,11 +6,6 @@ using System.Linq;
 
 namespace BLL
 {
-    /// <summary>
-    /// Patentes son las hojas del árbol de permisos: el permiso atómico que finalmente
-    /// se chequea contra <see cref="UsuarioSesion06AV.TienePermiso"/>. Se asignan a
-    /// Familias o Roles, pero tienen su propio ABM en esta pantalla.
-    /// </summary>
     public class PatentesBLL06AV
     {
         private readonly PatenteMPP06AV _mpp = new PatenteMPP06AV();
@@ -19,7 +14,6 @@ namespace BLL
 
         public Patente06AV ObtenerPorId(string id) => _mpp.ObtenerPorId(id);
 
-        // Recalcula el DV tras cada persistencia (no rompe la operación si falla).
         private void RecalcularIntegridad() => new IntegridadBLL06AV().RecalcularSeguro();
 
         public void Agregar(Patente06AV patente)
@@ -50,10 +44,6 @@ namespace BLL
             RecalcularIntegridad();
         }
 
-        /// <summary>
-        /// Elimina una patente solo si no está siendo usada en ninguna Familia
-        /// ni asignada directamente a ningún Rol.
-        /// </summary>
         public void Eliminar(string id)
         {
             Patente06AV patente = _mpp.ObtenerPorId(id);

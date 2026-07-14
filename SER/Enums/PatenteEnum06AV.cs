@@ -23,6 +23,16 @@ namespace SER
         GestionarPatentes,
 
         // Habilita el GUI de Reparación del Dígito Verificador
-        RepararIntegridad
+        RepararIntegridad,
+
+        // Acceso a las pantallas del dominio PC Factory
+        GestionarClientes,
+        GestionarComponentes,
+        GestionarInsumos,
+        GestionarProveedores,
+        GestionarLineasEnsamblaje,
+        GestionarProduccion,
+        GestionarCompras,
+        GestionarModelosEstandar
     }
 }

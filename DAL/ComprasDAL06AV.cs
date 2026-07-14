@@ -42,11 +42,12 @@ namespace DAL
             EjecutarSPNonQuery("sp_OC_Finalizar", new Dictionary<string, object> { { "@NumeroCompra", numero } });
 
         // ── Cotización ───────────────────────────────────────────
-        public int AgregarCotizacion(int numeroCompra, int idProveedor)
+        public int AgregarCotizacion(int numeroCompra, int idProveedor, decimal costo, string condiciones)
         {
             object num = EjecutarSPEscalar("sp_Cotizacion_Agregar", new Dictionary<string, object>
             {
-                { "@NumeroCompra", numeroCompra }, { "@IdProveedor", idProveedor }
+                { "@NumeroCompra", numeroCompra }, { "@IdProveedor", idProveedor },
+                { "@Costo", costo }, { "@Condiciones", (object)condiciones ?? "" }
             });
             return num == null || num == DBNull.Value ? 0 : Convert.ToInt32(num);
         }

@@ -42,6 +42,16 @@ namespace DAL
             });
         }
 
+        /// <summary>Descuenta stock de un componente (al usarlo en una orden). Atómico en el SP.</summary>
+        public void DescontarStock(string codigo, int cantidad)
+        {
+            EjecutarSPNonQuery("sp_Componentes_DescontarStock", new Dictionary<string, object>
+            {
+                { "@Codigo",   codigo   },
+                { "@Cantidad", cantidad }
+            });
+        }
+
         private static Dictionary<string, object> Parametros(string codigo, string descripcion,
             int tipo, string marca, string modelo, decimal precioUnitario, int stockDisponible)
         {

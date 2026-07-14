@@ -1,16 +1,12 @@
 using BE;
 using BLL.Excepciones;
 using MPP;
+using SER;
 using System;
 using System.Collections.Generic;
 
 namespace BLL
 {
-    /// <summary>
-    /// Lógica de negocio del ABM de Clientes (PC Factory). Valida los datos y delega la
-    /// persistencia en la capa MPP. Lanza excepciones del dominio ante datos inválidos,
-    /// duplicados o entidades inexistentes.
-    /// </summary>
     public class ClientesBLL06AV
     {
         private readonly ClientesMPP06AV _mpp = new ClientesMPP06AV();
@@ -37,6 +33,8 @@ namespace BLL
 
             try { _mpp.Agregar(cliente); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo crear el cliente.", ex); }
+
+            AuditoriaPcFactory06AV.Alta($"Cliente: {cliente.Dni}", ModuloBitacora.Clientes);
         }
 
         public void Modificar(Cliente06AV cliente)
@@ -48,6 +46,8 @@ namespace BLL
 
             try { _mpp.Modificar(cliente); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo modificar el cliente.", ex); }
+
+            AuditoriaPcFactory06AV.Modificacion($"Cliente: {cliente.Dni}", ModuloBitacora.Clientes);
         }
 
         public void Eliminar(string dni)
@@ -60,6 +60,8 @@ namespace BLL
             try { _mpp.Eliminar(dni); }
             catch (PcFactoryException06AV) { throw; }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo eliminar el cliente.", ex); }
+
+            AuditoriaPcFactory06AV.Baja($"Cliente: {dni}", ModuloBitacora.Clientes);
         }
 
         // ── Validaciones ─────────────────────────────────────────────

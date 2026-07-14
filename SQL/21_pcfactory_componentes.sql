@@ -70,5 +70,22 @@ BEGIN
 END
 GO
 
+-- Descuenta stock de un componente al usarlo en una orden de producción (RFN1).
+-- Solo descuenta si hay stock suficiente; si no, no toca nada y avisa con error.
+CREATE OR ALTER PROCEDURE sp_Componentes_DescontarStock
+    @Codigo   NVARCHAR(50),
+    @Cantidad INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE Componentes
+    SET    StockDisponible = StockDisponible - @Cantidad
+    WHERE  Codigo = @Codigo AND StockDisponible >= @Cantidad;
+
+    IF @@ROWCOUNT = 0
+        THROW 51000, 'Stock insuficiente o componente inexistente al descontar stock.', 1;
+END
+GO
+
 PRINT 'Tabla Componentes y procedimientos ABM creados/actualizados.';
 GO

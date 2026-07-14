@@ -28,7 +28,13 @@ namespace MPP
 
             foreach (string tabla in IntegridadDAL06AV.TablasProtegidas)
             {
-                DataTable datos = _dal.ObtenerContenido(tabla);
+                DataTable datos;
+                // Si una tabla protegida todavía no existe en la base (p. ej. los
+                // scripts de PC Factory aún no se corrieron), la salteamos en vez de
+                // tumbar todo el cálculo del DV. Cuando la tabla exista, entra sola.
+                try { datos = _dal.ObtenerContenido(tabla); }
+                catch { continue; }
+
                 long dvh, dvv;
                 _motor.Calcular(datos, out dvh, out dvv);
                 obj.Tablas.Add(new DigitoTabla06AV { Tabla = tabla, DVH = dvh, DVV = dvv });

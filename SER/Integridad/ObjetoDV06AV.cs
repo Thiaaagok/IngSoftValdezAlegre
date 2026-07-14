@@ -14,11 +14,6 @@ namespace SER.Integridad
         public string DVVHex => DVV.ToString("X");
     }
 
-    /// <summary>
-    /// "OBJETO DV": los dígitos de toda la base. En GENERACIÓN se persiste; en
-    /// REVISIÓN se genera igual pero solo en memoria para compararlo con lo almacenado.
-    /// El DVH/DVV de la base es la suma de los de todas las tablas.
-    /// </summary>
     public sealed class ObjetoDV06AV
     {
         public List<DigitoTabla06AV> Tablas { get; } = new List<DigitoTabla06AV>();
@@ -36,13 +31,9 @@ namespace SER.Integridad
         }
     }
 
-    /// <summary>Resultado de comparar el OBJETO DV generado contra el almacenado.</summary>
     public sealed class ResultadoVerificacion06AV
     {
         public bool EsConsistente { get; set; }
-
-        // True cuando no había línea base en la tabla DV (primera ejecución): no es
-        // una inconsistencia, hay que generar la base.
         public bool SinLineaBase { get; set; }
 
         public List<string> TablasInconsistentes { get; } = new List<string>();

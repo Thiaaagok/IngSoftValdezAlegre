@@ -34,9 +34,18 @@ CREATE TABLE PedidosCotizacion (
     IdProveedor  INT       NOT NULL,
     FechaEmision DATETIME  NOT NULL CONSTRAINT DF_Cot_Fecha DEFAULT (GETDATE()),
     Estado       INT       NOT NULL CONSTRAINT DF_Cot_Estado DEFAULT (0),
+    Costo        DECIMAL(12,2) NULL,
+    Condiciones  NVARCHAR(500) NULL,
     CONSTRAINT FK_Cot_OC FOREIGN KEY (NumeroCompra) REFERENCES OrdenesCompra(NumeroCompra),
     CONSTRAINT FK_Cot_Prov FOREIGN KEY (IdProveedor) REFERENCES Proveedores(Id)
 );
+GO
+
+-- Para bases ya creadas: agrega las columnas de precio/condiciones si faltan.
+IF COL_LENGTH('PedidosCotizacion','Costo') IS NULL
+    ALTER TABLE PedidosCotizacion ADD Costo DECIMAL(12,2) NULL;
+IF COL_LENGTH('PedidosCotizacion','Condiciones') IS NULL
+    ALTER TABLE PedidosCotizacion ADD Condiciones NVARCHAR(500) NULL;
 GO
 
 -- ── SPs Orden de compra ──────────────────────────────────────
@@ -114,12 +123,13 @@ GO
 
 -- ── SPs Cotización ───────────────────────────────────────────
 CREATE OR ALTER PROCEDURE sp_Cotizacion_Agregar
-    @NumeroCompra INT, @IdProveedor INT
+    @NumeroCompra INT, @IdProveedor INT,
+    @Costo DECIMAL(12,2), @Condiciones NVARCHAR(500)
 AS
 BEGIN
     SET NOCOUNT ON;
-    INSERT INTO PedidosCotizacion (NumeroCompra, IdProveedor, Estado)
-    VALUES (@NumeroCompra, @IdProveedor, 0);
+    INSERT INTO PedidosCotizacion (NumeroCompra, IdProveedor, Estado, Costo, Condiciones)
+    VALUES (@NumeroCompra, @IdProveedor, 0, @Costo, @Condiciones);
     SELECT CAST(SCOPE_IDENTITY() AS INT) AS NuevoNumero;
 END
 GO
@@ -128,7 +138,7 @@ CREATE OR ALTER PROCEDURE sp_Cotizacion_ObtenerTodas
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT Numero, NumeroCompra, IdProveedor, FechaEmision, Estado
+    SELECT Numero, NumeroCompra, IdProveedor, FechaEmision, Estado, Costo, Condiciones
     FROM   PedidosCotizacion ORDER BY Numero DESC;
 END
 GO
@@ -138,7 +148,7 @@ CREATE OR ALTER PROCEDURE sp_Cotizacion_ObtenerPorNumero
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT Numero, NumeroCompra, IdProveedor, FechaEmision, Estado
+    SELECT Numero, NumeroCompra, IdProveedor, FechaEmision, Estado, Costo, Condiciones
     FROM   PedidosCotizacion WHERE Numero = @Numero;
 END
 GO

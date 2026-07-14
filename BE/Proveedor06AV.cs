@@ -1,9 +1,5 @@
 namespace BE
 {
-    /// <summary>
-    /// Empresa o persona que suministra insumos/componentes para el ensamblaje (RFN2).
-    /// Se identifica por su CUIT.
-    /// </summary>
     public class Proveedor06AV
     {
         public int Id { get; set; }

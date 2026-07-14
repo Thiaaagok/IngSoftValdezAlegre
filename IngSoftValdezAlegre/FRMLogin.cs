@@ -232,6 +232,17 @@ namespace IngSoftValdezAlegre
                     tipo: ConfirmacionForm.TipoConfirmacion.Error,
                     owner: this);
             }
+            catch (Exception ex)
+            {
+                // Red de seguridad: cualquier otra falla (BD inaccesible, permisos,
+                // bitácora, etc.) muestra un aviso con el detalle en vez de reventar la app.
+                var t = GestorIdioma06AV.Instancia;
+                ConfirmacionForm.MostrarInfo(
+                    t.Obtener("error_conexion_tarde") + "\n\n" + ex.Message,
+                    titulo: t.Obtener("error"),
+                    tipo: ConfirmacionForm.TipoConfirmacion.Error,
+                    owner: this);
+            }
         }
 
         private void CerrarBTN_Click(object sender, EventArgs e)

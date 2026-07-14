@@ -1,12 +1,12 @@
 using BE;
 using BLL.Excepciones;
 using MPP;
+using SER;
 using System;
 using System.Collections.Generic;
 
 namespace BLL
 {
-    /// <summary>Lógica de negocio del ABM de Líneas de Ensamblaje (PC Factory).</summary>
     public class LineasEnsamblajeBLL06AV
     {
         private readonly LineasEnsamblajeMPP06AV _mpp = new LineasEnsamblajeMPP06AV();
@@ -28,6 +28,8 @@ namespace BLL
             Validar(l);
             try { _mpp.Agregar(l); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo crear la línea.", ex); }
+
+            AuditoriaPcFactory06AV.Alta($"Línea: {l.Nombre}", ModuloBitacora.LineasEnsamblaje);
         }
 
         public void Modificar(LineaEnsamblaje06AV l)
@@ -37,6 +39,8 @@ namespace BLL
                 throw new NoEncontradoException06AV($"No existe la línea #{l.Id}.");
             try { _mpp.Modificar(l); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo modificar la línea.", ex); }
+
+            AuditoriaPcFactory06AV.Modificacion($"Línea #{l.Id}", ModuloBitacora.LineasEnsamblaje);
         }
 
         public void Eliminar(int id)
@@ -46,6 +50,8 @@ namespace BLL
             try { _mpp.Eliminar(id); }
             catch (PcFactoryException06AV) { throw; }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo eliminar la línea.", ex); }
+
+            AuditoriaPcFactory06AV.Baja($"Línea #{id}", ModuloBitacora.LineasEnsamblaje);
         }
 
         private void Validar(LineaEnsamblaje06AV l)

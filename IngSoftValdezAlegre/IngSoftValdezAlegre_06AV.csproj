@@ -52,6 +52,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\PdfSimple06AV.cs" />
+    <Compile Include="Common\ComprobantePcFactory06AV.cs" />
     <Compile Include="Common\ConfirmacionForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -76,26 +78,43 @@
     <Compile Include="Controles\RolesControl.Designer.cs">
       <DependentUpon>RolesControl.cs</DependentUpon>
     </Compile>
-    <Compile Include="Controles\ClientesControl.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="Controles\AbmBaseControl06AV.cs" />
+    <Compile Include="Controles\ClientesControl.cs" />
+    <Compile Include="Controles\ComponentesControl.cs" />
+    <Compile Include="Controles\InsumosControl.cs" />
+    <Compile Include="Controles\ProveedoresControl.cs" />
+    <Compile Include="Controles\LineasEnsamblajeControl.cs" />
+    <Compile Include="Controles\ProduccionControl.cs" />
+    <Compile Include="Controles\ComprasControl.cs" />
+    <Compile Include="Controles\ConsultarStockControl.cs" />
+    <Compile Include="Controles\FacturasControl.cs" />
+    <Compile Include="Controles\ModelosEstandarControl.cs" />
+    <Compile Include="Controles\AbmBaseControl06AV.Designer.cs">
+      <DependentUpon>AbmBaseControl06AV.cs</DependentUpon>
     </Compile>
-    <Compile Include="Controles\ComponentesControl.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="Controles\ClientesControl.Designer.cs">
+      <DependentUpon>ClientesControl.cs</DependentUpon>
     </Compile>
-    <Compile Include="Controles\InsumosControl.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="Controles\ComponentesControl.Designer.cs">
+      <DependentUpon>ComponentesControl.cs</DependentUpon>
     </Compile>
-    <Compile Include="Controles\ProveedoresControl.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="Controles\InsumosControl.Designer.cs">
+      <DependentUpon>InsumosControl.cs</DependentUpon>
     </Compile>
-    <Compile Include="Controles\LineasEnsamblajeControl.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="Controles\ProveedoresControl.Designer.cs">
+      <DependentUpon>ProveedoresControl.cs</DependentUpon>
     </Compile>
-    <Compile Include="Controles\ProduccionControl.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="Controles\LineasEnsamblajeControl.Designer.cs">
+      <DependentUpon>LineasEnsamblajeControl.cs</DependentUpon>
     </Compile>
-    <Compile Include="Controles\ComprasControl.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="Controles\ModelosEstandarControl.Designer.cs">
+      <DependentUpon>ModelosEstandarControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\ProduccionControl.Designer.cs">
+      <DependentUpon>ProduccionControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\ComprasControl.Designer.cs">
+      <DependentUpon>ComprasControl.cs</DependentUpon>
     </Compile>
     <Compile Include="Controles\PatentesControl.cs">
       <SubType>UserControl</SubType>
@@ -130,6 +149,13 @@
     <Compile Include="FRMGestionBackup.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="FRMNuevoProveedor06AV.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FRMCotizacion06AV.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FRMArmarPc06AV.cs" />
     <Compile Include="FRMGestionBackup.Designer.cs">
       <DependentUpon>FRMGestionBackup.cs</DependentUpon>
     </Compile>
@@ -150,6 +176,33 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Controles\FamiliasControl.resx">
       <DependentUpon>FamiliasControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\AbmBaseControl06AV.resx">
+      <DependentUpon>AbmBaseControl06AV.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\ClientesControl.resx">
+      <DependentUpon>ClientesControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\ComponentesControl.resx">
+      <DependentUpon>ComponentesControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\InsumosControl.resx">
+      <DependentUpon>InsumosControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\ProveedoresControl.resx">
+      <DependentUpon>ProveedoresControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\LineasEnsamblajeControl.resx">
+      <DependentUpon>LineasEnsamblajeControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\ModelosEstandarControl.resx">
+      <DependentUpon>ModelosEstandarControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\ProduccionControl.resx">
+      <DependentUpon>ProduccionControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\ComprasControl.resx">
+      <DependentUpon>ComprasControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controles\PatentesControl.resx">
       <DependentUpon>PatentesControl.cs</DependentUpon>

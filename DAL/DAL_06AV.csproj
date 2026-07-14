@@ -53,9 +53,11 @@
     <Compile Include="ComprasDAL06AV.cs" />
     <Compile Include="FamiliaDAL06AV.cs" />
     <Compile Include="IntegridadDAL06AV.cs" />
+    <Compile Include="DVDAL_06AV.cs" />
     <Compile Include="PatentesDAL06AV.cs" />
     <Compile Include="Conexion.cs" />
     <Compile Include="RolesDAL06AV.cs" />
+    <Compile Include="ModelosEstandarDAL06AV.cs" />
     <Compile Include="UsuariosDAL06AV.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

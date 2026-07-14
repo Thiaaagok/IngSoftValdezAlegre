@@ -1,12 +1,12 @@
 using BE;
 using BLL.Excepciones;
 using MPP;
+using SER;
 using System;
 using System.Collections.Generic;
 
 namespace BLL
 {
-    /// <summary>Lógica de negocio del ABM de Componentes (PC Factory).</summary>
     public class ComponentesBLL06AV
     {
         private readonly ComponentesMPP06AV _mpp = new ComponentesMPP06AV();
@@ -31,6 +31,8 @@ namespace BLL
                 throw new DuplicadoException06AV($"Ya existe un componente con el código {c.Codigo}.");
             try { _mpp.Agregar(c); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo crear el componente.", ex); }
+
+            AuditoriaPcFactory06AV.Alta($"Componente: {c.Codigo}", ModuloBitacora.Componentes);
         }
 
         public void Modificar(Componente06AV c)
@@ -40,6 +42,8 @@ namespace BLL
                 throw new NoEncontradoException06AV($"No existe un componente con el código {c.Codigo}.");
             try { _mpp.Modificar(c); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo modificar el componente.", ex); }
+
+            AuditoriaPcFactory06AV.Modificacion($"Componente: {c.Codigo}", ModuloBitacora.Componentes);
         }
 
         public void Eliminar(string codigo)
@@ -50,6 +54,8 @@ namespace BLL
             try { _mpp.Eliminar(codigo); }
             catch (PcFactoryException06AV) { throw; }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo eliminar el componente.", ex); }
+
+            AuditoriaPcFactory06AV.Baja($"Componente: {codigo}", ModuloBitacora.Componentes);
         }
 
         private void Validar(Componente06AV c)

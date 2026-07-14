@@ -1,191 +1,104 @@
 using BE;
 using BLL;
-using IngSoftValdezAlegre.Common;
 using SER;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
     /// <summary>ABM de Proveedores (PC Factory). Id autonumérico (oculto).</summary>
-    public class ProveedoresControl : UserControl, IIdiomaAplicable06AV
+    [System.ComponentModel.DesignerCategory("Code")]
+    public partial class ProveedoresControl : AbmBaseControl06AV
     {
         private readonly ProveedoresBLL06AV _bll = new ProveedoresBLL06AV();
         private List<Proveedor06AV> _items = new List<Proveedor06AV>();
-        private int _idEditando;
+        private Proveedor06AV _sel;
 
-        private Label lblTitulo;
-        private DataGridView grilla;
         private Label lblNombre, lblCuit, lblEmail, lblTel, lblDir;
         private TextBox txtNombre, txtCuit, txtEmail, txtTel, txtDir;
-        private Button btnNuevo, btnGuardar, btnEliminar;
 
         public ProveedoresControl()
         {
-            ConstruirUI();
-            AplicarTema();
-            AplicarIdioma();
-            AjustarLayout();
-            Resize += (s, e) => AjustarLayout();
-            GestorIdioma06AV.Instancia.IdiomaChanged += AplicarIdioma;
-            Disposed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
-            CargarDatos();
+            lblNombre = new Label(); lblCuit = new Label(); lblEmail = new Label();
+            lblTel = new Label(); lblDir = new Label();
+            txtNombre = new TextBox(); txtCuit = new TextBox(); txtEmail = new TextBox();
+            txtTel = new TextBox(); txtDir = new TextBox();
+            InicializarAbm();
         }
 
-        private void ConstruirUI()
+        protected override string ClaveTitulo => "pcf_proveedores_titulo";
+
+        protected override void ConstruirCampos(TableLayoutPanel tabla)
         {
-            lblTitulo = new Label { AutoSize = true };
-            grilla = new DataGridView
-            {
-                ReadOnly = true, AllowUserToAddRows = false, AllowUserToDeleteRows = false,
-                MultiSelect = false, SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill, RowHeadersVisible = false
-            };
-            grilla.SelectionChanged += (s, e) => MostrarSeleccion();
-
-            lblNombre = new Label { AutoSize = true };
-            lblCuit = new Label { AutoSize = true };
-            lblEmail = new Label { AutoSize = true };
-            lblTel = new Label { AutoSize = true };
-            lblDir = new Label { AutoSize = true };
-            txtNombre = new TextBox();
-            txtCuit = new TextBox();
-            txtEmail = new TextBox();
-            txtTel = new TextBox();
-            txtDir = new TextBox();
-
-            btnNuevo = new Button { Text = "Nuevo" };
-            btnGuardar = new Button { Text = "Guardar" };
-            btnEliminar = new Button { Text = "Eliminar" };
-            btnNuevo.Click += (s, e) => Nuevo();
-            btnGuardar.Click += (s, e) => Guardar();
-            btnEliminar.Click += (s, e) => Eliminar();
-
-            Controls.AddRange(new Control[]
-            {
-                lblTitulo, grilla,
-                lblNombre, txtNombre, lblCuit, txtCuit, lblEmail, txtEmail,
-                lblTel, txtTel, lblDir, txtDir,
-                btnNuevo, btnGuardar, btnEliminar
-            });
+            AgregarCampo(lblNombre, txtNombre);
+            AgregarCampo(lblCuit, txtCuit);
+            AgregarCampo(lblEmail, txtEmail);
+            AgregarCampo(lblTel, txtTel);
+            AgregarCampo(lblDir, txtDir);
         }
 
-        private void AplicarTema()
+        protected override void CargarDatosEnGrilla(DataGridView grilla)
         {
-            Tema.AplicarControl(this);
-            Tema.AplicarTitulo(lblTitulo);
-            Tema.AplicarGrilla(grilla);
-            Tema.AplicarBotonPrimario(btnGuardar);
-            Tema.AplicarBotonSecundario(btnNuevo);
-            Tema.AplicarBotonPeligro(btnEliminar);
+            _items = _bll.ObtenerTodos() ?? new List<Proveedor06AV>();
+            grilla.DataSource = null;
+            grilla.DataSource = _items;
         }
 
-        public void AplicarIdioma()
+        protected override void PrepararNuevo()
         {
-            lblTitulo.Text = "Gestión de Proveedores";
-            lblNombre.Text = "Nombre:";
-            lblCuit.Text = "CUIT:";
-            lblEmail.Text = "Email:";
-            lblTel.Text = "Teléfono:";
-            lblDir.Text = "Dirección:";
-            btnNuevo.Text = "Nuevo";
-            btnGuardar.Text = "Guardar";
-            btnEliminar.Text = "Eliminar";
-        }
-
-        private void AjustarLayout()
-        {
-            int margen = 12;
-            int ancho = Math.Max(740, ClientSize.Width);
-            int alto = Math.Max(440, ClientSize.Height);
-            lblTitulo.SetBounds(margen, margen, 320, 30);
-
-            int grillaW = (int)(ancho * 0.52);
-            grilla.SetBounds(margen, 52, grillaW - margen, alto - 64);
-
-            int fx = grillaW + margen, etiqW = 90, campoX = fx + etiqW;
-            int campoW = ancho - campoX - margen, y = 60, paso = 40;
-            void Fila(Control l, Control c) { l.SetBounds(fx, y + 3, etiqW, 22); c.SetBounds(campoX, y, campoW, 26); y += paso; }
-            Fila(lblNombre, txtNombre);
-            Fila(lblCuit, txtCuit);
-            Fila(lblEmail, txtEmail);
-            Fila(lblTel, txtTel);
-            Fila(lblDir, txtDir);
-
-            y += 8;
-            btnNuevo.SetBounds(campoX, y, 100, 34);
-            btnGuardar.SetBounds(campoX + 108, y, 100, 34);
-            btnEliminar.SetBounds(campoX + 216, y, 100, 34);
-        }
-
-        private void CargarDatos()
-        {
-            try
-            {
-                _items = _bll.ObtenerTodos() ?? new List<Proveedor06AV>();
-                grilla.DataSource = null;
-                grilla.DataSource = _items;
-            }
-            catch (Exception ex) { MostrarError(ex.Message); }
-        }
-
-        private void MostrarSeleccion()
-        {
-            if (grilla.CurrentRow?.DataBoundItem is Proveedor06AV p)
-            {
-                _idEditando = p.Id;
-                txtNombre.Text = p.Nombre;
-                txtCuit.Text = p.Cuit;
-                txtEmail.Text = p.Email;
-                txtTel.Text = p.Telefono;
-                txtDir.Text = p.Direccion;
-            }
-        }
-
-        private void Nuevo()
-        {
-            _idEditando = 0;
+            _sel = null;
             txtNombre.Clear(); txtCuit.Clear(); txtEmail.Clear(); txtTel.Clear(); txtDir.Clear();
-            txtNombre.Focus();
         }
 
-        private void Guardar()
+        protected override bool CargarSeleccionEnCampos()
+        {
+            if (!(Grilla.CurrentRow?.DataBoundItem is Proveedor06AV p)) return false;
+            _sel = p;
+            txtNombre.Text = p.Nombre;
+            txtCuit.Text = p.Cuit;
+            txtEmail.Text = p.Email;
+            txtTel.Text = p.Telefono;
+            txtDir.Text = p.Direccion;
+            return true;
+        }
+
+        protected override bool Guardar(bool editando)
         {
             var p = new Proveedor06AV
             {
-                Id = _idEditando,
+                Id = editando && _sel != null ? _sel.Id : 0,
                 Nombre = txtNombre.Text.Trim(),
                 Cuit = txtCuit.Text.Trim(),
                 Email = txtEmail.Text.Trim(),
                 Telefono = txtTel.Text.Trim(),
                 Direccion = txtDir.Text.Trim()
             };
-
-            try
-            {
-                if (_idEditando > 0) _bll.Modificar(p); else _bll.Crear(p);
-                CargarDatos(); Nuevo();
-                ConfirmacionForm.MostrarInfo("Proveedor guardado correctamente.",
-                    "Proveedores", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
-            }
-            catch (Exception ex) { MostrarError(ex.Message); }
+            if (editando) _bll.Modificar(p); else _bll.Crear(p);
+            return true;
         }
 
-        private void Eliminar()
+        protected override void EliminarSeleccion()
         {
-            if (_idEditando <= 0) { MostrarError("Seleccioná un proveedor de la lista."); return; }
-            bool ok = ConfirmacionForm.Mostrar($"¿Eliminar el proveedor {txtNombre.Text}?",
-                "Eliminar proveedor", ConfirmacionForm.TipoConfirmacion.Advertencia,
-                "Eliminar", "Cancelar", FindForm());
-            if (!ok) return;
-            try { _bll.Eliminar(_idEditando); CargarDatos(); Nuevo(); }
+            if (!(Grilla.CurrentRow?.DataBoundItem is Proveedor06AV p))
+            {
+                MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro"));
+                return;
+            }
+            if (!Confirmar($"¿Eliminar el proveedor {p.Nombre}?",
+                           GestorIdioma06AV.Instancia.Obtener("eliminar"))) return;
+            try { _bll.Eliminar(p.Id); RecargarGrilla(); }
             catch (Exception ex) { MostrarError(ex.Message); }
         }
 
-        private void MostrarError(string mensaje) => ConfirmacionForm.MostrarInfo(
-            mensaje, GestorIdioma06AV.Instancia.Obtener("aviso"),
-            ConfirmacionForm.TipoConfirmacion.Advertencia, FindForm());
+        protected override void AplicarIdiomaCampos()
+        {
+            var t = GestorIdioma06AV.Instancia;
+            lblNombre.Text = t.Obtener("pcf_prov_nombre") + ":";
+            lblCuit.Text = t.Obtener("cuit") + ":";
+            lblEmail.Text = t.Obtener("email") + ":";
+            lblTel.Text = t.Obtener("telefono") + ":";
+            lblDir.Text = t.Obtener("direccion") + ":";
+        }
     }
 }

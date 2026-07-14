@@ -1,9 +1,5 @@
 namespace BE
 {
-    /// <summary>
-    /// Cliente que solicita la compra de una computadora (particular o empresa).
-    /// Se identifica por su DNI.
-    /// </summary>
     public class Cliente06AV
     {
         public string Dni { get; set; }

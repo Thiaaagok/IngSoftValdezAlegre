@@ -2,10 +2,6 @@ using System;
 
 namespace BE
 {
-    /// <summary>
-    /// Pago que realiza el cliente sobre una orden de producción: la seña (50% inicial)
-    /// o el saldo final (50% restante al retirar el equipo).
-    /// </summary>
     public class Pago06AV
     {
         public int Id { get; set; }

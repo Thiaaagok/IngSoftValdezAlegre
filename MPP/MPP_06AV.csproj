@@ -51,9 +51,11 @@
     <Compile Include="ProduccionMPP06AV.cs" />
     <Compile Include="ComprasMPP06AV.cs" />
     <Compile Include="IntegridadMPP06AV.cs" />
+    <Compile Include="DVMPP_06AV.cs" />
     <Compile Include="PatenteMPP06AV.cs" />
     <Compile Include="FamiliaMPP06AV.cs" />
     <Compile Include="RolesMPP06AV.cs" />
+    <Compile Include="ModelosEstandarMPP06AV.cs" />
     <Compile Include="UsuariosMPP06AV.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

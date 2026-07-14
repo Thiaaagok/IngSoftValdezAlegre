@@ -13,7 +13,22 @@ namespace IngSoftValdezAlegre
         private static bool _oscuro = false;
         public static bool EsOscuro => _oscuro;
 
-        public static void ToggleTema() => _oscuro = !_oscuro;
+        /// <summary>Se dispara al cambiar el tema (claro/oscuro), para que la UI se repinte.</summary>
+        public static event System.Action TemaChanged;
+
+        public static void ToggleTema()
+        {
+            _oscuro = !_oscuro;
+            TemaChanged?.Invoke();
+        }
+
+        /// <summary>Fuerza el modo indicado (true = oscuro) y notifica el cambio.</summary>
+        public static void EstablecerOscuro(bool oscuro)
+        {
+            if (_oscuro == oscuro) return;
+            _oscuro = oscuro;
+            TemaChanged?.Invoke();
+        }
 
         // Neutros
         public static readonly Color Grafito950 = Color.FromArgb(2, 6, 23);

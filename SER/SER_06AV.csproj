@@ -49,6 +49,7 @@
     <Compile Include="Enums\PatenteEnum06AV.cs" />
     <Compile Include="Exportacion\ExportacionEXCEL.cs" />
     <Compile Include="Exportacion\ExportacionPDF.cs" />
+    <Compile Include="ComponentePermisoCompuesto06AV.cs" />
     <Compile Include="Familia06AV.cs" />
     <Compile Include="GestorIdioma06AV.cs" />
     <Compile Include="Integridad\ICalculadorDigito06AV.cs" />

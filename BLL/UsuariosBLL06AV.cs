@@ -26,9 +26,6 @@ namespace SER
             if (string.IsNullOrWhiteSpace(contrasenia))
                 throw new UsuarioValidacionException("contrasenia", t.Obtener("val_contrasenia_vacia"));
 
-            // Guarda de sesión única: el singleton UsuarioSesion06AV conserva su estado
-            // entre pantallas (lo demuestra "Relogin"). Si ya hay un usuario cargado ahí,
-            // no se permite ningún login nuevo hasta que esa sesión se cierre.
             var sesionActiva = UsuarioSesion06AV.Instancia();
             if (sesionActiva.UsuarioActual != null)
                 throw new SesionActivaException(sesionActiva.UsuarioActual.Dni);
@@ -88,14 +85,18 @@ namespace SER
                 sesion.CargarPatentes(patentes);
 
                 GestorIdioma06AV.Instancia.Cargar(usuario.Idioma);
-                bitacora.LoginExitoso(usuario.Dni);
+                // La auditoría no debe bloquear un login ya válido: la sesión ya se inició.
+                try { bitacora.LoginExitoso(usuario.Dni); } catch { }
 
                 return usuario;
             }
             catch (UsuarioException) { throw; }
                 catch (Exception ex)
             {
-                bitacora.Error($"Error en Login ({login}): {ex.Message}", ModuloBitacora.Autenticacion, null);
+                // El registro en bitácora no debe pisar la excepción real: si la BD está
+                // caída, la bitácora también falla y enmascararía el error original (por eso
+                // se traga acá). Siempre se relanza como UsuarioAccesoDatosException.
+                try { bitacora.Error($"Error en Login ({login}): {ex.Message}", ModuloBitacora.Autenticacion, null); } catch { }
                 throw new UsuarioAccesoDatosException($"Login({login})", ex);
             }
         }
@@ -125,17 +126,6 @@ namespace SER
             }
         }
 
-        /// <summary>
-        /// Verifica credenciales de forma liviana (sin iniciar sesión ni registrar en
-        /// bitácora) y devuelve true solo si corresponden a un usuario cuyo rol tiene,
-        /// entre sus patentes efectivas, la patente indicada.
-        ///
-        /// Se usa en la REVISIÓN de integridad del Login: el acceso al GUI de Reparación
-        /// no depende del nombre del rol sino de tener la patente que lo habilita
-        /// (<see cref="PatenteEnum06AV.RepararIntegridad"/>). Las patentes se resuelven
-        /// con el SP recursivo (igual que el Login), por lo que no depende de construir
-        /// el árbol del rol.
-        /// </summary>
         public bool TienePatente(string login, string contrasenia, PatenteEnum06AV patente)
         {
             try
