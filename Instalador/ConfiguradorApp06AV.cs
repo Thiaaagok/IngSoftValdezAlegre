@@ -15,6 +15,9 @@ namespace Instalador
     {
         public const string NombreExeApp = "IngSoftValdezAlegre.exe";
 
+        /// <summary>Nombre del archivo externo con la cadena de conexión (lo lee DAL.Conexion).</summary>
+        public const string ArchivoConexion = "conexion.config";
+
         /// <summary>
         /// Busca el ejecutable del sistema. Primero junto al Instalador (caso distribuido),
         /// y si no, subiendo por el árbol de carpetas hacia las salidas bin\Debug|Release
@@ -23,30 +26,45 @@ namespace Instalador
         /// </summary>
         public static string LocalizarExeApp()
         {
+            var todos = LocalizarTodosExeApp();
+            return todos.Count > 0 ? todos[0] : null;
+        }
+
+        /// <summary>
+        /// Devuelve TODAS las ubicaciones del ejecutable del sistema: junto al Instalador
+        /// (caso distribuido) y las salidas bin\Debug y bin\Release del proyecto principal
+        /// (caso Visual Studio). Sirve para dejar la cadena de conexión en todas, así no
+        /// importa cuál configuración se ejecute.
+        /// </summary>
+        public static System.Collections.Generic.List<string> LocalizarTodosExeApp()
+        {
+            var lista = new System.Collections.Generic.List<string>();
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
-            // 1) Mismo directorio que el Instalador.
-            string junto = Path.Combine(baseDir, NombreExeApp);
-            if (File.Exists(junto)) return junto;
+            void Agregar(string ruta)
+            {
+                if (!string.IsNullOrEmpty(ruta) && File.Exists(ruta) &&
+                    !lista.Exists(x => string.Equals(x, ruta, StringComparison.OrdinalIgnoreCase)))
+                    lista.Add(ruta);
+            }
 
-            // 2) Subir hasta la raíz del repo y buscar las salidas del proyecto principal.
+            // 1) Mismo directorio que el Instalador (distribuido).
+            Agregar(Path.Combine(baseDir, NombreExeApp));
+
+            // 2) Subir hasta la raíz del repo y buscar salidas del proyecto principal.
             try
             {
                 var dir = new DirectoryInfo(baseDir);
                 for (int i = 0; i < 6 && dir != null; i++)
                 {
                     foreach (string cfg in new[] { "Debug", "Release" })
-                    {
-                        string candidato = Path.Combine(
-                            dir.FullName, "IngSoftValdezAlegre", "bin", cfg, NombreExeApp);
-                        if (File.Exists(candidato)) return candidato;
-                    }
+                        Agregar(Path.Combine(dir.FullName, "IngSoftValdezAlegre", "bin", cfg, NombreExeApp));
                     dir = dir.Parent;
                 }
             }
-            catch { /* si algo falla, se devuelve null */ }
+            catch { /* si algo falla, se devuelve lo que se haya encontrado */ }
 
-            return null;
+            return lista;
         }
 
         /// <summary>
@@ -57,6 +75,23 @@ namespace Instalador
         {
             if (string.IsNullOrEmpty(exePath)) return false;
 
+            bool ok = false;
+
+            // (A) Archivo externo "conexion.config" junto al exe. Es la FUENTE DE VERDAD que
+            //     lee DAL.Conexion: no forma parte del proyecto, así que un rebuild de Visual
+            //     Studio NO lo pisa (a diferencia del .exe.config, que se regenera desde App.config).
+            try
+            {
+                string dir = Path.GetDirectoryName(exePath);
+                if (!string.IsNullOrEmpty(dir))
+                {
+                    File.WriteAllText(Path.Combine(dir, ArchivoConexion), connectionString);
+                    ok = true;
+                }
+            }
+            catch { /* si falla, queda el .exe.config como respaldo */ }
+
+            // (B) Además, el .exe.config (compatibilidad / respaldo).
             try
             {
                 string configPath = exePath + ".config";
@@ -100,12 +135,11 @@ namespace Instalador
                 add.SetAttributeValue("providerName", "System.Data.SqlClient");
 
                 doc.Save(configPath);
-                return true;
+                ok = true;
             }
-            catch
-            {
-                return false;
-            }
+            catch { /* el archivo externo (A) ya alcanza para que la app conecte */ }
+
+            return ok;
         }
 
         /// <summary>

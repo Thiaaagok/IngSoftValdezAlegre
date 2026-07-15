@@ -108,7 +108,9 @@ namespace SER
         /// </summary>
         public void Cargar(string idioma)
         {
-            _idiomaActual = EsValido(idioma) ? idioma : IdiomaDefecto;
+            // Se normaliza a MAYÚSCULAS para que coincida con las claves de _traducciones
+            // (ES/EN/PT). En la BD el idioma puede estar en minúsculas ('es').
+            _idiomaActual = EsValido(idioma) ? idioma.ToUpperInvariant() : IdiomaDefecto;
         }
 
         /// <summary>
@@ -120,7 +122,7 @@ namespace SER
             if (!EsValido(idioma))
                 throw new ArgumentException(
                     $"Idioma '{idioma}' no está disponible. Opciones: {string.Join(", ", IdiomasDisponibles)}");
-            _idiomaActual = idioma;
+            _idiomaActual = idioma.ToUpperInvariant();
             NotificarCambio();
         }
 
@@ -136,9 +138,11 @@ namespace SER
 
         #region Carga de JSON
 
-        // Diccionario en memoria: idioma → (clave → texto)
+        // Diccionario en memoria: idioma → (clave → texto).
+        // Comparador OrdinalIgnoreCase: la clave de idioma se busca sin importar
+        // mayúsculas/minúsculas ('es' == 'ES'), que es la causa del bug de labels.
         private Dictionary<string, Dictionary<string, string>> _traducciones
-            = new Dictionary<string, Dictionary<string, string>>();
+            = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Carga todos los archivos de idioma disponibles desde Resources/Idiomas/.
@@ -151,9 +155,6 @@ namespace SER
             foreach (string codigo in IdiomasDisponibles)
             {
                 string ruta = Path.Combine(CarpetaIdiomas, codigo.ToLower() + ".json");
-
-                Console.WriteLine(ruta);
-
                 _traducciones[codigo] = LeerJson(ruta);
             }
         }

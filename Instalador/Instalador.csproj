@@ -134,6 +134,18 @@
       <Link>Scripts\26_pcfactory_compras.sql</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\SQL\27_pcfactory_patentes.sql">
+      <Link>Scripts\27_pcfactory_patentes.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SQL\28_pcfactory_modelos.sql">
+      <Link>Scripts\28_pcfactory_modelos.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SQL\30_seed_demo_pcfactory.sql">
+      <Link>Scripts\30_seed_demo_pcfactory.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

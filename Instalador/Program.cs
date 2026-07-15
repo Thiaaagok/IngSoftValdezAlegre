@@ -123,6 +123,18 @@ namespace Instalador
                 }
 
                 new InstaladorBLL06AV(opciones).Instalar(Log);
+
+                // Dejar la app apuntando a la instancia elegida (en todas las ubicaciones
+                // del ejecutable), igual que hace el asistente gráfico.
+                var exes = ConfiguradorApp06AV.LocalizarTodosExeApp();
+                int escritos = 0;
+                foreach (string exe in exes)
+                    if (ConfiguradorApp06AV.EscribirCadenaConexion(exe, opciones.CadenaBaseDatos()))
+                        escritos++;
+                Console.WriteLine(escritos > 0
+                    ? $"Configuración de la aplicación actualizada ({escritos} ubicación/es)."
+                    : "Aviso: no se encontró el ejecutable del sistema para configurarlo.");
+
                 Console.WriteLine();
                 Console.WriteLine("Instalación completada. Credenciales iniciales:");
                 Console.WriteLine("   Login: admin   Contraseña: Admin1234");

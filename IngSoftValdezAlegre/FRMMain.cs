@@ -136,6 +136,7 @@ namespace IngSoftValdezAlegre
         private void ConfigurarBotonGrupo(Button btn)
         {
             btn.Height = 40;
+            btn.Margin = new Padding(0, 3, 0, 3);   // sin margen horizontal: evita el scroll-x al aparecer el scroll-y
             btn.FlatStyle = FlatStyle.Flat;
             btn.FlatAppearance.BorderSize = 0;
             btn.Font = new Font("Segoe UI Semibold", 9.5f, FontStyle.Bold);
@@ -163,8 +164,11 @@ namespace IngSoftValdezAlegre
             ant?.Dispose();
         }
 
+        // Ancho útil real del área de módulos. Se toma de flpModulos.ClientSize, que
+        // YA descuenta la barra de scroll vertical cuando aparece; así los botones
+        // nunca sobresalen y no se dispara una barra de scroll horizontal fantasma.
         private int AnchoBotonSidebar() =>
-            Math.Max(44, pnlSidebar.Width - pnlSidebar.Padding.Left - pnlSidebar.Padding.Right - SystemInformation.VerticalScrollBarWidth);
+            Math.Max(1, flpModulos.ClientSize.Width);
 
         /// <summary>Crea (una sola vez) el botón de tema claro/oscuro en la barra superior.</summary>
         private void CrearBotonTema()
@@ -342,6 +346,56 @@ namespace IngSoftValdezAlegre
             ConfigurarPanelUsuario();
             ConfigurarMenuUsuario();
             AjustarSidebar();
+
+            // Cuando el área de módulos cambia de ancho (aparece/desaparece la barra
+            // de scroll vertical, o se colapsa el sidebar) reajustamos el ancho de los
+            // botones para que sigan encajando y NO aparezca una barra horizontal.
+            flpModulos.ClientSizeChanged += (s, e) => AjustarAnchosModulos();
+
+            // La ventana no tiene bordes (FormBorderStyle = None), así que se permite
+            // moverla arrastrando la barra superior (y el título), como una barra de título.
+            HabilitarArrastreVentana(pnlTopBar);
+            HabilitarArrastreVentana(lblSistema);
+        }
+
+        // ── Arrastre de la ventana sin bordes ────────────────────────
+        private const int WM_NCLBUTTONDOWN = 0xA1;
+        private const int HT_CAPTION = 0x2;
+
+        [DllImport("user32.dll")]
+        private static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
+        [DllImport("user32.dll")]
+        private static extern bool ReleaseCapture();
+
+        /// <summary>Hace que arrastrar el control indicado mueva toda la ventana,
+        /// igual que si se arrastrara la barra de título de una ventana normal.</summary>
+        private void HabilitarArrastreVentana(Control control)
+        {
+            if (control == null) return;
+            control.MouseDown += (s, e) =>
+            {
+                if (e.Button != MouseButtons.Left) return;
+                ReleaseCapture();
+                SendMessage(this.Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+            };
+        }
+
+        private bool _ajustandoAnchos;
+
+        /// <summary>Iguala el ancho de todos los botones del menú al área cliente
+        /// actual de flpModulos (que ya descuenta el scroll vertical), evitando el
+        /// scroll horizontal. Reentrante-safe.</summary>
+        private void AjustarAnchosModulos()
+        {
+            if (_ajustandoAnchos) return;
+            _ajustandoAnchos = true;
+            flpModulos.SuspendLayout();
+            int ancho = AnchoBotonSidebar();
+            foreach (Control c in flpModulos.Controls)
+                if (c is Button b) b.Width = ancho;
+            flpModulos.ResumeLayout();
+            _ajustandoAnchos = false;
         }
 
         private void ConfigurarPanelUsuario()
@@ -381,7 +435,8 @@ namespace IngSoftValdezAlegre
         private void ConfigurarBotonModulo(Button btn, string texto, string icono)
         {
             btn.Tag = new ModuloSidebar(texto, icono);
-            btn.Width = Math.Max(44, pnlSidebar.Width - pnlSidebar.Padding.Left - pnlSidebar.Padding.Right - SystemInformation.VerticalScrollBarWidth);
+            btn.Margin = new Padding(0, 3, 0, 3);   // sin margen horizontal: evita el scroll-x al aparecer el scroll-y
+            btn.Width = AnchoBotonSidebar();
             btn.Height = 42;
             btn.FlatStyle = FlatStyle.Flat;
             btn.FlatAppearance.BorderSize = 0;
@@ -416,7 +471,7 @@ namespace IngSoftValdezAlegre
                 ? Tema.PrimarioSuave
                 : Tema.Seleccion;
             btn.FlatAppearance.MouseDownBackColor = Tema.Seleccion;
-            btn.Width = Math.Max(44, pnlSidebar.Width - pnlSidebar.Padding.Left - pnlSidebar.Padding.Right - SystemInformation.VerticalScrollBarWidth);
+            btn.Width = AnchoBotonSidebar();
 
             Image imagenAnterior = btn.Image;
             btn.Image = CrearIconoModulo(modulo.Icono, btn.ForeColor);

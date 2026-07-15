@@ -58,9 +58,12 @@ Name: "{group}\Desinstalar IngSoftValdezAlegre"; Filename: "{uninstallexe}"
 ; (Instalador.exe) al finalizar la configuracion de la base.
 
 [Run]
+; La configuracion de la base es OBLIGATORIA: se ejecuta automaticamente al
+; finalizar la copia de archivos (no como tilde opcional) y el Setup ESPERA a
+; que termine. Asi ningun usuario puede quedarse sin base creada / sin conexion.config.
 Filename: "{app}\{#ConfiguradorExe}"; \
-    Description: "Configurar la base de datos ahora"; \
-    Flags: postinstall skipifsilent nowait
+    StatusMsg: "Configurando la base de datos (paso obligatorio)..."; \
+    Flags: waituntilterminated
 
 [Code]
 // Verifica que exista .NET Framework 4.8 (Release >= 528040). Si no, avisa.

@@ -123,14 +123,19 @@ namespace Instalador
             {
                 await Task.Run(() => new InstaladorBLL06AV(_opciones).Instalar(Log));
 
-                // Dejar la app apuntando a la instancia elegida.
-                _exeApp = ConfiguradorApp06AV.LocalizarExeApp();
+                // Dejar la app apuntando a la instancia elegida. Se escribe en TODAS las
+                // ubicaciones del ejecutable (junto al Instalador y bin\Debug|Release), para
+                // que la cadena elegida valga sin importar qué configuración se ejecute.
+                var exes = ConfiguradorApp06AV.LocalizarTodosExeApp();
+                _exeApp = exes.Count > 0 ? exes[0] : null;
                 if (_exeApp != null)
                 {
-                    bool escrito = ConfiguradorApp06AV.EscribirCadenaConexion(
-                        _exeApp, _opciones.CadenaBaseDatos());
-                    Log(escrito
-                        ? "Configuración de la aplicación actualizada."
+                    int escritos = 0;
+                    foreach (string exe in exes)
+                        if (ConfiguradorApp06AV.EscribirCadenaConexion(exe, _opciones.CadenaBaseDatos()))
+                            escritos++;
+                    Log(escritos > 0
+                        ? $"Configuración de la aplicación actualizada ({escritos} ubicación/es)."
                         : "Aviso: no se pudo actualizar la configuración de la aplicación.");
 
                     // Acceso directo en el Escritorio, automático (sin intervención del usuario).

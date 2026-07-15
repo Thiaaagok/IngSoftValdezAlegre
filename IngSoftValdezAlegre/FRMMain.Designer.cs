@@ -157,6 +157,8 @@ namespace IngSoftValdezAlegre
             this.flpTopActions.Controls.Add(this.btnIdioma);
             this.flpTopActions.Controls.Add(this.panel4);
             this.flpTopActions.Controls.Add(this.btnCerrarSesion);
+            this.flpTopActions.AutoSize = true;
+            this.flpTopActions.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.flpTopActions.Dock = System.Windows.Forms.DockStyle.Right;
             this.flpTopActions.Location = new System.Drawing.Point(912, 0);
             this.flpTopActions.Name = "flpTopActions";
@@ -373,7 +375,7 @@ namespace IngSoftValdezAlegre
             this.MinimumSize = new System.Drawing.Size(900, 560);
             this.Name = "FRMMain";
             this.ShowIcon = false;
-            this.ShowInTaskbar = false;
+            this.ShowInTaskbar = true;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "PCForge Clinica";
             this.pnlTopBar.ResumeLayout(false);

@@ -10,6 +10,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -27,6 +28,33 @@ namespace IngSoftValdezAlegre
             // Observer: suscribirse al cambio de idioma
             GestorIdioma06AV.Instancia.IdiomaChanged += AplicarIdioma;
             FormClosed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
+
+            // La ventana no tiene bordes: se permite moverla arrastrando el panel del
+            // logo o cualquier zona vacía del formulario.
+            HabilitarArrastreVentana(this);
+            HabilitarArrastreVentana(panel1);
+        }
+
+        // ── Arrastre de la ventana sin bordes ────────────────────────
+        private const int WM_NCLBUTTONDOWN = 0xA1;
+        private const int HT_CAPTION = 0x2;
+
+        [DllImport("user32.dll")]
+        private static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
+        [DllImport("user32.dll")]
+        private static extern bool ReleaseCapture();
+
+        /// <summary>Arrastrar el control indicado mueve toda la ventana.</summary>
+        private void HabilitarArrastreVentana(Control control)
+        {
+            if (control == null) return;
+            control.MouseDown += (s, e) =>
+            {
+                if (e.Button != MouseButtons.Left) return;
+                ReleaseCapture();
+                SendMessage(this.Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+            };
         }
 
         private void AplicarTema()
@@ -223,11 +251,18 @@ namespace IngSoftValdezAlegre
                     tipo: ConfirmacionForm.TipoConfirmacion.Error,
                     owner: this);
             }
-            catch (UsuarioAccesoDatosException)
+            catch (UsuarioAccesoDatosException ex)
             {
                 var t = GestorIdioma06AV.Instancia;
+
+                // Mostrar la causa REAL (SqlException interna): "no se encontró la instancia",
+                // "no se puede abrir la base", "login failed", etc. Sirve para diagnosticar
+                // problemas de conexión en otras PCs sin adivinar.
+                Exception real = ex;
+                while (real.InnerException != null) real = real.InnerException;
+
                 ConfirmacionForm.MostrarInfo(
-                    t.Obtener("error_conexion_tarde"),
+                    t.Obtener("error_conexion_tarde") + "\n\n" + real.Message,
                     titulo: t.Obtener("error"),
                     tipo: ConfirmacionForm.TipoConfirmacion.Error,
                     owner: this);

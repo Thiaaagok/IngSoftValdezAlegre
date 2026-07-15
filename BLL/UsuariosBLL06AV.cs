@@ -63,6 +63,12 @@ namespace SER
                     if (fallidos >= MaximosIntentos)
                     {
                         UsuariosMPP.BloquearUsuario(usuario.Dni);
+
+                        // El bloqueo modifica la tabla protegida 'Usuarios'. Hay que recalcular
+                        // el DV (igual que hace BLL.BloquearUsuario en la acción del admin), si
+                        // no el próximo login detectaría una inconsistencia FALSA por este cambio.
+                        RecalcularIntegridad();
+
                         throw new UsuarioEstadoInvalidoException(usuario.Dni, "Bloqueado", "Login");
                     }
 

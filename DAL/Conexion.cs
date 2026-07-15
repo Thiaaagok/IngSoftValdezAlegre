@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,31 +13,54 @@ namespace DAL
     {
         private static Conexion _Instancia;
 
-        /// <summary>Cadena por defecto si el archivo de configuración no la define.</summary>
+        /// <summary>Cadena por defecto si nada más define la conexión.</summary>
         private const string CadenaPorDefecto =
             "Server=.;DataBase=IngSoftValdezAlegre;Integrated Security=true";
 
+        /// <summary>Archivo externo (junto al ejecutable) con la cadena de conexión.</summary>
+        private const string ArchivoConexion = "conexion.config";
+
         /// <summary>
-        /// Cadena de conexión. Se toma de la sección &lt;connectionStrings&gt; del archivo
-        /// de configuración (nombre "IngSoft") — que es la que escribe el Instalador con
-        /// la instancia elegida. Si no está definida, usa el valor por defecto (Server=.),
-        /// preservando el comportamiento anterior.
+        /// Cadena de conexión. Orden de prioridad:
+        ///   1) Archivo externo "conexion.config" junto al .exe. Lo escribe el Instalador
+        ///      con la instancia/base elegida y — a diferencia del .exe.config — NO lo
+        ///      regenera Visual Studio al recompilar, así que la elección SIEMPRE persiste.
+        ///   2) Sección &lt;connectionStrings&gt; del .config (nombre "IngSoft").
+        ///   3) Valor por defecto (Server=.), preservando el comportamiento anterior.
         /// </summary>
         public string connectionString;
 
         private Conexion()
         {
+            connectionString = ResolverCadena();
+        }
+
+        private static string ResolverCadena()
+        {
+            // 1) Archivo externo junto al ejecutable (fuente de verdad del Instalador).
+            try
+            {
+                string ruta = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ArchivoConexion);
+                if (File.Exists(ruta))
+                {
+                    string txt = File.ReadAllText(ruta).Trim();
+                    if (!string.IsNullOrWhiteSpace(txt))
+                        return txt;
+                }
+            }
+            catch { /* si no se puede leer, se intenta la siguiente fuente */ }
+
+            // 2) connectionStrings del .config (nombre "IngSoft").
             try
             {
                 ConnectionStringSettings cs = ConfigurationManager.ConnectionStrings["IngSoft"];
-                connectionString = (cs != null && !string.IsNullOrWhiteSpace(cs.ConnectionString))
-                    ? cs.ConnectionString
-                    : CadenaPorDefecto;
+                if (cs != null && !string.IsNullOrWhiteSpace(cs.ConnectionString))
+                    return cs.ConnectionString;
             }
-            catch
-            {
-                connectionString = CadenaPorDefecto;
-            }
+            catch { /* idem */ }
+
+            // 3) Valor por defecto.
+            return CadenaPorDefecto;
         }
 
         public static Conexion Instancia

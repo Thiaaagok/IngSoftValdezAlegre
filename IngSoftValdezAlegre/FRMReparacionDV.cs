@@ -108,10 +108,17 @@ namespace IngSoftValdezAlegre
         {
             var t = GestorIdioma06AV.Instancia;
 
+            // Arrancar el diálogo en la MISMA carpeta por defecto que usa el Gestor de
+            // Backups (IntegridadBLL06AV.CarpetaBackupPorDefecto). Se crea si no existe.
+            string carpetaBackups;
+            try { carpetaBackups = _integridad.ObtenerCarpetaBackupPorDefecto(); }
+            catch { carpetaBackups = string.Empty; }
+
             using (var ofd = new OpenFileDialog
             {
                 Title = t.Obtener("dv_restore_titulo"),
-                Filter = "Backup SQL Server (*.bak)|*.bak|Todos los archivos (*.*)|*.*"
+                Filter = "Backup SQL Server (*.bak)|*.bak|Todos los archivos (*.*)|*.*",
+                InitialDirectory = carpetaBackups
             })
             {
                 if (ofd.ShowDialog(this) != DialogResult.OK)
