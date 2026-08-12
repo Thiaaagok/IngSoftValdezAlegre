@@ -8,16 +8,10 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre
 {
-    /// <summary>
-    /// Diálogo modal para dar de alta un proveedor sin salir del proceso de Compras
-    /// (RFN2: "registrar nuevo proveedor si ninguno cumple"). Si el alta sale bien,
-    /// expone el proveedor creado en <see cref="ProveedorCreado"/> y cierra con OK.
-    /// </summary>
     public class FRMNuevoProveedor06AV : Form
     {
         private readonly ProveedoresBLL06AV _bll = new ProveedoresBLL06AV();
 
-        /// <summary>Proveedor recién creado (solo válido si DialogResult == OK).</summary>
         public Proveedor06AV ProveedorCreado { get; private set; }
 
         private Label lblNombre, lblCuit, lblEmail, lblTel, lblDir;

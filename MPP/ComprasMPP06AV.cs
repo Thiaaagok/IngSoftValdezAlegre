@@ -1,5 +1,7 @@
 using BE;
 using DAL;
+using SER;
+using SER.Generador;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -7,20 +9,25 @@ using System.Data;
 namespace MPP
 {
     /// <summary>
-    /// Mapeo del proceso de Compras (RFN2). Persiste y reconstruye órdenes de compra
-    /// (con su detalle de insumos) y pedidos de cotización (con proveedor e insumos de la OC).
+    /// Mapeo del proceso de Compras (RFN2). Tras el refactor:
+    /// la OrdenCompra tiene Id string (PK técnica, GeneradorCodigo06AV) y NumeroCompra
+    /// de negocio (secuencia). El detalle usa DetalleComponente06AV. La Cotización
+    /// referencia la OC por su Id. Se persiste además la Factura de Compra.
     /// </summary>
     public class ComprasMPP06AV
     {
         private readonly ComprasDAL06AV _dal = new ComprasDAL06AV();
         private readonly ProveedoresMPP06AV _proveedores = new ProveedoresMPP06AV();
+        private readonly UsuariosMPP06AV _usuarios = new UsuariosMPP06AV();
+        private readonly GeneradorCodigo06AV _gen = new GeneradorCodigo06AV();
 
         // ── Orden de compra ──────────────────────────────────────
         public void AgregarOrdenCompra(OrdenCompra06AV oc)
         {
-            oc.NumeroCompra = _dal.AgregarOrdenCompra(oc.FechaLimite, oc.RepositorSolicitante);
-            foreach (DetalleInsumo06AV d in oc.InsumosFaltantes)
-                _dal.AgregarDetalle(oc.NumeroCompra, d.Insumo.Codigo, d.Cantidad);
+            if (string.IsNullOrEmpty(oc.Id)) oc.Id = _gen.Generar("OC");
+            oc.NumeroCompra = _dal.AgregarOrdenCompra(oc.Id, oc.FechaLimite, oc.RepositorSolicitante?.Dni);
+            foreach (DetalleComponente06AV d in oc.ComponentesFaltantes)
+                _dal.AgregarDetalle(oc.Id, d.Componente.Codigo, d.Cantidad);
         }
 
         public List<OrdenCompra06AV> ObtenerOrdenesCompra()
@@ -31,41 +38,28 @@ namespace MPP
             return lista;
         }
 
-        public OrdenCompra06AV ObtenerOrdenCompraPorNumero(int numero)
+        public List<DetalleComponente06AV> ObtenerDetalle(string idOrdenCompra)
         {
-            DataTable t = _dal.ObtenerOrdenCompraPorNumero(numero);
-            return t.Rows.Count == 0 ? null : MapearOrdenCompra(t.Rows[0]);
-        }
-
-        public List<DetalleInsumo06AV> ObtenerDetalle(int numeroCompra)
-        {
-            var lista = new List<DetalleInsumo06AV>();
-            foreach (DataRow r in _dal.ObtenerDetalle(numeroCompra).Rows)
-            {
-                lista.Add(new DetalleInsumo06AV
+            var lista = new List<DetalleComponente06AV>();
+            foreach (DataRow r in _dal.ObtenerDetalle(idOrdenCompra).Rows)
+                lista.Add(new DetalleComponente06AV
                 {
                     Cantidad = Convert.ToInt32(r["Cantidad"]),
-                    Insumo = new Insumo06AV
-                    {
-                        Codigo = r["CodigoInsumo"].ToString(),
-                        Descripcion = r["Descripcion"].ToString(),
-                        Stock = Convert.ToInt32(r["Stock"]),
-                        StockMinimo = Convert.ToInt32(r["StockMinimo"])
-                    }
+                    Componente = MapearComponente(r)
                 });
-            }
             return lista;
         }
 
-        public void FinalizarOrdenCompra(int numero) => _dal.FinalizarOrdenCompra(numero);
+        public void CerrarOrdenCompra(string id, DateTime fechaCierre) => _dal.CerrarOrdenCompra(id, fechaCierre);
 
-        public void CambiarEstadoOrdenCompra(int numero, EstadoOrdenCompra06AV estado) =>
-            _dal.CambiarEstadoOrdenCompra(numero, (int)estado);
+        public void CambiarEstadoOrdenCompra(string id, EstadoOrdenCompra06AV estado) =>
+            _dal.CambiarEstadoOrdenCompra(id, (int)estado);
 
         // ── Cotización ───────────────────────────────────────────
         public void AgregarCotizacion(PedidoCotizacion06AV cot)
         {
-            cot.Numero = _dal.AgregarCotizacion(cot.NumeroCompra, cot.Proveedor.Id, cot.Costo, cot.Condiciones);
+            if (string.IsNullOrEmpty(cot.Numero)) cot.Numero = _gen.Generar("CO");
+            _dal.AgregarCotizacion(cot.Numero, cot.NumeroCompra, cot.Proveedor.Id, cot.Costo, cot.Condiciones);
         }
 
         public List<PedidoCotizacion06AV> ObtenerCotizaciones()
@@ -76,30 +70,41 @@ namespace MPP
             return lista;
         }
 
-        public PedidoCotizacion06AV ObtenerCotizacionPorNumero(int numero)
+        public List<PedidoCotizacion06AV> ObtenerCotizacionesPorOrden(string idOrdenCompra)
         {
-            DataTable t = _dal.ObtenerCotizacionPorNumero(numero);
-            return t.Rows.Count == 0 ? null : MapearCotizacion(t.Rows[0]);
+            var lista = new List<PedidoCotizacion06AV>();
+            foreach (DataRow row in _dal.ObtenerCotizacionesPorOrden(idOrdenCompra).Rows)
+                lista.Add(MapearCotizacion(row));
+            return lista;
         }
 
-        public void CambiarEstadoCotizacion(int numero, EstadoCotizacion06AV estado) =>
-            _dal.CambiarEstadoCotizacion(numero, (int)estado);
+        public void CambiarEstadoCotizacion(string numero, EstadoCotizacion06AV estado, string dniGerenteAprobador) =>
+            _dal.CambiarEstadoCotizacion(numero, (int)estado, dniGerenteAprobador);
 
-        // ── Stock ────────────────────────────────────────────────
-        public void SumarStock(string codigoInsumo, int cantidad) => _dal.SumarStock(codigoInsumo, cantidad);
+        // ── Factura de compra ────────────────────────────────────
+        public void AgregarFacturaCompra(FacturaCompra06AV f)
+        {
+            if (string.IsNullOrEmpty(f.NumeroFactura)) f.NumeroFactura = _gen.Generar("FC");
+            _dal.AgregarFacturaCompra(f.NumeroFactura, f.NumeroCompra, f.FechaEmision,
+                                      f.FechaEntrega, f.Total, f.Observaciones);
+            foreach (DetalleComponente06AV d in f.ComponentesRecibidos)
+                _dal.AgregarFacturaCompraDetalle(f.NumeroFactura, d.Componente.Codigo, d.Cantidad);
+        }
 
         // ── Helpers de mapeo ─────────────────────────────────────
         private OrdenCompra06AV MapearOrdenCompra(DataRow row)
         {
-            int numero = Convert.ToInt32(row["NumeroCompra"]);
+            string id = row["Id"].ToString();
             var oc = new OrdenCompra06AV
             {
-                NumeroCompra = numero,
+                Id = id,
+                NumeroCompra = Convert.ToInt32(row["NumeroCompra"]),
                 FechaLimite = Convert.ToDateTime(row["FechaLimite"]),
-                RepositorSolicitante = row["RepositorSolicitante"] == DBNull.Value ? "" : row["RepositorSolicitante"].ToString(),
                 Estado = (EstadoOrdenCompra06AV)Convert.ToInt32(row["Estado"]),
-                InsumosFaltantes = ObtenerDetalle(numero)
+                ComponentesFaltantes = ObtenerDetalle(id)
             };
+            if (row["DniRepositor"] != DBNull.Value)
+                oc.RepositorSolicitante = _usuarios.ObtenerPorDni(row["DniRepositor"].ToString());
             if (row["FechaCierre"] != DBNull.Value)
                 oc.FechaCierre = Convert.ToDateTime(row["FechaCierre"]);
             return oc;
@@ -107,17 +112,35 @@ namespace MPP
 
         private PedidoCotizacion06AV MapearCotizacion(DataRow row)
         {
-            int numeroCompra = Convert.ToInt32(row["NumeroCompra"]);
-            return new PedidoCotizacion06AV
+            string idOc = row["IdOrdenCompra"].ToString();
+            var cot = new PedidoCotizacion06AV
             {
-                Numero = Convert.ToInt32(row["Numero"]),
-                NumeroCompra = numeroCompra,
+                Numero = row["Numero"].ToString(),
+                NumeroCompra = idOc,
                 Proveedor = _proveedores.ObtenerPorId(Convert.ToInt32(row["IdProveedor"])),
                 FechaEmision = Convert.ToDateTime(row["FechaEmision"]),
                 Estado = (EstadoCotizacion06AV)Convert.ToInt32(row["Estado"]),
-                Costo = row.Table.Columns.Contains("Costo") && row["Costo"] != DBNull.Value ? Convert.ToDecimal(row["Costo"]) : 0m,
-                Condiciones = row.Table.Columns.Contains("Condiciones") && row["Condiciones"] != DBNull.Value ? row["Condiciones"].ToString() : "",
-                InsumosPedidos = ObtenerDetalle(numeroCompra)
+                Costo = row["Costo"] == DBNull.Value ? 0m : Convert.ToDecimal(row["Costo"]),
+                Condiciones = row["Condiciones"] == DBNull.Value ? "" : row["Condiciones"].ToString(),
+                ComponentesPedidos = ObtenerDetalle(idOc)
+            };
+            if (row["DniGerenteAprobador"] != DBNull.Value)
+                cot.GerenteAprobador = _usuarios.ObtenerPorDni(row["DniGerenteAprobador"].ToString());
+            return cot;
+        }
+
+        private Componente06AV MapearComponente(DataRow r)
+        {
+            return new Componente06AV
+            {
+                Codigo         = r["CodigoComponente"].ToString(),
+                Descripcion    = r["Descripcion"].ToString(),
+                Marca          = r["Marca"] == DBNull.Value ? "" : r["Marca"].ToString(),
+                Modelo         = r["Modelo"] == DBNull.Value ? "" : r["Modelo"].ToString(),
+                PrecioUnitario = Convert.ToDecimal(r["PrecioUnitario"]),
+                Stock          = Convert.ToInt32(r["Stock"]),
+                StockMinimo    = Convert.ToInt32(r["StockMinimo"]),
+                Tipo           = (TipoComponente06AV)Convert.ToInt32(r["Tipo"])
             };
         }
     }

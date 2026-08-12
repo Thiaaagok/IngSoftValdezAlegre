@@ -8,23 +8,23 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    /// <summary>ABM de Componentes (PC Factory). Grilla full + formulario de alta/edición.</summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class ComponentesControl : AbmBaseControl06AV
     {
         private readonly ComponentesBLL06AV _bll = new ComponentesBLL06AV();
         private List<Componente06AV> _items = new List<Componente06AV>();
 
-        private Label lblCodigo, lblDesc, lblTipo, lblMarca, lblModelo, lblPrecio, lblStock;
-        private TextBox txtCodigo, txtDesc, txtMarca, txtModelo, txtPrecio, txtStock;
+        private Label lblCodigo, lblDesc, lblTipo, lblMarca, lblModelo, lblPrecio, lblStock, lblStockMin;
+        private TextBox txtCodigo, txtDesc, txtMarca, txtModelo, txtPrecio, txtStock, txtStockMin;
         private ComboBox cboTipo;
 
         public ComponentesControl()
         {
             lblCodigo = new Label(); lblDesc = new Label(); lblTipo = new Label();
-            lblMarca = new Label(); lblModelo = new Label(); lblPrecio = new Label(); lblStock = new Label();
+            lblMarca = new Label(); lblModelo = new Label(); lblPrecio = new Label();
+            lblStock = new Label(); lblStockMin = new Label();
             txtCodigo = new TextBox(); txtDesc = new TextBox(); txtMarca = new TextBox();
-            txtModelo = new TextBox(); txtPrecio = new TextBox(); txtStock = new TextBox();
+            txtModelo = new TextBox(); txtPrecio = new TextBox(); txtStock = new TextBox(); txtStockMin = new TextBox();
             cboTipo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
             cboTipo.DataSource = Enum.GetValues(typeof(TipoComponente06AV))
                 .Cast<TipoComponente06AV>()
@@ -46,6 +46,7 @@ namespace IngSoftValdezAlegre.Controles
             AgregarCampo(lblModelo, txtModelo);
             AgregarCampo(lblPrecio, txtPrecio);
             AgregarCampo(lblStock, txtStock);
+            AgregarCampo(lblStockMin, txtStockMin);
         }
 
         protected override void CargarDatosEnGrilla(DataGridView grilla)
@@ -59,7 +60,7 @@ namespace IngSoftValdezAlegre.Controles
         {
             txtCodigo.ReadOnly = false;
             txtCodigo.Clear(); txtDesc.Clear(); txtMarca.Clear(); txtModelo.Clear();
-            txtPrecio.Text = "0"; txtStock.Text = "0";
+            txtPrecio.Text = "0"; txtStock.Text = "0"; txtStockMin.Text = "0";
             if (cboTipo.Items.Count > 0) cboTipo.SelectedIndex = 0;
         }
 
@@ -72,7 +73,8 @@ namespace IngSoftValdezAlegre.Controles
             txtMarca.Text = c.Marca;
             txtModelo.Text = c.Modelo;
             txtPrecio.Text = c.PrecioUnitario.ToString("0.00");
-            txtStock.Text = c.StockDisponible.ToString();
+            txtStock.Text = c.Stock.ToString();
+            txtStockMin.Text = c.StockMinimo.ToString();
             txtCodigo.ReadOnly = true;
             return true;
         }
@@ -83,6 +85,8 @@ namespace IngSoftValdezAlegre.Controles
             { MostrarError("El precio debe ser un número válido."); return false; }
             if (!int.TryParse(txtStock.Text.Trim(), out int stock))
             { MostrarError("El stock debe ser un número entero."); return false; }
+            if (!int.TryParse(txtStockMin.Text.Trim(), out int stockMin))
+            { MostrarError("El stock mínimo debe ser un número entero."); return false; }
 
             var c = new Componente06AV
             {
@@ -92,7 +96,8 @@ namespace IngSoftValdezAlegre.Controles
                 Marca = txtMarca.Text.Trim(),
                 Modelo = txtModelo.Text.Trim(),
                 PrecioUnitario = precio,
-                StockDisponible = stock
+                Stock = stock,
+                StockMinimo = stockMin
             };
             if (editando) _bll.Modificar(c); else _bll.Crear(c);
             return true;
@@ -121,9 +126,9 @@ namespace IngSoftValdezAlegre.Controles
             lblModelo.Text = t.Obtener("modelo") + ":";
             lblPrecio.Text = t.Obtener("precio") + ":";
             lblStock.Text = t.Obtener("stock") + ":";
+            lblStockMin.Text = t.Obtener("pcf_col_minimo") + ":";
         }
 
-        /// <summary>Nombre legible del tipo de componente (con espacios y acentos).</summary>
         private static string NombreTipo(TipoComponente06AV t)
         {
             switch (t)

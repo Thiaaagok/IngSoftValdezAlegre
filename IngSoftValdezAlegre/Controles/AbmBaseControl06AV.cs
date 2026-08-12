@@ -6,19 +6,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    /// <summary>
-    /// Base de los ABM de PC Factory con el diseño de "grilla + vistas".
-    ///
-    ///  • Vista GRILLA: la grilla ocupa toda la pantalla, con una barra
-    ///    superior que tiene el título y los botones Nuevo / Editar / Eliminar.
-    ///  • Vista FORMULARIO: los campos del registro y una barra inferior con
-    ///    Guardar / Volver. "Nuevo" y "Editar" abren el formulario; "Volver"
-    ///    (o guardar con éxito) regresa a la grilla.
-    ///
-    /// Las subclases sólo aportan sus campos y el mapeo con la entidad a través
-    /// de los métodos abstractos. Todo el andamiaje (paneles, barras, cambio de
-    /// vista, idioma, tema) vive acá para que las 5 pantallas queden idénticas.
-    /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public abstract partial class AbmBaseControl06AV : UserControl, IIdiomaAplicable06AV
     {
@@ -30,10 +17,6 @@ namespace IngSoftValdezAlegre.Controles
         private Label _lblTitulo, _lblFormTitulo;
         private Button _btnNuevo, _btnEditar, _btnEliminar, _btnGuardar, _btnVolver;
 
-        /// <summary>
-        /// La subclase llama a esto al final de su constructor, DESPUÉS de haber
-        /// instanciado sus controles de campo (para que ConstruirCampos los use).
-        /// </summary>
         protected void InicializarAbm()
         {
             ConstruirChrome();
@@ -43,7 +26,6 @@ namespace IngSoftValdezAlegre.Controles
             GestorIdioma06AV.Instancia.IdiomaChanged += AplicarIdioma;
             Disposed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
 
-            // Observer de tema: repinta el ABM (grilla + formulario) al cambiar claro/oscuro.
             Tema.TemaChanged += AplicarTema;
             Disposed += (s, e) => Tema.TemaChanged -= AplicarTema;
 
@@ -51,7 +33,6 @@ namespace IngSoftValdezAlegre.Controles
             RecargarGrilla();
         }
 
-        // ── Hooks de la subclase ─────────────────────────────────────
         protected abstract string ClaveTitulo { get; }
         protected abstract void ConstruirCampos(TableLayoutPanel tabla);
         protected abstract void CargarDatosEnGrilla(DataGridView grilla);
@@ -61,10 +42,8 @@ namespace IngSoftValdezAlegre.Controles
         protected abstract void EliminarSeleccion();
         protected abstract void AplicarIdiomaCampos();
 
-        // ── Construcción de la UI ────────────────────────────────────
         private void ConstruirChrome()
         {
-            // --- Vista grilla ---
             Grilla = new DataGridView
             {
                 Dock = DockStyle.Fill,
@@ -94,10 +73,9 @@ namespace IngSoftValdezAlegre.Controles
             barraGrilla.Controls.Add(BarraBotones(_btnNuevo, _btnEditar, _btnEliminar));
 
             _pnlGrilla = new Panel { Dock = DockStyle.Fill };
-            _pnlGrilla.Controls.Add(Grilla);        // Fill primero (queda en índice 0 → ocupa lo que resta)
-            _pnlGrilla.Controls.Add(barraGrilla);   // borde (Top) después
+            _pnlGrilla.Controls.Add(Grilla);        
+            _pnlGrilla.Controls.Add(barraGrilla);   
 
-            // --- Vista formulario ---
             _lblFormTitulo = new Label { AutoSize = true, Location = new Point(6, 16) };
             var barraForm = new Panel { Dock = DockStyle.Top, Height = 56 };
             barraForm.Controls.Add(_lblFormTitulo);
@@ -130,9 +108,9 @@ namespace IngSoftValdezAlegre.Controles
             barraFormBottom.Controls.Add(BarraBotones(_btnVolver, _btnGuardar));
 
             _pnlForm = new Panel { Dock = DockStyle.Fill, Visible = false };
-            _pnlForm.Controls.Add(contCampos);        // Fill primero
-            _pnlForm.Controls.Add(barraForm);         // Top
-            _pnlForm.Controls.Add(barraFormBottom);   // Bottom
+            _pnlForm.Controls.Add(contCampos);        
+            _pnlForm.Controls.Add(barraForm);        
+            _pnlForm.Controls.Add(barraFormBottom);   
 
             Controls.Add(_pnlForm);
             Controls.Add(_pnlGrilla);
@@ -249,7 +227,6 @@ namespace IngSoftValdezAlegre.Controles
             if (_btnEliminar != null) _btnEliminar.Enabled = hay;
         }
 
-        // ── Helpers para las subclases ───────────────────────────────
         protected void AgregarCampo(Label etiqueta, Control campo)
         {
             int fila = TablaCampos.RowCount;

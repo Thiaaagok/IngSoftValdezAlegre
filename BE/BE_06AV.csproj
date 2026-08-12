@@ -55,7 +55,17 @@
     <Compile Include="OrdenCompra06AV.cs" />
     <Compile Include="ModeloEstandar06AV.cs" />
     <Compile Include="PedidoCotizacion06AV.cs" />
+    <Compile Include="DetalleComponente06AV.cs" />
+    <Compile Include="FacturaCompra06AV.cs" />
+    <Compile Include="FacturaVenta06AV.cs" />
+    <Compile Include="Recibo06AV.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SER\SER_06AV.csproj">
+      <Project>{82B0C5F6-0E96-4E40-ACC9-7847E8196EEB}</Project>
+      <Name>SER</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

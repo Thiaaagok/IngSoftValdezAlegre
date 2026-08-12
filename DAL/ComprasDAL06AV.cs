@@ -5,66 +5,105 @@ using System.Data.SqlClient;
 
 namespace DAL
 {
-    /// <summary>Acceso a datos del proceso de Compras (RFN2): órdenes de compra y cotizaciones.</summary>
+    /// <summary>
+    /// Acceso a datos del proceso de Compras (RFN2). Tras el refactor:
+    /// la Orden de Compra tiene Id string (generado por la app) y un NumeroCompra
+    /// de negocio (int, secuencia) que el SP devuelve por OUTPUT. La Cotización usa
+    /// Numero string y referencia la OC por su Id. Incluye Factura de Compra.
+    /// </summary>
     public class ComprasDAL06AV
     {
         // ── Orden de compra ──────────────────────────────────────
-        public int AgregarOrdenCompra(DateTime fechaLimite, string repositor)
+        /// <summary>Inserta la OC con Id generado y devuelve el NumeroCompra de negocio (secuencia).</summary>
+        public int AgregarOrdenCompra(string id, DateTime fechaLimite, string dniRepositor)
         {
-            object num = EjecutarSPEscalar("sp_OC_Agregar", new Dictionary<string, object>
+            var salida = new SqlParameter("@NumeroCompra", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            EjecutarSPConSalida("sp_OrdenesCompra_Agregar", new Dictionary<string, object>
             {
-                { "@FechaLimite", fechaLimite }, { "@RepositorSolicitante", (object)repositor ?? "" }
-            });
-            return num == null || num == DBNull.Value ? 0 : Convert.ToInt32(num);
+                { "@Id", id },
+                { "@FechaLimite", fechaLimite },
+                { "@DniRepositor", (object)dniRepositor ?? DBNull.Value }
+            }, salida);
+            return salida.Value == null || salida.Value == DBNull.Value ? 0 : Convert.ToInt32(salida.Value);
         }
 
-        public void AgregarDetalle(int numeroCompra, string codigoInsumo, int cantidad)
+        public void AgregarDetalle(string idOrdenCompra, string codigoComponente, int cantidad)
         {
-            EjecutarSPNonQuery("sp_OC_AgregarDetalle", new Dictionary<string, object>
+            EjecutarSPNonQuery("sp_OrdenCompra_AgregarDetalle", new Dictionary<string, object>
             {
-                { "@NumeroCompra", numeroCompra }, { "@CodigoInsumo", codigoInsumo }, { "@Cantidad", cantidad }
+                { "@IdOrdenCompra", idOrdenCompra },
+                { "@CodigoComponente", codigoComponente },
+                { "@Cantidad", cantidad }
             });
         }
 
-        public DataTable ObtenerOrdenesCompra() => EjecutarSP("sp_OC_ObtenerTodas", null);
+        public DataTable ObtenerOrdenesCompra() => EjecutarSP("sp_OrdenesCompra_ObtenerTodas", null);
 
-        public DataTable ObtenerOrdenCompraPorNumero(int numero) =>
-            EjecutarSP("sp_OC_ObtenerPorNumero", new Dictionary<string, object> { { "@NumeroCompra", numero } });
+        public DataTable ObtenerDetalle(string idOrdenCompra) =>
+            EjecutarSP("sp_OrdenCompra_ObtenerDetalle",
+                new Dictionary<string, object> { { "@IdOrdenCompra", idOrdenCompra } });
 
-        public DataTable ObtenerDetalle(int numeroCompra) =>
-            EjecutarSP("sp_OC_ObtenerDetalle", new Dictionary<string, object> { { "@NumeroCompra", numeroCompra } });
+        public void CambiarEstadoOrdenCompra(string id, int estado) =>
+            EjecutarSPNonQuery("sp_OrdenesCompra_CambiarEstado", new Dictionary<string, object>
+            { { "@Id", id }, { "@Estado", estado } });
 
-        public void CambiarEstadoOrdenCompra(int numero, int estado) =>
-            EjecutarSPNonQuery("sp_OC_CambiarEstado", new Dictionary<string, object>
-            { { "@NumeroCompra", numero }, { "@Estado", estado } });
-
-        public void FinalizarOrdenCompra(int numero) =>
-            EjecutarSPNonQuery("sp_OC_Finalizar", new Dictionary<string, object> { { "@NumeroCompra", numero } });
+        public void CerrarOrdenCompra(string id, DateTime fechaCierre) =>
+            EjecutarSPNonQuery("sp_OrdenesCompra_Cerrar", new Dictionary<string, object>
+            { { "@Id", id }, { "@FechaCierre", fechaCierre } });
 
         // ── Cotización ───────────────────────────────────────────
-        public int AgregarCotizacion(int numeroCompra, int idProveedor, decimal costo, string condiciones)
+        public void AgregarCotizacion(string numero, string idOrdenCompra, int idProveedor,
+                                      decimal costo, string condiciones)
         {
-            object num = EjecutarSPEscalar("sp_Cotizacion_Agregar", new Dictionary<string, object>
+            EjecutarSPNonQuery("sp_Cotizacion_Agregar", new Dictionary<string, object>
             {
-                { "@NumeroCompra", numeroCompra }, { "@IdProveedor", idProveedor },
-                { "@Costo", costo }, { "@Condiciones", (object)condiciones ?? "" }
+                { "@Numero", numero },
+                { "@IdOrdenCompra", idOrdenCompra },
+                { "@IdProveedor", idProveedor },
+                { "@Costo", costo },
+                { "@Condiciones", (object)condiciones ?? "" }
             });
-            return num == null || num == DBNull.Value ? 0 : Convert.ToInt32(num);
         }
 
         public DataTable ObtenerCotizaciones() => EjecutarSP("sp_Cotizacion_ObtenerTodas", null);
 
-        public DataTable ObtenerCotizacionPorNumero(int numero) =>
-            EjecutarSP("sp_Cotizacion_ObtenerPorNumero", new Dictionary<string, object> { { "@Numero", numero } });
+        public DataTable ObtenerCotizacionesPorOrden(string idOrdenCompra) =>
+            EjecutarSP("sp_Cotizacion_ObtenerPorOrden",
+                new Dictionary<string, object> { { "@IdOrdenCompra", idOrdenCompra } });
 
-        public void CambiarEstadoCotizacion(int numero, int estado) =>
+        /// <summary>Cambia el estado de la cotización y registra el gerente que la aprobó/desaprobó.</summary>
+        public void CambiarEstadoCotizacion(string numero, int estado, string dniGerenteAprobador) =>
             EjecutarSPNonQuery("sp_Cotizacion_CambiarEstado", new Dictionary<string, object>
-            { { "@Numero", numero }, { "@Estado", estado } });
+            {
+                { "@Numero", numero },
+                { "@Estado", estado },
+                { "@DniGerenteAprobador", (object)dniGerenteAprobador ?? DBNull.Value }
+            });
 
-        // ── Stock ────────────────────────────────────────────────
-        public void SumarStock(string codigoInsumo, int cantidad) =>
-            EjecutarSPNonQuery("sp_Insumos_SumarStock", new Dictionary<string, object>
-            { { "@Codigo", codigoInsumo }, { "@Cantidad", cantidad } });
+        // ── Factura de compra ────────────────────────────────────
+        public void AgregarFacturaCompra(string numeroFactura, string idOrdenCompra, DateTime fechaEmision,
+                                         DateTime fechaEntrega, decimal total, string observaciones)
+        {
+            EjecutarSPNonQuery("sp_FacturaCompra_Agregar", new Dictionary<string, object>
+            {
+                { "@NumeroFactura", numeroFactura },
+                { "@IdOrdenCompra", idOrdenCompra },
+                { "@FechaEmision", fechaEmision },
+                { "@FechaEntrega", fechaEntrega },
+                { "@Total", total },
+                { "@Observaciones", (object)observaciones ?? "" }
+            });
+        }
+
+        public void AgregarFacturaCompraDetalle(string numeroFactura, string codigoComponente, int cantidad)
+        {
+            EjecutarSPNonQuery("sp_FacturaCompra_AgregarDetalle", new Dictionary<string, object>
+            {
+                { "@NumeroFactura", numeroFactura },
+                { "@CodigoComponente", codigoComponente },
+                { "@Cantidad", cantidad }
+            });
+        }
 
         #region Helpers
 
@@ -81,24 +120,25 @@ namespace DAL
             return tabla;
         }
 
-        private object EjecutarSPEscalar(string nombreSP, Dictionary<string, object> parametros)
-        {
-            SqlConnection conn = Conexion.Instancia.ObtenerConexion();
-            SqlCommand cmd = new SqlCommand(nombreSP, conn) { CommandType = CommandType.StoredProcedure };
-            if (parametros != null)
-                foreach (var p in parametros) cmd.Parameters.AddWithValue(p.Key, p.Value);
-            conn.Open();
-            object r = cmd.ExecuteScalar();
-            conn.Close();
-            return r;
-        }
-
         private void EjecutarSPNonQuery(string nombreSP, Dictionary<string, object> parametros)
         {
             SqlConnection conn = Conexion.Instancia.ObtenerConexion();
             SqlCommand cmd = new SqlCommand(nombreSP, conn) { CommandType = CommandType.StoredProcedure };
             if (parametros != null)
                 foreach (var p in parametros) cmd.Parameters.AddWithValue(p.Key, p.Value);
+            conn.Open();
+            cmd.ExecuteNonQuery();
+            conn.Close();
+        }
+
+        /// <summary>Ejecuta un SP con parámetros de entrada y un parámetro de salida (OUTPUT).</summary>
+        private void EjecutarSPConSalida(string nombreSP, Dictionary<string, object> parametros, SqlParameter salida)
+        {
+            SqlConnection conn = Conexion.Instancia.ObtenerConexion();
+            SqlCommand cmd = new SqlCommand(nombreSP, conn) { CommandType = CommandType.StoredProcedure };
+            if (parametros != null)
+                foreach (var p in parametros) cmd.Parameters.AddWithValue(p.Key, p.Value);
+            cmd.Parameters.Add(salida);
             conn.Open();
             cmd.ExecuteNonQuery();
             conn.Close();

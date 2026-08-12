@@ -7,10 +7,7 @@ using System.Linq;
 
 namespace BLL
 {
-    /// <summary>
-    /// Reglas de negocio para Familias. Una familia es un nodo del árbol de permisos
-    /// (ver IComponentePermiso06AV) que puede agrupar Patentes y otras Familias (subfamilias).
-    /// </summary>
+   
     public class FamiliasBLL06AV
     {
         private readonly FamiliaMPP06AV _mpp = new FamiliaMPP06AV();
@@ -19,7 +16,6 @@ namespace BLL
 
         public Familia06AV ObtenerPorId(string id) => _mpp.ObtenerPorId(id);
 
-        // Recalcula el DV tras cada persistencia (no rompe la operación si falla).
         private void RecalcularIntegridad() => new IntegridadBLL06AV().RecalcularSeguro();
 
         public void Agregar(Familia06AV familia)

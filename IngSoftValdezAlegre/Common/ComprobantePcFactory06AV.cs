@@ -9,11 +9,7 @@ using System.Linq;
 
 namespace IngSoftValdezAlegre.Common
 {
-    /// <summary>
-    /// Arma los comprobantes de PC Factory (RFN1): recibo de seña (paso 3) y factura
-    /// al entregar (paso 6). Genera un PDF con <see cref="PdfSimple06AV"/> en
-    /// Documentos\PC Factory\Comprobantes y devuelve la ruta del archivo.
-    /// </summary>
+    
     public static class ComprobantePcFactory06AV
     {
         private static string CarpetaComprobantes()

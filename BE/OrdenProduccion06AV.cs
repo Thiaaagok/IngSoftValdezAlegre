@@ -4,11 +4,18 @@ using System.Linq;
 
 namespace BE
 {
+    /// <summary>
+    /// Orden de producción (venta). La crea el gerente seleccionando una Computadora06AV
+    /// ya registrada y con seña cobrada. El cliente, los pagos y el precio se navegan desde
+    /// la computadora (no se duplican).
+    /// </summary>
     public class OrdenProduccion06AV
     {
-        public int NumeroOrden { get; set; }
-        public Cliente06AV Cliente { get; set; }
+        public string Id { get; set; }              // PK (GeneradorCodigo06AV, ej. "OP-2026-0001")
+        public int NumeroOrden { get; set; }         // número de negocio visible al usuario
+
         public Computadora06AV Computadora { get; set; }
+        public Cliente06AV Cliente => Computadora?.Cliente;   // navegado desde la computadora
 
         public DateTime FechaEntrega { get; set; }
         public EstadoOrdenProduccion06AV Estado { get; set; } = EstadoOrdenProduccion06AV.Pendiente;
@@ -16,11 +23,12 @@ namespace BE
         public LineaEnsamblaje06AV LineaEnsamblaje { get; set; }
         public DateTime? FechaInicioPrevista { get; set; }
         public string ResponsableTecnico { get; set; }
+        public DateTime? FechaCierre { get; set; }
 
-        public List<Pago06AV> Pagos { get; set; } = new List<Pago06AV>();
-
+        // Derivados desde la computadora (fuente única de verdad):
+        public List<Pago06AV> Pagos => Computadora?.Pagos ?? new List<Pago06AV>();
         public decimal PrecioTotal => Computadora?.PrecioTotal ?? 0m;
-        public decimal TotalAbonado => Pagos?.Sum(p => p.Monto) ?? 0m;
+        public decimal TotalAbonado => Pagos.Sum(p => p.Monto);
         public decimal SaldoPendiente => PrecioTotal - TotalAbonado;
 
         public override string ToString() => $"OP #{NumeroOrden} - {Estado}";

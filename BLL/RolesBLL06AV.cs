@@ -7,10 +7,6 @@ using System.Linq;
 
 namespace BLL
 {
-    /// <summary>
-    /// Reglas de negocio para Roles. Un rol es la raíz del árbol de permisos: puede
-    /// contener Patentes y Familias, pero nunca otro Rol (los roles no se anidan).
-    /// </summary>
     public class RolesBLL06AV
     {
         private readonly RolesMPP06AV _mpp = new RolesMPP06AV();
@@ -19,7 +15,6 @@ namespace BLL
 
         public Rol06AV ObtenerPorId(string id) => _mpp.ObtenerPorId(id);
 
-        // Recalcula el DV tras cada persistencia (no rompe la operación si falla).
         private void RecalcularIntegridad() => new IntegridadBLL06AV().RecalcularSeguro();
 
         public void Agregar(Rol06AV rol)
@@ -49,11 +44,6 @@ namespace BLL
             RecalcularIntegridad();
         }
 
-        /// <summary>
-        /// Elimina un rol solo si no tiene hijos propios asignados.
-        /// Los roles no pueden estar contenidos en otras estructuras,
-        /// así que la única dependencia posible es que tenga patentes o familias propias.
-        /// </summary>
         public void Eliminar(string id)
         {
             Rol06AV rol = _mpp.ObtenerPorId(id);
@@ -76,10 +66,6 @@ namespace BLL
             RecalcularIntegridad();
         }
 
-        /// <summary>
-        /// Agrega una patente directa al rol, validando que no quede duplicada
-        /// en ninguna otra rama (patentes sueltas o dentro de familias) del rol.
-        /// </summary>
         public void AgregarPatente(string idRol, string idPatente)
         {
             Rol06AV rol = _mpp.ObtenerPorId(idRol);
@@ -107,14 +93,6 @@ namespace BLL
             RecalcularIntegridad();
         }
 
-        /// <summary>
-        /// Agrega una familia directa al rol, validando que tenga patentes efectivas
-        /// y que ninguna de sus patentes quede duplicada dentro del rol.
-        ///
-        /// Que la familia sea además subfamilia de otra familia NO impide usarla como
-        /// familia "padre" dentro de un rol: son ubicaciones independientes en el árbol
-        /// de permisos. La única restricción real es que no se dupliquen patentes.
-        /// </summary>
         public void AgregarFamilia(string idRol, string idFamilia)
         {
             Rol06AV rol = _mpp.ObtenerPorId(idRol);

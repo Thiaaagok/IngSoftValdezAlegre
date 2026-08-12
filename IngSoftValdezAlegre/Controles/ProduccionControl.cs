@@ -11,14 +11,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    /// <summary>
-    /// Producción (RFN1) rediseñado como una sola pantalla centrada en la orden.
-    /// La lista muestra el estado de cada orden y, al seleccionarla, el panel de detalle
-    /// muestra el PROGRESO (Pendiente → Planificada → En ensamblaje → Finalizada → Entregada)
-    /// y el ÚNICO paso siguiente ("¿Qué sigue?"), además de "Registrar seña" y
-    /// "Volver al paso anterior". Los componentes de una orden "Personalizada" se eligen con
-    /// el asistente "Armá tu PC". La lógica de negocio no cambia (solo se agregó VolverAtras).
-    /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class ProduccionControl : UserControl, IIdiomaAplicable06AV
     {
@@ -651,12 +643,17 @@ namespace IngSoftValdezAlegre.Controles
 
             try
             {
-                var orden = _ordenesBLL.RegistrarOrden(cliente, pc, dtpEntrega.Value);
+                // Circuito nuevo: la computadora existe por sí misma y la seña se cobra
+                // ANTES de crear la orden. Se hace en una sola operación desde la UI.
+                var pcGuardada = _ordenesBLL.RegistrarComputadora(cliente, pc);
+                _ordenesBLL.CobrarSena(pcGuardada.Id, dtpEntrega.Value);
+                var orden = _ordenesBLL.RegistrarOrden(pcGuardada.Id, dtpEntrega.Value);
+
                 MostrarGrilla();
                 CargarOrdenes();
                 SeleccionarOrden(orden.NumeroOrden);
                 ConfirmacionForm.MostrarInfo(
-                    $"Orden #{orden.NumeroOrden} registrada. Total: ${orden.PrecioTotal:0.00}.",
+                    $"Orden #{orden.NumeroOrden} registrada (seña cobrada). Total: ${orden.PrecioTotal:0.00}.",
                     "Producción", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
             }
             catch (Exception ex) { MostrarError(ex.Message); }
@@ -666,13 +663,14 @@ namespace IngSoftValdezAlegre.Controles
         {
             var o = OrdenSeleccionada();
             if (o == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
+            if (o.Computadora == null) { MostrarError("La orden no tiene computadora asociada."); return; }
             try
             {
-                decimal sena = _ordenesBLL.RegistrarSena(o.NumeroOrden);
+                var recibo = _ordenesBLL.CobrarSena(o.Computadora.Id, o.FechaEntrega);
                 CargarOrdenes();
-                string recibo = ComprobantePcFactory06AV.GenerarReciboSena(o, sena);
-                ComprobantePcFactory06AV.Abrir(recibo);
-                ConfirmacionForm.MostrarInfo($"Seña registrada: ${sena:0.00}.\nRecibo generado en:\n{recibo}",
+                string ruta = ComprobantePcFactory06AV.GenerarReciboSena(o, recibo.MontoAbonado);
+                ComprobantePcFactory06AV.Abrir(ruta);
+                ConfirmacionForm.MostrarInfo($"Seña registrada: ${recibo.MontoAbonado:0.00}.\nRecibo generado en:\n{ruta}",
                     "Producción", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
             }
             catch (Exception ex) { MostrarError(ex.Message); }
@@ -684,7 +682,7 @@ namespace IngSoftValdezAlegre.Controles
             if (o == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
             try
             {
-                _ordenesBLL.IniciarEnsamblaje(o.NumeroOrden);
+                _ordenesBLL.IniciarEnsamblaje(o.Id);
                 CargarOrdenes();
                 ConfirmacionForm.MostrarInfo("Orden en ensamblaje.",
                     "Producción", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
@@ -698,7 +696,7 @@ namespace IngSoftValdezAlegre.Controles
             if (o == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
             try
             {
-                _ordenesBLL.Finalizar(o.NumeroOrden);
+                _ordenesBLL.Finalizar(o.Id);
                 CargarOrdenes();
                 ConfirmacionForm.MostrarInfo("Orden finalizada, lista para entregar.",
                     "Producción", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
@@ -713,7 +711,7 @@ namespace IngSoftValdezAlegre.Controles
             if (linea == null) { MostrarError("Elegí una línea de ensamblaje."); return; }
             try
             {
-                _ordenesBLL.Planificar(_ordenPlan.NumeroOrden, linea.Id, dtpInicio.Value, txtResp.Text.Trim());
+                _ordenesBLL.Planificar(_ordenPlan.Id, linea.Id, dtpInicio.Value, txtResp.Text.Trim());
                 MostrarGrilla();
                 CargarOrdenes();
                 CargarCombos();
@@ -734,13 +732,14 @@ namespace IngSoftValdezAlegre.Controles
             if (!ok) return;
             try
             {
-                _ordenesBLL.Entregar(o.NumeroOrden);
+                _ordenesBLL.Entregar(o.Id);
+                var facturaVenta = _ordenesBLL.EmitirFacturaVenta(o.Id);
                 CargarOrdenes();
                 CargarCombos();
-                var entregada = _ordenesBLL.ObtenerPorNumero(o.NumeroOrden) ?? o;
+                var entregada = _ordenesBLL.ObtenerPorId(o.Id) ?? o;
                 string factura = ComprobantePcFactory06AV.GenerarFactura(entregada);
                 ComprobantePcFactory06AV.Abrir(factura);
-                ConfirmacionForm.MostrarInfo($"Orden entregada y cerrada.\nFactura generada en:\n{factura}",
+                ConfirmacionForm.MostrarInfo($"Orden entregada y facturada ({facturaVenta.NumeroFactura}).\nFactura generada en:\n{factura}",
                     "Producción", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
             }
             catch (Exception ex) { MostrarError(ex.Message); }
@@ -757,7 +756,7 @@ namespace IngSoftValdezAlegre.Controles
             if (!ok) return;
             try
             {
-                _ordenesBLL.VolverAtras(o.NumeroOrden);
+                _ordenesBLL.VolverAtras(o.Id);
                 CargarOrdenes();
                 CargarCombos();
             }

@@ -5,17 +5,8 @@ using System.Data.SqlClient;
 
 namespace DAL
 {
-    /// <summary>
-    /// Acceso a datos del Dígito Verificador. El DVH/DVV de cada tabla se guarda en
-    /// una tabla central "DV" (Tabla, DVH, DVV), sin alterar las tablas de negocio.
-    /// </summary>
     public class IntegridadDAL06AV
     {
-        /// <summary>
-        /// Tablas cuya integridad se controla. Se excluyen los logs (Bitacora,
-        /// IntentosLogin) porque cambian constantemente. También actúa como whitelist
-        /// para evitar inyección por nombre de tabla.
-        /// </summary>
         public static readonly string[] TablasProtegidas =
         {
             // ── Seguridad / permisos ─────────────────────────────
@@ -154,10 +145,6 @@ namespace DAL
             }
         }
 
-        /// <summary>
-        /// Restaura la base desde un backup. Se conecta a 'master', pone la base en
-        /// SINGLE_USER, restaura con REPLACE y vuelve a MULTI_USER aún si falla el restore.
-        /// </summary>
         public void Restaurar(string ruta)
         {
             string db = NombreBaseDatos();

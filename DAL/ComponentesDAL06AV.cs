@@ -4,13 +4,15 @@ using System.Data.SqlClient;
 
 namespace DAL
 {
-    /// <summary>Acceso a datos de Componentes (PC Factory).</summary>
+    /// <summary>
+    /// Acceso a datos de Componentes (PC Forge). Tras el refactor, Componente absorbe
+    /// a Insumo: es la pieza comprable y stockeable (Stock / StockMinimo).
+    /// </summary>
     public class ComponentesDAL06AV
     {
-        public DataTable ObtenerTodos()
-        {
-            return EjecutarSP("sp_Componentes_ObtenerTodos", null);
-        }
+        public DataTable ObtenerTodos() => EjecutarSP("sp_Componentes_ObtenerTodos", null);
+
+        public DataTable ObtenerBajoStock() => EjecutarSP("sp_Componentes_ObtenerBajoStock", null);
 
         public DataTable ObtenerPorCodigo(string codigo)
         {
@@ -20,18 +22,18 @@ namespace DAL
             });
         }
 
-        public void Agregar(string codigo, string descripcion, int tipo, string marca,
-                            string modelo, decimal precioUnitario, int stockDisponible)
+        public void Agregar(string codigo, string descripcion, string marca, string modelo,
+                            decimal precioUnitario, int stock, int stockMinimo, int tipo)
         {
             EjecutarSPNonQuery("sp_Componentes_Agregar", Parametros(
-                codigo, descripcion, tipo, marca, modelo, precioUnitario, stockDisponible));
+                codigo, descripcion, marca, modelo, precioUnitario, stock, stockMinimo, tipo));
         }
 
-        public void Modificar(string codigo, string descripcion, int tipo, string marca,
-                              string modelo, decimal precioUnitario, int stockDisponible)
+        public void Modificar(string codigo, string descripcion, string marca, string modelo,
+                              decimal precioUnitario, int stock, int stockMinimo, int tipo)
         {
             EjecutarSPNonQuery("sp_Componentes_Modificar", Parametros(
-                codigo, descripcion, tipo, marca, modelo, precioUnitario, stockDisponible));
+                codigo, descripcion, marca, modelo, precioUnitario, stock, stockMinimo, tipo));
         }
 
         public void Eliminar(string codigo)
@@ -52,18 +54,29 @@ namespace DAL
             });
         }
 
+        /// <summary>Suma stock de un componente (al recibir una factura de compra). Atómico en el SP.</summary>
+        public void SumarStock(string codigo, int cantidad)
+        {
+            EjecutarSPNonQuery("sp_Componentes_SumarStock", new Dictionary<string, object>
+            {
+                { "@Codigo",   codigo   },
+                { "@Cantidad", cantidad }
+            });
+        }
+
         private static Dictionary<string, object> Parametros(string codigo, string descripcion,
-            int tipo, string marca, string modelo, decimal precioUnitario, int stockDisponible)
+            string marca, string modelo, decimal precioUnitario, int stock, int stockMinimo, int tipo)
         {
             return new Dictionary<string, object>
             {
-                { "@Codigo",          codigo               },
-                { "@Descripcion",     descripcion          },
-                { "@Tipo",            tipo                 },
-                { "@Marca",           (object)marca  ?? "" },
-                { "@Modelo",          (object)modelo ?? "" },
-                { "@PrecioUnitario",  precioUnitario       },
-                { "@StockDisponible", stockDisponible      }
+                { "@Codigo",         codigo               },
+                { "@Descripcion",    descripcion          },
+                { "@Marca",          (object)marca  ?? "" },
+                { "@Modelo",         (object)modelo ?? "" },
+                { "@PrecioUnitario", precioUnitario       },
+                { "@Stock",          stock                },
+                { "@StockMinimo",    stockMinimo          },
+                { "@Tipo",           tipo                 }
             };
         }
 

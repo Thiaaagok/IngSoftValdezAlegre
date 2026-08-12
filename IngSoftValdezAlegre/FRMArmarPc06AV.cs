@@ -230,7 +230,7 @@ namespace IngSoftValdezAlegre
             public readonly Componente06AV C;
             public ItemComp(Componente06AV c) { C = c; }
             public override string ToString() =>
-                $"{C.Descripcion}   ·   {C.Marca} {C.Modelo}   ·   ${C.PrecioUnitario:0.00}   (stock {C.StockDisponible})";
+                $"{C.Descripcion}   ·   {C.Marca} {C.Modelo}   ·   ${C.PrecioUnitario:0.00}   (stock {C.Stock})";
         }
     }
 }
