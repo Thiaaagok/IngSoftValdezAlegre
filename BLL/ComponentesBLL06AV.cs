@@ -17,6 +17,23 @@ namespace BLL
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudieron obtener los componentes.", ex); }
         }
 
+        /// <summary>Componentes cuyo stock está en o por debajo del mínimo (faltantes a comprar).</summary>
+        public List<Componente06AV> ObtenerBajoStock()
+        {
+            try { return _mpp.ObtenerBajoStock(); }
+            catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo obtener el stock bajo.", ex); }
+        }
+
+        /// <summary>Suma stock a un componente (al recibir una factura de compra).</summary>
+        public void SumarStock(string codigo, int cantidad)
+        {
+            ValidarCodigo(codigo);
+            if (cantidad <= 0)
+                throw new ValidacionException06AV("cantidad", "La cantidad a sumar debe ser mayor a cero.");
+            try { _mpp.SumarStock(codigo, cantidad); }
+            catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo sumar el stock.", ex); }
+        }
+
         public Componente06AV ObtenerPorCodigo(string codigo)
         {
             ValidarCodigo(codigo);
@@ -67,8 +84,10 @@ namespace BLL
                 throw new ValidacionException06AV("Descripcion", "La descripción es obligatoria.");
             if (c.PrecioUnitario < 0)
                 throw new ValidacionException06AV("PrecioUnitario", "El precio no puede ser negativo.");
-            if (c.StockDisponible < 0)
-                throw new ValidacionException06AV("StockDisponible", "El stock no puede ser negativo.");
+            if (c.Stock < 0)
+                throw new ValidacionException06AV("Stock", "El stock no puede ser negativo.");
+            if (c.StockMinimo < 0)
+                throw new ValidacionException06AV("StockMinimo", "El stock mínimo no puede ser negativo.");
         }
 
         private void ValidarCodigo(string codigo)

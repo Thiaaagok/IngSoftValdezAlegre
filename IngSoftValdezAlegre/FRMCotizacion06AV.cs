@@ -6,11 +6,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre
 {
-    /// <summary>
-    /// Diálogo modal para capturar el costo ofrecido por el proveedor y las
-    /// condiciones/observaciones de una cotización (RFN2). El gerente después
-    /// aprueba o desaprueba viendo ese precio.
-    /// </summary>
     public class FRMCotizacion06AV : Form
     {
         public decimal Costo { get; private set; }

@@ -7,7 +7,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    /// <summary>ABM de Clientes (PC Factory). Grilla full + formulario de alta/edición.</summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class ClientesControl : AbmBaseControl06AV
     {
@@ -61,7 +60,7 @@ namespace IngSoftValdezAlegre.Controles
             txtApellido.Text = c.Apellido;
             txtTelefono.Text = c.Telefono;
             txtDireccion.Text = c.Direccion;
-            txtDni.ReadOnly = true;   // el DNI es la clave: no se edita
+            txtDni.ReadOnly = true;  
             return true;
         }
 

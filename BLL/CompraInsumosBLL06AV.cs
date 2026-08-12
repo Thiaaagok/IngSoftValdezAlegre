@@ -8,16 +8,22 @@ using System.Linq;
 
 namespace BLL
 {
+    /// <summary>
+    /// Proceso de Compras de componentes (RFN2). Tras el refactor:
+    /// el faltante es un Componente06AV (Insumo se fusionó), la orden de compra la
+    /// registra un Repositor, la aprueba un Gerente de Compras, y la recepción se
+    /// documenta con una Factura de Compra que suma stock y cierra la orden.
+    /// </summary>
     public class CompraInsumosBLL06AV
     {
         private readonly ComprasMPP06AV _mpp = new ComprasMPP06AV();
         private readonly ProveedoresMPP06AV _proveedores = new ProveedoresMPP06AV();
-        private readonly InsumosMPP06AV _insumos = new InsumosMPP06AV();
+        private readonly ComponentesMPP06AV _componentes = new ComponentesMPP06AV();
 
-        /// <summary>Insumos bajo stock, para que el repositor arme la orden de compra.</summary>
-        public List<Insumo06AV> ObtenerFaltantes()
+        // ── Consultas ────────────────────────────────────────────
+        public List<Componente06AV> ObtenerFaltantes()
         {
-            try { return _insumos.ObtenerBajoStock(); }
+            try { return _componentes.ObtenerBajoStock(); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudieron obtener los faltantes.", ex); }
         }
 
@@ -33,45 +39,56 @@ namespace BLL
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudieron obtener las cotizaciones.", ex); }
         }
 
-        /// <summary>Paso 1: registra la orden de compra de insumos faltantes (estado Pendiente).</summary>
-        public OrdenCompra06AV RegistrarOrdenCompra(List<DetalleInsumo06AV> faltantes, DateTime fechaLimite, string repositor)
+        public List<PedidoCotizacion06AV> ObtenerCotizacionesPorOrden(string idOrdenCompra)
         {
+            try { return _mpp.ObtenerCotizacionesPorOrden(idOrdenCompra); }
+            catch (Exception ex) { throw new AccesoDatosException06AV("No se pudieron obtener las cotizaciones de la orden.", ex); }
+        }
+
+        // ── Paso 1: registrar la orden de compra (rol Repositor) ──
+        public OrdenCompra06AV RegistrarOrdenCompra(List<DetalleComponente06AV> faltantes,
+                                                    DateTime fechaLimite, Usuario06AV repositor)
+        {
+            RolNegocio06AV.Exigir(repositor, RolUsuario06AV.Repositor, "registrar una orden de compra");
+
             if (faltantes == null || faltantes.Count == 0)
-                throw new ValidacionException06AV("faltantes", "La orden debe incluir al menos un insumo.");
+                throw new ValidacionException06AV("faltantes", "La orden debe incluir al menos un componente.");
             foreach (var d in faltantes)
             {
-                if (d.Insumo == null || string.IsNullOrWhiteSpace(d.Insumo.Codigo))
-                    throw new ValidacionException06AV("insumo", "Hay un insumo inválido en el detalle.");
+                if (d.Componente == null || string.IsNullOrWhiteSpace(d.Componente.Codigo))
+                    throw new ValidacionException06AV("componente", "Hay un componente inválido en el detalle.");
                 if (d.Cantidad <= 0)
-                    throw new ValidacionException06AV("cantidad", $"La cantidad de '{d.Insumo.Codigo}' debe ser mayor a cero.");
+                    throw new ValidacionException06AV("cantidad", $"La cantidad de '{d.Componente.Codigo}' debe ser mayor a cero.");
             }
             if (fechaLimite.Date < DateTime.Today)
                 throw new ValidacionException06AV("FechaLimite", "La fecha límite no puede ser anterior a hoy.");
 
-            // Regla: un insumo no puede estar en dos órdenes de compra en curso a la vez.
-            // Se bloquea si ya figura en una orden que todavía no fue recibida (Pendiente o Enviada).
+            // RFN2: un componente no puede estar en dos órdenes de compra EN CURSO a la vez.
+            // "En curso" = todavía no recibida: se lista de forma EXPLÍCITA por estado
+            // (Pendiente o Enviada), no por negación de Finalizada.
             var enTramite = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             foreach (var abierta in _mpp.ObtenerOrdenesCompra()
-                                        .Where(o => o.Estado != EstadoOrdenCompra06AV.Finalizada))
-                foreach (var d in abierta.InsumosFaltantes)
-                    if (d.Insumo != null && !enTramite.ContainsKey(d.Insumo.Codigo))
-                        enTramite[d.Insumo.Codigo] = abierta.NumeroCompra;
+                                        .Where(o => o.Estado == EstadoOrdenCompra06AV.Pendiente
+                                                 || o.Estado == EstadoOrdenCompra06AV.Enviada))
+                foreach (var d in abierta.ComponentesFaltantes)
+                    if (d.Componente != null && !enTramite.ContainsKey(d.Componente.Codigo))
+                        enTramite[d.Componente.Codigo] = abierta.NumeroCompra;
 
             var conflictivos = faltantes
-                .Where(d => d.Insumo != null && enTramite.ContainsKey(d.Insumo.Codigo))
-                .Select(d => $"{d.Insumo.Codigo} (OC #{enTramite[d.Insumo.Codigo]})")
+                .Where(d => d.Componente != null && enTramite.ContainsKey(d.Componente.Codigo))
+                .Select(d => $"{d.Componente.Codigo} (OC #{enTramite[d.Componente.Codigo]})")
                 .Distinct()
                 .ToList();
 
             if (conflictivos.Count > 0)
-                throw new ValidacionException06AV("insumo",
-                    "Estos insumos ya están en una orden de compra en curso: " +
+                throw new ValidacionException06AV("componente",
+                    "Estos componentes ya están en una orden de compra en curso: " +
                     string.Join(", ", conflictivos) +
                     ". Recibí esa orden antes de volver a pedirlos.");
 
             var oc = new OrdenCompra06AV
             {
-                InsumosFaltantes = faltantes,
+                ComponentesFaltantes = faltantes,
                 FechaLimite = fechaLimite,
                 RepositorSolicitante = repositor,
                 Estado = EstadoOrdenCompra06AV.Pendiente
@@ -80,27 +97,25 @@ namespace BLL
             try { _mpp.AgregarOrdenCompra(oc); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo registrar la orden de compra.", ex); }
 
-            AuditoriaPcFactory06AV.Alta($"Orden de compra ({faltantes.Count} insumo/s)", ModuloBitacora.Compras);
+            AuditoriaPcFactory06AV.Alta($"Orden de compra #{oc.NumeroCompra} ({faltantes.Count} comp.)", ModuloBitacora.Compras);
             return oc;
         }
 
-        /// <summary>Paso 3: registra el pedido de cotización a un proveedor (estado Por aprobar).</summary>
-        public PedidoCotizacion06AV RegistrarCotizacion(int numeroCompra, int idProveedor, decimal costo, string condiciones)
+        // ── Paso 3: registrar cotización a un proveedor ──────────
+        public PedidoCotizacion06AV RegistrarCotizacion(string idOrdenCompra, int idProveedor,
+                                                        decimal costo, string condiciones)
         {
-            var oc = _mpp.ObtenerOrdenCompraPorNumero(numeroCompra);
-            if (oc == null)
-                throw new NoEncontradoException06AV($"No existe la orden de compra #{numeroCompra}.");
-
+            var oc = BuscarOrden(idOrdenCompra);
             var proveedor = _proveedores.ObtenerPorId(idProveedor);
             if (proveedor == null)
                 throw new NoEncontradoException06AV($"No existe el proveedor #{idProveedor}.");
-
             if (costo < 0)
                 throw new ValidacionException06AV("costo", "El costo de la cotización no puede ser negativo.");
 
             var cot = new PedidoCotizacion06AV
             {
-                NumeroCompra = numeroCompra,
+                NumeroCompra = oc.Id,
+                ComponentesPedidos = oc.ComponentesFaltantes,
                 Proveedor = proveedor,
                 Estado = EstadoCotizacion06AV.PorAprobar,
                 Costo = costo,
@@ -110,65 +125,110 @@ namespace BLL
             try { _mpp.AgregarCotizacion(cot); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo registrar la cotización.", ex); }
 
-            AuditoriaPcFactory06AV.Alta($"Cotización a proveedor #{idProveedor} (compra #{numeroCompra})", ModuloBitacora.Compras);
+            AuditoriaPcFactory06AV.Alta($"Cotización {cot.Numero} → proveedor {proveedor.Nombre} (OC #{oc.NumeroCompra})", ModuloBitacora.Compras);
             return cot;
         }
 
-        /// <summary>Paso 4: el gerente aprueba la cotización y la orden de compra queda Enviada.</summary>
-        public void AprobarCotizacion(int numeroCotizacion)
+        // ── Paso 4: aprobar / desaprobar (rol Gerente de Compras) ─
+        public void AprobarCotizacion(string numeroCotizacion, Usuario06AV gerente)
         {
-            var cot = ObtenerCotizacionOExcepcion(numeroCotizacion);
+            RolNegocio06AV.Exigir(gerente, RolUsuario06AV.GerenteCompras, "aprobar una cotización");
+            var cot = BuscarCotizacion(numeroCotizacion);
             if (cot.Estado != EstadoCotizacion06AV.PorAprobar)
                 throw new ValidacionException06AV("estado", "Solo se puede aprobar una cotización 'Por aprobar'.");
 
             try
             {
-                _mpp.CambiarEstadoCotizacion(numeroCotizacion, EstadoCotizacion06AV.Aprobado);
+                _mpp.CambiarEstadoCotizacion(numeroCotizacion, EstadoCotizacion06AV.Aprobado, gerente.Dni);
                 _mpp.CambiarEstadoOrdenCompra(cot.NumeroCompra, EstadoOrdenCompra06AV.Enviada);
-                AuditoriaPcFactory06AV.Modificacion($"Cotización #{numeroCotizacion} aprobada", ModuloBitacora.Compras);
             }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo aprobar la cotización.", ex); }
+
+            AuditoriaPcFactory06AV.Modificacion($"Cotización {numeroCotizacion} aprobada por {gerente.Login}", ModuloBitacora.Compras);
         }
 
-        /// <summary>Paso 4 (alt.): el gerente desaprueba; el repositor deberá cotizar de nuevo.</summary>
-        public void DesaprobarCotizacion(int numeroCotizacion)
+        public void DesaprobarCotizacion(string numeroCotizacion, Usuario06AV gerente)
         {
-            var cot = ObtenerCotizacionOExcepcion(numeroCotizacion);
+            RolNegocio06AV.Exigir(gerente, RolUsuario06AV.GerenteCompras, "desaprobar una cotización");
+            var cot = BuscarCotizacion(numeroCotizacion);
             if (cot.Estado != EstadoCotizacion06AV.PorAprobar)
                 throw new ValidacionException06AV("estado", "Solo se puede desaprobar una cotización 'Por aprobar'.");
 
-            try { _mpp.CambiarEstadoCotizacion(numeroCotizacion, EstadoCotizacion06AV.Desaprobada); }
+            try { _mpp.CambiarEstadoCotizacion(numeroCotizacion, EstadoCotizacion06AV.Desaprobada, gerente.Dni); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo desaprobar la cotización.", ex); }
 
-            AuditoriaPcFactory06AV.Modificacion($"Cotización #{numeroCotizacion} desaprobada", ModuloBitacora.Compras);
+            AuditoriaPcFactory06AV.Modificacion($"Cotización {numeroCotizacion} desaprobada por {gerente.Login}", ModuloBitacora.Compras);
         }
 
-        /// <summary>Paso 5: al recibir los insumos se suma el stock y la orden queda Finalizada.</summary>
-        public void RecibirInsumos(int numeroCompra)
+        // ── Paso 5: recibir mercadería = Factura de Compra ───────
+        /// <summary>
+        /// Registra la factura de compra (recepción real): suma el stock de lo recibido,
+        /// deja la orden Finalizada y guarda la fecha de cierre = fecha de entrega.
+        /// El proveedor y el total se navegan desde la cotización aprobada de la OC.
+        /// </summary>
+        public FacturaCompra06AV RegistrarFacturaCompra(string idOrdenCompra, DateTime fechaEntrega, string observaciones)
         {
-            var oc = _mpp.ObtenerOrdenCompraPorNumero(numeroCompra);
-            if (oc == null)
-                throw new NoEncontradoException06AV($"No existe la orden de compra #{numeroCompra}.");
+            var oc = BuscarOrden(idOrdenCompra);
             if (oc.Estado != EstadoOrdenCompra06AV.Enviada)
                 throw new ValidacionException06AV("estado",
-                    "Solo se pueden recibir insumos de una orden Enviada (con cotización aprobada).");
+                    "Solo se puede facturar/recibir una orden Enviada (con cotización aprobada).");
+
+            var cotAprobada = _mpp.ObtenerCotizacionesPorOrden(oc.Id)
+                                  .Where(c => c.Estado == EstadoCotizacion06AV.Aprobado)
+                                  .OrderByDescending(c => c.FechaEmision)
+                                  .FirstOrDefault();
+            if (cotAprobada == null)
+                throw new ValidacionException06AV("cotizacion", "La orden no tiene una cotización aprobada.");
+
+            var recibidos = oc.ComponentesFaltantes;
+            decimal total = cotAprobada.Costo > 0
+                ? cotAprobada.Costo
+                : recibidos.Sum(d => d.Componente.PrecioUnitario * d.Cantidad);
+
+            var factura = new FacturaCompra06AV
+            {
+                NumeroCompra = oc.Id,
+                FechaEmision = DateTime.Now,
+                FechaEntrega = fechaEntrega,
+                ComponentesRecibidos = recibidos,
+                Total = total,
+                Observaciones = observaciones
+            };
 
             try
             {
-                foreach (DetalleInsumo06AV d in oc.InsumosFaltantes)
-                    _mpp.SumarStock(d.Insumo.Codigo, d.Cantidad);
-
-                _mpp.FinalizarOrdenCompra(numeroCompra);
-                AuditoriaPcFactory06AV.Modificacion($"Recepción de insumos (orden de compra #{numeroCompra})", ModuloBitacora.Compras);
+                _mpp.AgregarFacturaCompra(factura);
+                foreach (DetalleComponente06AV d in recibidos)
+                    _componentes.SumarStock(d.Componente.Codigo, d.Cantidad);
+                _mpp.CerrarOrdenCompra(oc.Id, fechaEntrega);
             }
-            catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo registrar la recepción.", ex); }
+            catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo registrar la factura de compra.", ex); }
+
+            AuditoriaPcFactory06AV.Alta($"Factura de compra {factura.NumeroFactura} (OC #{oc.NumeroCompra})", ModuloBitacora.Compras);
+            return factura;
         }
 
-        private PedidoCotizacion06AV ObtenerCotizacionOExcepcion(int numero)
+        // ── Helpers ──────────────────────────────────────────────
+        /// <summary>Busca una OC por su Id técnico o por su NumeroCompra de negocio.</summary>
+        private OrdenCompra06AV BuscarOrden(string idONumero)
         {
-            var cot = _mpp.ObtenerCotizacionPorNumero(numero);
+            if (string.IsNullOrWhiteSpace(idONumero))
+                throw new ValidacionException06AV("orden", "Debe indicarse la orden de compra.");
+            var todas = _mpp.ObtenerOrdenesCompra();
+            var oc = todas.FirstOrDefault(o => o.Id == idONumero)
+                  ?? todas.FirstOrDefault(o => o.NumeroCompra.ToString() == idONumero);
+            if (oc == null)
+                throw new NoEncontradoException06AV($"No existe la orden de compra '{idONumero}'.");
+            return oc;
+        }
+
+        private PedidoCotizacion06AV BuscarCotizacion(string numero)
+        {
+            if (string.IsNullOrWhiteSpace(numero))
+                throw new ValidacionException06AV("cotizacion", "Debe indicarse la cotización.");
+            var cot = _mpp.ObtenerCotizaciones().FirstOrDefault(c => c.Numero == numero);
             if (cot == null)
-                throw new NoEncontradoException06AV($"No existe la cotización #{numero}.");
+                throw new NoEncontradoException06AV($"No existe la cotización '{numero}'.");
             return cot;
         }
     }

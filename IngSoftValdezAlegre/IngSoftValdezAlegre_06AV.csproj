@@ -90,6 +90,7 @@
     <Compile Include="Controles\ComprasControl.cs" />
     <Compile Include="Controles\ConsultarStockControl.cs" />
     <Compile Include="Controles\FacturasControl.cs" />
+    <Compile Include="Controles\RecibosControl.cs" />
     <Compile Include="Controles\ModelosEstandarControl.cs" />
     <Compile Include="Controles\AbmBaseControl06AV.Designer.cs">
       <DependentUpon>AbmBaseControl06AV.cs</DependentUpon>

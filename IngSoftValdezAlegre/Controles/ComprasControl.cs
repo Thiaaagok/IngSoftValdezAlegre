@@ -11,17 +11,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    /// <summary>
-    /// Compras (RFN2) rediseñado como una sola pantalla centrada en la Orden de Compra.
-    /// La lista muestra el ESTADO de cada orden y, al seleccionarla, un panel de detalle
-    /// indica el ÚNICO paso siguiente ("¿Qué sigue?") con el botón correspondiente:
-    ///   Pendiente de cotizar → Pedir cotización a un proveedor.
-    ///   Cotización por aprobar → Aprobar / Rechazar (gerente).
-    ///   Lista para recibir (Enviada) → Recibir insumos (suma stock).
-    ///   Recibida (Finalizada) → sin acción.
-    /// "Nueva orden de compra" abre un formulario simple con los insumos faltantes.
-    /// La lógica de negocio (CompraInsumosBLL06AV) no se toca.
-    /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class ComprasControl : UserControl, IIdiomaAplicable06AV
     {
@@ -36,7 +25,6 @@ namespace IngSoftValdezAlegre.Controles
 
         private enum Paso { Cotizar, Aprobar, Recibir, Finalizada }
 
-        // ── Vista lista (hub) ─────────────────────────────────────────
         private Panel pnlLista;
         private Label lblTitulo;
         private Button btnActualizar, btnNueva;
@@ -45,7 +33,6 @@ namespace IngSoftValdezAlegre.Controles
         private Label lblDetTitulo, lblDetEstado;
         private FlowLayoutPanel flpDetalle;
 
-        // ── Vista formulario (nueva OC) ───────────────────────────────
         private Panel pnlForm;
         private Label lblFormTitulo, lblLimite, lblRepositor;
         private DataGridView grFaltantes;
@@ -66,9 +53,6 @@ namespace IngSoftValdezAlegre.Controles
             CargarOrdenes();
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Construcción de la interfaz
-        // ══════════════════════════════════════════════════════════════
         private void ConstruirUI()
         {
             ConstruirVistaLista();
@@ -99,7 +83,6 @@ namespace IngSoftValdezAlegre.Controles
             barraSup.Controls.Add(lblTitulo);
             barraSup.Controls.Add(flpAcciones);
 
-            // Grilla de órdenes de compra
             grOC = new DataGridView
             {
                 Dock = DockStyle.Fill, ReadOnly = true, AllowUserToAddRows = false,
@@ -111,7 +94,6 @@ namespace IngSoftValdezAlegre.Controles
             grOC.SelectionChanged += (s, e) => ActualizarDetalle();
             grOC.DataBindingComplete += (s, e) => FormatearGrillaOrdenes();
 
-            // Panel de detalle (derecha)
             lblDetTitulo = new Label { Dock = DockStyle.Top, AutoSize = false, Height = 26, Padding = new Padding(0, 2, 0, 0) };
             lblDetEstado = new Label { Dock = DockStyle.Top, AutoSize = false, Height = 24, Padding = new Padding(0, 0, 0, 6) };
             flpDetalle = new FlowLayoutPanel
@@ -120,14 +102,14 @@ namespace IngSoftValdezAlegre.Controles
                 WrapContents = false, AutoScroll = true
             };
             pnlDetalle = new Panel { Dock = DockStyle.Right, Width = 380, Padding = new Padding(16, 14, 12, 12) };
-            pnlDetalle.Controls.Add(flpDetalle);   // Fill primero
-            pnlDetalle.Controls.Add(lblDetEstado); // Top
-            pnlDetalle.Controls.Add(lblDetTitulo); // Top
+            pnlDetalle.Controls.Add(flpDetalle);   
+            pnlDetalle.Controls.Add(lblDetEstado); 
+            pnlDetalle.Controls.Add(lblDetTitulo); 
 
             pnlLista = new Panel { Dock = DockStyle.Fill };
-            pnlLista.Controls.Add(grOC);      // Fill primero
-            pnlLista.Controls.Add(pnlDetalle); // Right
-            pnlLista.Controls.Add(barraSup);   // Top
+            pnlLista.Controls.Add(grOC);     
+            pnlLista.Controls.Add(pnlDetalle); 
+            pnlLista.Controls.Add(barraSup);   
         }
 
         private void ConstruirVistaFormulario()
@@ -142,7 +124,6 @@ namespace IngSoftValdezAlegre.Controles
                 RowHeadersVisible = false, BorderStyle = BorderStyle.None
             };
             grFaltantes.DataBindingComplete += (s, e) => FormatearGrillaFaltantes();
-            // La tilde de "Incluir" se confirma al instante (sin salir de la celda).
             grFaltantes.CurrentCellDirtyStateChanged += (s, e) =>
             {
                 if (grFaltantes.IsCurrentCellDirty)
@@ -177,9 +158,6 @@ namespace IngSoftValdezAlegre.Controles
         private static Button NuevoBoton(int width) =>
             new Button { Width = width, Height = 32, Margin = new Padding(6, 0, 0, 0), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 
-        // ══════════════════════════════════════════════════════════════
-        //  Navegación entre vistas
-        // ══════════════════════════════════════════════════════════════
         private void MostrarLista()
         {
             pnlForm.Visible = false;
@@ -190,14 +168,14 @@ namespace IngSoftValdezAlegre.Controles
         private void AbrirFormularioNueva()
         {
             CargarFaltantes();
+            var actual = UsuarioSesion06AV.Instancia().UsuarioActual;
+            txtRepositor.Text = actual?.Login ?? "";
+            txtRepositor.ReadOnly = true;   // el repositor es el usuario autenticado (RFN2)
             pnlLista.Visible = false;
             pnlForm.Visible = true;
             pnlForm.BringToFront();
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Carga de datos
-        // ══════════════════════════════════════════════════════════════
         private void CargarOrdenes()
         {
             try
@@ -228,7 +206,7 @@ namespace IngSoftValdezAlegre.Controles
             return new OrdenVm
             {
                 Numero = oc.NumeroCompra,
-                Repositor = oc.RepositorSolicitante,
+                Repositor = oc.RepositorSolicitante?.Login ?? "",
                 Limite = oc.FechaLimite.ToShortDateString(),
                 Estado = texto,
                 Costo = cot != null ? cot.Costo.ToString("C0") : "—",
@@ -240,11 +218,10 @@ namespace IngSoftValdezAlegre.Controles
 
         private PedidoCotizacion06AV CotizacionDe(OrdenCompra06AV oc) =>
             _cotizaciones
-                .Where(c => c.NumeroCompra == oc.NumeroCompra)
-                .OrderByDescending(c => c.Numero)
+                .Where(c => c.NumeroCompra == oc.Id)
+                .OrderByDescending(c => c.FechaEmision)
                 .FirstOrDefault();
 
-        /// <summary>Traduce el par (orden, cotización) al texto/color/paso siguiente.</summary>
         private void EstadoDe(OrdenCompra06AV oc, PedidoCotizacion06AV cot,
                               out string texto, out Color color, out Paso paso)
         {
@@ -258,7 +235,6 @@ namespace IngSoftValdezAlegre.Controles
             {
                 texto = t.Obtener("pcf_est_enviada"); color = Tema.Acento; paso = Paso.Recibir; return;
             }
-            // Pendiente
             if (cot != null && cot.Estado == EstadoCotizacion06AV.PorAprobar)
             {
                 texto = t.Obtener("pcf_est_por_aprobar"); color = Tema.Primario; paso = Paso.Aprobar; return;
@@ -274,13 +250,13 @@ namespace IngSoftValdezAlegre.Controles
         {
             try
             {
-                // Insumos que ya están en una orden en curso (no finalizada): no se pueden volver a pedir.
                 try { _ordenes = _bll.ObtenerOrdenesCompra() ?? _ordenes; } catch { }
                 var enTramite = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                foreach (var o in _ordenes.Where(o => o.Estado != EstadoOrdenCompra06AV.Finalizada))
-                    foreach (var d in o.InsumosFaltantes)
-                        if (d.Insumo != null && !enTramite.ContainsKey(d.Insumo.Codigo))
-                            enTramite[d.Insumo.Codigo] = o.NumeroCompra;
+                foreach (var o in _ordenes.Where(o => o.Estado == EstadoOrdenCompra06AV.Pendiente
+                                                   || o.Estado == EstadoOrdenCompra06AV.Enviada))
+                    foreach (var d in o.ComponentesFaltantes)
+                        if (d.Componente != null && !enTramite.ContainsKey(d.Componente.Codigo))
+                            enTramite[d.Componente.Codigo] = o.NumeroCompra;
 
                 _faltantes = new BindingList<FaltanteVm06AV>();
                 foreach (var i in _bll.ObtenerFaltantes())
@@ -320,9 +296,6 @@ namespace IngSoftValdezAlegre.Controles
                 }
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Panel de detalle: "¿Qué sigue?"
-        // ══════════════════════════════════════════════════════════════
         private void ActualizarDetalle()
         {
             flpDetalle.Controls.Clear();
@@ -346,13 +319,11 @@ namespace IngSoftValdezAlegre.Controles
             lblDetEstado.ForeColor = estadoColor;
             lblDetEstado.Font = new Font("Segoe UI Semibold", 9.5f, FontStyle.Bold);
 
-            // Insumos
             flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_insumos")));
-            var lineas = _ocSel.InsumosFaltantes
-                .Select(d => "•  " + (d.Insumo != null ? d.Insumo.Descripcion : d.Insumo?.Codigo) + "   ×" + d.Cantidad);
+            var lineas = _ocSel.ComponentesFaltantes
+                .Select(d => "•  " + (d.Componente != null ? d.Componente.Descripcion : "") + "   ×" + d.Cantidad);
             flpDetalle.Controls.Add(TextoSecundario(string.Join(Environment.NewLine, lineas)));
 
-            // Cotización (si existe)
             if (cot != null)
             {
                 flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_cotizacion_lbl")));
@@ -363,7 +334,6 @@ namespace IngSoftValdezAlegre.Controles
                 flpDetalle.Controls.Add(TextoSecundario(linea));
             }
 
-            // Separador + "¿Qué sigue?"
             flpDetalle.Controls.Add(Separador());
             flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_que_sigue"), fuerte: true));
 
@@ -434,9 +404,6 @@ namespace IngSoftValdezAlegre.Controles
             flpDetalle.Controls.Add(TextoSecundario("✓  " + t.Obtener("pcf_hint_finalizada")));
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Acciones (delegan en la BLL, sin cambios de lógica)
-        // ══════════════════════════════════════════════════════════════
         private void PedirCotizacion(Proveedor06AV prov)
         {
             if (_ocSel == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_sel_orden")); return; }
@@ -447,7 +414,7 @@ namespace IngSoftValdezAlegre.Controles
                 if (dlg.ShowDialog(FindForm()) != DialogResult.OK) return;
                 try
                 {
-                    var cot = _bll.RegistrarCotizacion(_ocSel.NumeroCompra, prov.Id, dlg.Costo, dlg.Condiciones);
+                    var cot = _bll.RegistrarCotizacion(_ocSel.Id, prov.Id, dlg.Costo, dlg.Condiciones);
                     ConfirmacionForm.MostrarInfo(
                         $"Cotización #{cot.Numero} enviada a {prov.Nombre} (${dlg.Costo:0.00}).",
                         "Compras", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
@@ -462,8 +429,9 @@ namespace IngSoftValdezAlegre.Controles
             if (cot == null) { MostrarError("No hay cotización para resolver."); return; }
             try
             {
-                if (aprobar) _bll.AprobarCotizacion(cot.Numero);
-                else _bll.DesaprobarCotizacion(cot.Numero);
+                var gerente = UsuarioSesion06AV.Instancia().UsuarioActual;
+                if (aprobar) _bll.AprobarCotizacion(cot.Numero, gerente);
+                else _bll.DesaprobarCotizacion(cot.Numero, gerente);
                 CargarOrdenes();
             }
             catch (Exception ex) { MostrarError(ex.Message); }
@@ -473,13 +441,13 @@ namespace IngSoftValdezAlegre.Controles
         {
             if (_ocSel == null) return;
             bool ok = ConfirmacionForm.Mostrar(
-                $"¿Recibir los insumos de la orden #{_ocSel.NumeroCompra}? Se sumará el stock.",
+                $"¿Registrar la factura de compra de la orden #{_ocSel.NumeroCompra}? Se sumará el stock y la orden quedará finalizada.",
                 "Recibir", ConfirmacionForm.TipoConfirmacion.Advertencia, "Recibir", "Cancelar", FindForm());
             if (!ok) return;
             try
             {
-                _bll.RecibirInsumos(_ocSel.NumeroCompra);
-                ConfirmacionForm.MostrarInfo("Insumos recibidos y stock actualizado.",
+                _bll.RegistrarFacturaCompra(_ocSel.Id, DateTime.Today, "");
+                ConfirmacionForm.MostrarInfo("Factura de compra registrada: stock actualizado y orden finalizada.",
                     "Compras", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
                 CargarOrdenes();
             }
@@ -488,18 +456,19 @@ namespace IngSoftValdezAlegre.Controles
 
         private void CrearOrden()
         {
-            var detalles = new List<DetalleInsumo06AV>();
+            var detalles = new List<DetalleComponente06AV>();
             foreach (var f in _faltantes)
                 if (f.Incluir && f.Cantidad > 0)
-                    detalles.Add(new DetalleInsumo06AV
+                    detalles.Add(new DetalleComponente06AV
                     {
                         Cantidad = f.Cantidad,
-                        Insumo = new Insumo06AV { Codigo = f.Codigo, Descripcion = f.Descripcion, Stock = f.Stock, StockMinimo = f.StockMinimo }
+                        Componente = new Componente06AV { Codigo = f.Codigo, Descripcion = f.Descripcion, Stock = f.Stock, StockMinimo = f.StockMinimo }
                     });
 
             try
             {
-                var oc = _bll.RegistrarOrdenCompra(detalles, dtpLimite.Value, txtRepositor.Text.Trim());
+                var repositor = UsuarioSesion06AV.Instancia().UsuarioActual;
+                var oc = _bll.RegistrarOrdenCompra(detalles, dtpLimite.Value, repositor);
                 ConfirmacionForm.MostrarInfo($"Orden de compra #{oc.NumeroCompra} creada.",
                     "Compras", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
                 MostrarLista();
@@ -515,9 +484,6 @@ namespace IngSoftValdezAlegre.Controles
             catch (Exception ex) { MostrarError(ex.Message); }
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Formato de grillas
-        // ══════════════════════════════════════════════════════════════
         private void FormatearGrillaOrdenes()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -564,9 +530,6 @@ namespace IngSoftValdezAlegre.Controles
                 }
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Helpers de UI (detalle)
-        // ══════════════════════════════════════════════════════════════
         private Label Etiqueta(string texto, bool fuerte = false)
         {
             return new Label
@@ -596,9 +559,6 @@ namespace IngSoftValdezAlegre.Controles
             return b;
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Tema e idioma
-        // ══════════════════════════════════════════════════════════════
         private void AplicarTema()
         {
             Tema.AplicarControl(this);
@@ -641,10 +601,6 @@ namespace IngSoftValdezAlegre.Controles
             mensaje, GestorIdioma06AV.Instancia.Obtener("aviso"),
             ConfirmacionForm.TipoConfirmacion.Advertencia, FindForm());
 
-        // ══════════════════════════════════════════════════════════════
-        //  View-models
-        // ══════════════════════════════════════════════════════════════
-        /// <summary>Fila de la grilla de órdenes (con estado ya resuelto).</summary>
         private class OrdenVm
         {
             public int Numero { get; set; }
@@ -658,7 +614,6 @@ namespace IngSoftValdezAlegre.Controles
             [Browsable(false)] public PedidoCotizacion06AV Cotizacion { get; set; }
         }
 
-        /// <summary>Fila editable para armar la orden de compra (insumo + cantidad a pedir).</summary>
         private class FaltanteVm06AV
         {
             public bool Incluir { get; set; }

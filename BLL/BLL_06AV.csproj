@@ -60,6 +60,7 @@
     <Compile Include="Excepciones\ExcepcionesPcFactory06AV.cs" />
     <Compile Include="Excepciones\ExcepcionesUsuario.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RolNegocio06AV.cs" />
     <Compile Include="RolesBLL06AV.cs" />
     <Compile Include="ModelosEstandarBLL06AV.cs" />
     <Compile Include="UsuariosBLL06AV.cs" />

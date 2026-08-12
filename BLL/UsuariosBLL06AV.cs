@@ -215,7 +215,6 @@ namespace SER
 
         #endregion
 
-        // Recalcula el DV tras cada persistencia (no rompe la operación si falla).
         private void RecalcularIntegridad() => new IntegridadBLL06AV().RecalcularSeguro();
 
         #region Alta

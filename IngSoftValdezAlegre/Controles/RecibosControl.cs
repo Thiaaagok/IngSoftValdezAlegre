@@ -12,20 +12,19 @@ using System.Windows.Forms;
 namespace IngSoftValdezAlegre.Controles
 {
     /// <summary>
-    /// Facturas de venta: lista las órdenes de producción ya entregadas (que tienen
-    /// factura) y permite generar/abrir el PDF de la factura. La misma pantalla se usa
-    /// para "Facturas" (consultar) y "Generar factura".
+    /// Recibos de seña emitidos (RFN1). Cada recibo documenta el pago de seña sobre una
+    /// computadora registrada, con su monto abonado y saldo pendiente (valores snapshot).
     /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
-    public partial class FacturasControl : UserControl, IIdiomaAplicable06AV
+    public partial class RecibosControl : UserControl, IIdiomaAplicable06AV
     {
-        private readonly VentasBLL06AV _ventasBLL = new VentasBLL06AV();
+        private readonly OrdenProduccionBLL06AV _bll = new OrdenProduccionBLL06AV();
 
         private Label lblTitulo;
-        private Button btnAbrir, btnRefrescar;
+        private Button btnRefrescar;
         private DataGridView grilla;
 
-        public FacturasControl()
+        public RecibosControl()
         {
             ConstruirUI();
             AplicarTema();
@@ -41,9 +40,7 @@ namespace IngSoftValdezAlegre.Controles
         {
             lblTitulo = new Label { AutoSize = true, Location = new Point(4, 16) };
 
-            btnAbrir = new Button { Width = 170, Height = 32, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Margin = new Padding(6, 0, 0, 0) };
             btnRefrescar = new Button { Width = 120, Height = 32, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Margin = new Padding(6, 0, 0, 0) };
-            btnAbrir.Click += (s, e) => AbrirFactura();
             btnRefrescar.Click += (s, e) => Cargar();
 
             var flp = new FlowLayoutPanel
@@ -52,7 +49,7 @@ namespace IngSoftValdezAlegre.Controles
                 WrapContents = false, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Padding = new Padding(0, 10, 8, 0)
             };
-            flp.Controls.AddRange(new Control[] { btnRefrescar, btnAbrir });
+            flp.Controls.Add(btnRefrescar);
 
             var barra = new Panel { Dock = DockStyle.Top, Height = 56 };
             barra.Controls.Add(lblTitulo);
@@ -67,7 +64,6 @@ namespace IngSoftValdezAlegre.Controles
                 RowHeadersVisible = false, BorderStyle = BorderStyle.None
             };
             grilla.DataBindingComplete += (s, e) => FormatearGrilla();
-            grilla.DoubleClick += (s, e) => AbrirFactura();
 
             Controls.Add(grilla);
             Controls.Add(barra);
@@ -77,41 +73,22 @@ namespace IngSoftValdezAlegre.Controles
         {
             try
             {
-                var entregadas = (_ventasBLL.ObtenerTodas() ?? new List<Venta06AV>())
-                    .Where(v => v.Estado == EstadoVenta06AV.Entregada)
-                    .OrderByDescending(v => v.NumeroVenta)
-                    .Select(v =>
+                var filas = (_bll.ObtenerRecibos() ?? new List<Recibo06AV>())
+                    .OrderByDescending(r => r.FechaEmision)
+                    .Select(r => new ReciboVm
                     {
-                        var saldo = v.Pagos.FirstOrDefault(p => p.Tipo == TipoPago06AV.SaldoFinal);
-                        return new FacturaVm
-                        {
-                            Comprobante = saldo != null ? saldo.NumeroRecibo : "-",
-                            Numero = v.NumeroVenta,
-                            Cliente = v.Cliente != null ? v.Cliente.Apellido + ", " + v.Cliente.Nombre : "",
-                            Fecha = (saldo != null ? saldo.Fecha : v.FechaVenta).ToShortDateString(),
-                            Total = v.PrecioTotal.ToString("C0"),
-                            Abonado = v.TotalAbonado.ToString("C0"),
-                            Venta = v
-                        };
+                        Numero = r.Id,
+                        Computadora = r.Pago?.Computadora?.Nombre ?? "",
+                        Cliente = r.Pago?.Computadora?.Cliente?.Dni ?? "",
+                        Emision = r.FechaEmision.ToShortDateString(),
+                        Abonado = r.MontoAbonado.ToString("C0"),
+                        Saldo = r.SaldoPendiente.ToString("C0"),
+                        Entrega = r.FechaEntregaEstimada.ToShortDateString()
                     })
                     .ToList();
 
                 grilla.DataSource = null;
-                grilla.DataSource = entregadas;
-            }
-            catch (Exception ex) { MostrarError(ex.Message); }
-        }
-
-        private void AbrirFactura()
-        {
-            var vm = grilla.CurrentRow?.DataBoundItem as FacturaVm;
-            if (vm == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
-            try
-            {
-                var orden = vm.Venta.NumeroOrdenProduccion.HasValue
-                    ? _ventasBLL.ObtenerOrdenDeVenta(vm.Venta.NumeroVenta) : null;
-                string ruta = ComprobantePcFactory06AV.GenerarFactura(vm.Venta, orden);
-                ComprobantePcFactory06AV.Abrir(ruta);
+                grilla.DataSource = filas;
             }
             catch (Exception ex) { MostrarError(ex.Message); }
         }
@@ -120,15 +97,14 @@ namespace IngSoftValdezAlegre.Controles
         {
             var t = GestorIdioma06AV.Instancia;
             void H(string c, string k) { if (grilla.Columns[c] != null) grilla.Columns[c].HeaderText = t.Obtener(k); }
-            H("Comprobante", "pcf_comprobante");
-            H("Numero", "pcf_venta");
+            H("Numero", "pcf_col_numero");
+            H("Computadora", "pcf_menu_componentes");
             H("Cliente", "pcf_cliente");
-            H("Fecha", "pcf_fecha");
-            H("Total", "pcf_total");
+            H("Emision", "pcf_f_emision");
             H("Abonado", "pcf_abonado");
-            if (grilla.Columns["Venta"] != null) grilla.Columns["Venta"].Visible = false;
-            if (grilla.Columns["Numero"] != null) grilla.Columns["Numero"].FillWeight = 26;
-            foreach (string c in new[] { "Total", "Abonado" })
+            H("Saldo", "pcf_saldo");
+            H("Entrega", "pcf_f_entrega");
+            foreach (string c in new[] { "Abonado", "Saldo" })
                 if (grilla.Columns[c] != null) grilla.Columns[c].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
         }
 
@@ -137,15 +113,13 @@ namespace IngSoftValdezAlegre.Controles
             Tema.AplicarControl(this);
             Tema.AplicarTitulo(lblTitulo);
             Tema.AplicarGrilla(grilla);
-            Tema.AplicarBotonPrimario(btnAbrir);
             Tema.AplicarBotonSecundario(btnRefrescar);
         }
 
         public void AplicarIdioma()
         {
             var t = GestorIdioma06AV.Instancia;
-            lblTitulo.Text = t.Obtener("menu_facturas");
-            btnAbrir.Text = t.Obtener("fact_abrir");
+            lblTitulo.Text = t.Obtener("menu_recibos");
             btnRefrescar.Text = t.Obtener("pcf_actualizar");
             if (grilla.DataSource != null) FormatearGrilla();
         }
@@ -154,15 +128,15 @@ namespace IngSoftValdezAlegre.Controles
             mensaje, GestorIdioma06AV.Instancia.Obtener("aviso"),
             ConfirmacionForm.TipoConfirmacion.Advertencia, FindForm());
 
-        private class FacturaVm
+        private class ReciboVm
         {
-            public string Comprobante { get; set; }
-            public int Numero { get; set; }
+            public string Numero { get; set; }
+            public string Computadora { get; set; }
             public string Cliente { get; set; }
-            public string Fecha { get; set; }
-            public string Total { get; set; }
+            public string Emision { get; set; }
             public string Abonado { get; set; }
-            [Browsable(false)] public Venta06AV Venta { get; set; }
+            public string Saldo { get; set; }
+            public string Entrega { get; set; }
         }
     }
 }

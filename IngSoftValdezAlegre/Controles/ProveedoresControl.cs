@@ -7,7 +7,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    /// <summary>ABM de Proveedores (PC Factory). Id autonumérico (oculto).</summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class ProveedoresControl : AbmBaseControl06AV
     {

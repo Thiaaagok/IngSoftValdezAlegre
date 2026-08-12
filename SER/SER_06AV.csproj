@@ -60,6 +60,7 @@
     <Compile Include="Interfaces\IIdiomaAplicable06AV.cs" />
     <Compile Include="IComponentePermiso06AV.cs" />
     <Compile Include="Generador\GeneradorID.cs" />
+    <Compile Include="Generador\GeneradorCodigo06AV.cs" />
     <Compile Include="IntentoLogin06AV.cs" />
     <Compile Include="Patente06AV.cs" />
     <Compile Include="Rol06AV.cs" />

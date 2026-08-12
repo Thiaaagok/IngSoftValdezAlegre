@@ -11,16 +11,11 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    /// <summary>
-    /// Consulta de stock (solo lectura): componentes e insumos con su stock actual
-    /// y, en el caso de los insumos, su stock mínimo. Los insumos bajo mínimo se
-    /// resaltan. Se puede filtrar por tipo.
-    /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class ConsultarStockControl : UserControl, IIdiomaAplicable06AV
     {
+        // Tras el refactor, Insumo se fusionó en Componente: una sola fuente de stock.
         private readonly ComponentesBLL06AV _compBLL = new ComponentesBLL06AV();
-        private readonly InsumosBLL06AV _insBLL = new InsumosBLL06AV();
 
         private Label lblTitulo, lblFiltro;
         private ComboBox cboFiltro;
@@ -79,29 +74,26 @@ namespace IngSoftValdezAlegre.Controles
         {
             try
             {
-                var filas = new List<StockVm>();
-                int filtro = cboFiltro.SelectedIndex; // 0 Todos, 1 Componentes, 2 Insumos
+                int filtro = cboFiltro.SelectedIndex; // 0 Todos, 1 Bajo stock
+                var componentes = _compBLL.ObtenerTodos() ?? new List<Componente06AV>();
+                if (filtro == 1)
+                    componentes = componentes.Where(c => c.BajoStock).ToList();
 
-                if (filtro != 2)
-                    foreach (var c in _compBLL.ObtenerTodos() ?? new List<Componente06AV>())
-                        filas.Add(new StockVm
-                        {
-                            Tipo = GestorIdioma06AV.Instancia.Obtener("pcf_menu_componentes"),
-                            Codigo = c.Codigo, Descripcion = c.Descripcion,
-                            Stock = c.StockDisponible, Minimo = "—", Bajo = false
-                        });
-
-                if (filtro != 1)
-                    foreach (var i in _insBLL.ObtenerTodos() ?? new List<Insumo06AV>())
-                        filas.Add(new StockVm
-                        {
-                            Tipo = GestorIdioma06AV.Instancia.Obtener("pcf_menu_insumos"),
-                            Codigo = i.Codigo, Descripcion = i.Descripcion,
-                            Stock = i.Stock, Minimo = i.StockMinimo.ToString(), Bajo = i.BajoStock
-                        });
+                var filas = componentes
+                    .Select(c => new StockVm
+                    {
+                        Codigo = c.Codigo,
+                        Descripcion = c.Descripcion,
+                        Tipo = c.Tipo.ToString(),
+                        Stock = c.Stock,
+                        Minimo = c.StockMinimo.ToString(),
+                        Bajo = c.BajoStock
+                    })
+                    .OrderBy(f => f.Descripcion)
+                    .ToList();
 
                 grilla.DataSource = null;
-                grilla.DataSource = filas.OrderBy(f => f.Tipo).ThenBy(f => f.Codigo).ToList();
+                grilla.DataSource = filas;
             }
             catch (Exception ex)
             {
@@ -114,9 +106,9 @@ namespace IngSoftValdezAlegre.Controles
         {
             var t = GestorIdioma06AV.Instancia;
             void H(string c, string k) { if (grilla.Columns[c] != null) grilla.Columns[c].HeaderText = t.Obtener(k); }
-            H("Tipo", "tipo");
             H("Codigo", "pcf_col_codigo");
             H("Descripcion", "pcf_col_descripcion");
+            H("Tipo", "tipo");
             H("Stock", "pcf_col_stock");
             H("Minimo", "pcf_col_minimo");
             if (grilla.Columns["Bajo"] != null) grilla.Columns["Bajo"].Visible = false;
@@ -150,8 +142,7 @@ namespace IngSoftValdezAlegre.Controles
             int sel = cboFiltro.SelectedIndex < 0 ? 0 : cboFiltro.SelectedIndex;
             cboFiltro.Items.Clear();
             cboFiltro.Items.Add(t.Obtener("todos"));
-            cboFiltro.Items.Add(t.Obtener("pcf_menu_componentes"));
-            cboFiltro.Items.Add(t.Obtener("pcf_menu_insumos"));
+            cboFiltro.Items.Add(t.Obtener("pcf_stock_bajo"));
             cboFiltro.SelectedIndex = sel;
 
             if (grilla.DataSource != null) FormatearGrilla();
@@ -159,9 +150,9 @@ namespace IngSoftValdezAlegre.Controles
 
         private class StockVm
         {
-            public string Tipo { get; set; }
             public string Codigo { get; set; }
             public string Descripcion { get; set; }
+            public string Tipo { get; set; }
             public int Stock { get; set; }
             public string Minimo { get; set; }
             [Browsable(false)] public bool Bajo { get; set; }

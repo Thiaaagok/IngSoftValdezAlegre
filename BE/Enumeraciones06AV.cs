@@ -16,7 +16,17 @@ namespace BE
     public enum TipoConfiguracion06AV
     {
         Estandar,
-        Personalizada
+        Configurable
+    }
+
+    /// <summary>Rol de negocio de un usuario en el circuito de compras/ventas (RFN1/RFN2).</summary>
+    public enum RolUsuario06AV
+    {
+        Repositor,
+        GerenteCompras,
+        Almacenista,
+        Recepcionista,
+        Gerente
     }
 
     /// <summary>

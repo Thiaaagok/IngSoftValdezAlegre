@@ -1,25 +1,58 @@
 using BE;
 using DAL;
+using SER.Generador;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 
 namespace MPP
 {
     /// <summary>
-    /// Mapeo de la ORDEN DE PRODUCCIÓN (RFN1 - CU04 a CU07). Reconstruye la orden y
-    /// engancha la VENTA asociada (que aporta cliente, computadora y pagos).
+    /// Mapeo del proceso de Producción (RFN1). Persiste y reconstruye el grafo completo
+    /// de una orden: cliente, computadora + componentes, línea de ensamblaje y pagos.
     /// </summary>
     public class ProduccionMPP06AV
     {
         private readonly ProduccionDAL06AV _dal = new ProduccionDAL06AV();
         private readonly VentasMPP06AV _ventas = new VentasMPP06AV();
         private readonly LineasEnsamblajeMPP06AV _lineas = new LineasEnsamblajeMPP06AV();
+        private readonly ModelosEstandarMPP06AV _modelos = new ModelosEstandarMPP06AV();
+        private readonly GeneradorCodigo06AV _gen = new GeneradorCodigo06AV();
 
-        // ── Alta (CU04) ──────────────────────────────────────────
+        // ── Computadora ──────────────────────────────────────────
+        public void GuardarComputadora(Computadora06AV pc)
+        {
+            pc.Id = _dal.AgregarComputadora(pc.Nombre, (int)pc.TipoConfiguracion, pc.PrecioTotal);
+            foreach (Componente06AV c in pc.Componentes)
+                _dal.AgregarComponenteAComputadora(pc.Id, c.Codigo);
+        }
+
+        public Computadora06AV ObtenerComputadora(int id)
+        {
+            DataTable cab = _dal.ObtenerComputadoraPorId(id);
+            if (cab.Rows.Count == 0) return null;
+            DataRow r = cab.Rows[0];
+
+            var pc = new Computadora06AV
+            {
+                Id = Convert.ToInt32(r["Id"]),
+                Nombre = r["Nombre"] == DBNull.Value ? "" : r["Nombre"].ToString(),
+                TipoConfiguracion = (TipoConfiguracion06AV)Convert.ToInt32(r["TipoConfiguracion"])
+            };
+
+            foreach (DataRow rc in _dal.ObtenerComponentesDeComputadora(id).Rows)
+                pc.Componentes.Add(MapearComponente(rc));
+
+            return pc;
+        }
+
+        // ── Orden de producción ──────────────────────────────────
         public void AgregarOrden(OrdenProduccion06AV orden)
         {
-            orden.NumeroOrden = _dal.AgregarOrden(orden.NumeroVenta, orden.FechaEntregaEstimada);
+            GuardarComputadora(orden.Computadora);
+            orden.NumeroOrden = _dal.AgregarOrden(
+                orden.Cliente.Dni, orden.Computadora.Id, orden.FechaEntrega);
             orden.Estado = EstadoOrdenProduccion06AV.Pendiente;
         }
 
@@ -32,43 +65,36 @@ namespace MPP
             return lista;
         }
 
-        public OrdenProduccion06AV ObtenerPorNumero(int numero)
+        public OrdenProduccion06AV ObtenerPorId(string id)
         {
-            DataTable t = _dal.ObtenerOrdenPorNumero(numero);
+            DataTable t = _dal.ObtenerOrdenPorId(id);
             return t.Rows.Count == 0 ? null : MapearOrden(t.Rows[0]);
         }
 
-        /// <summary>CU07: órdenes en un estado dado (Finalizadas / Entregadas).</summary>
-        public List<OrdenProduccion06AV> ObtenerPorEstado(EstadoOrdenProduccion06AV estado)
-        {
-            var lista = new List<OrdenProduccion06AV>();
-            foreach (DataRow row in _dal.ObtenerOrdenesPorEstado((int)estado).Rows)
-                lista.Add(MapearOrden(row));
-            return lista;
-        }
-
-        public OrdenProduccion06AV ObtenerPorVenta(int numeroVenta)
-        {
-            DataTable t = _dal.ObtenerOrdenPorVenta(numeroVenta);
-            return t.Rows.Count == 0 ? null : MapearOrden(t.Rows[0]);
-        }
-
-        // ── Transiciones ─────────────────────────────────────────
         public void Planificar(int numero, int idLinea, DateTime fechaInicio, string responsable) =>
             _dal.PlanificarOrden(numero, idLinea, fechaInicio, responsable);
-
-        public void Desplanificar(int numero) => _dal.DesplanificarOrden(numero);
 
         public void CambiarEstado(int numero, EstadoOrdenProduccion06AV estado) =>
             _dal.CambiarEstadoOrden(numero, (int)estado);
 
-        // ── Cierre de producción (CU06) ──────────────────────────
-        public void RegistrarControlCalidad(int numero, ControlCalidad06AV cc) =>
-            _dal.RegistrarControlCalidad(numero, cc.Encendido, cc.Conexiones,
-                                         cc.SistemaOperativo, cc.Drivers,
-                                         cc.Observaciones, cc.Responsable);
+        // ── Pagos ────────────────────────────────────────────────
+        public void AgregarPago(int numeroOrden, TipoPago06AV tipo, decimal monto) =>
+            _dal.AgregarPago(numeroOrden, (int)tipo, monto);
 
-        public void Cerrar(int numero, string numeroSerie) => _dal.CerrarOrden(numero, numeroSerie);
+        public List<Pago06AV> ObtenerPagos(int numeroOrden)
+        {
+            var lista = new List<Pago06AV>();
+            foreach (DataRow r in _dal.ObtenerPagosPorOrden(numeroOrden).Rows)
+                lista.Add(new Pago06AV
+                {
+                    Id = Convert.ToInt32(r["Id"]),
+                    NumeroOrden = Convert.ToInt32(r["NumeroOrden"]),
+                    Tipo = (TipoPago06AV)Convert.ToInt32(r["Tipo"]),
+                    Monto = Convert.ToDecimal(r["Monto"]),
+                    Fecha = Convert.ToDateTime(r["Fecha"])
+                });
+            return lista;
+        }
 
         // ── Helpers de mapeo ─────────────────────────────────────
         private OrdenProduccion06AV MapearOrden(DataRow row)
@@ -77,37 +103,40 @@ namespace MPP
 
             var orden = new OrdenProduccion06AV
             {
+                Id = row["Id"].ToString(),
                 NumeroOrden = Convert.ToInt32(row["NumeroOrden"]),
-                NumeroVenta = numeroVenta,
-                Venta = _ventas.ObtenerPorNumero(numeroVenta),
-                FechaRegistro = Convert.ToDateTime(row["FechaRegistro"]),
-                FechaEntregaEstimada = Convert.ToDateTime(row["FechaEntregaEstimada"]),
+                Cliente = _clientes.ObtenerPorDni(row["DniCliente"].ToString()),
+                Computadora = ObtenerComputadora(Convert.ToInt32(row["IdComputadora"])),
+                FechaEntrega = Convert.ToDateTime(row["FechaEntrega"]),
                 Estado = (EstadoOrdenProduccion06AV)Convert.ToInt32(row["Estado"]),
                 ResponsableTecnico = row["ResponsableTecnico"] == DBNull.Value ? "" : row["ResponsableTecnico"].ToString(),
                 NumeroSerie = row["NumeroSerie"] == DBNull.Value ? "" : row["NumeroSerie"].ToString()
             };
-
             if (row["IdLinea"] != DBNull.Value)
                 orden.LineaEnsamblaje = _lineas.ObtenerPorId(Convert.ToInt32(row["IdLinea"]));
-
             if (row["FechaInicioPrevista"] != DBNull.Value)
                 orden.FechaInicioPrevista = Convert.ToDateTime(row["FechaInicioPrevista"]);
 
-            if (row["FechaCierre"] != DBNull.Value)
-                orden.FechaCierre = Convert.ToDateTime(row["FechaCierre"]);
+            orden.Pagos = ObtenerPagos(orden.NumeroOrden);
+            return orden;
+        }
 
             orden.ControlCalidad = new ControlCalidad06AV
             {
-                Encendido = row["CcEncendido"] != DBNull.Value && Convert.ToBoolean(row["CcEncendido"]),
-                Conexiones = row["CcConexiones"] != DBNull.Value && Convert.ToBoolean(row["CcConexiones"]),
-                SistemaOperativo = row["CcSistemaOperativo"] != DBNull.Value && Convert.ToBoolean(row["CcSistemaOperativo"]),
-                Drivers = row["CcDrivers"] != DBNull.Value && Convert.ToBoolean(row["CcDrivers"]),
-                Observaciones = row["CcObservaciones"] == DBNull.Value ? "" : row["CcObservaciones"].ToString(),
-                Responsable = row["CcResponsable"] == DBNull.Value ? "" : row["CcResponsable"].ToString(),
-                Fecha = row["CcFecha"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(row["CcFecha"])
+                Codigo = row["Codigo"].ToString(),
+                Descripcion = row["Descripcion"].ToString(),
+                Tipo = (TipoComponente06AV)Convert.ToInt32(row["Tipo"]),
+                Marca = row["Marca"] == DBNull.Value ? "" : row["Marca"].ToString(),
+                Modelo = row["Modelo"] == DBNull.Value ? "" : row["Modelo"].ToString(),
+                PrecioUnitario = Convert.ToDecimal(row["PrecioUnitario"]),
+                StockDisponible = Convert.ToInt32(row["StockDisponible"])
             };
 
             return orden;
         }
+
+        private ModeloEstandar06AV BuscarModelo(int idModelo) =>
+            _modelos.ObtenerTodos().FirstOrDefault(m => m.Id == idModelo)
+            ?? new ModeloEstandar06AV { Id = idModelo };
     }
 }

@@ -8,10 +8,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    /// <summary>
-    /// ABM del catálogo de modelos de computadora estándar (RFN1). Los componentes del
-    /// modelo se eligen con el asistente "Armá tu PC" (uno por tipo).
-    /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class ModelosEstandarControl : AbmBaseControl06AV
     {

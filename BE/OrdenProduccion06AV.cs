@@ -2,25 +2,29 @@ using System;
 
 namespace BE
 {
+    /// <summary>
+    /// Orden de producción (venta). La crea el gerente seleccionando una Computadora06AV
+    /// ya registrada y con seña cobrada. El cliente, los pagos y el precio se navegan desde
+    /// la computadora (no se duplican).
+    /// </summary>
     public class OrdenProduccion06AV
     {
         public int NumeroOrden { get; set; }
-        public Venta06AV Venta { get; set; }
-        public int NumeroVenta { get; set; }
-        public DateTime FechaRegistro { get; set; } = DateTime.Now;
-        public DateTime FechaEntregaEstimada { get; set; }
+        public Cliente06AV Cliente { get; set; }
+        public Computadora06AV Computadora { get; set; }
+
+        public DateTime FechaEntrega { get; set; }
         public EstadoOrdenProduccion06AV Estado { get; set; } = EstadoOrdenProduccion06AV.Pendiente;
         public LineaEnsamblaje06AV LineaEnsamblaje { get; set; }
         public DateTime? FechaInicioPrevista { get; set; }
         public string ResponsableTecnico { get; set; }
-        public ControlCalidad06AV ControlCalidad { get; set; } = new ControlCalidad06AV();
-        public string NumeroSerie { get; set; }
-        public DateTime? FechaCierre { get; set; }
-        public Cliente06AV Cliente => Venta?.Cliente;
-        public Computadora06AV Computadora => Venta?.Computadora;
-        public decimal PrecioTotal => Venta?.PrecioTotal ?? 0m;
-        public decimal TotalAbonado => Venta?.TotalAbonado ?? 0m;
-        public decimal SaldoPendiente => Venta?.SaldoPendiente ?? 0m;
-        public override string ToString() => $"OP #{NumeroOrden} (Venta #{NumeroVenta}) - {Estado}";
+
+        public List<Pago06AV> Pagos { get; set; } = new List<Pago06AV>();
+
+        public decimal PrecioTotal => Computadora?.PrecioTotal ?? 0m;
+        public decimal TotalAbonado => Pagos?.Sum(p => p.Monto) ?? 0m;
+        public decimal SaldoPendiente => PrecioTotal - TotalAbonado;
+
+        public override string ToString() => $"OP #{NumeroOrden} - {Estado}";
     }
 }

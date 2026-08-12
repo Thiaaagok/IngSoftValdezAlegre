@@ -20,9 +20,8 @@ namespace IngSoftValdezAlegre
         private Button _moduloActivo;
         private ToolStripMenuItem cambiarIdiomaToolStripMenuItem;
         private ContextMenuStrip cmsIdiomas;
-        private Button btnTema;   // toggle de tema claro/oscuro (topbar)
+        private Button btnTema;   
 
-        // Backup automático cada 3 horas (solo administrador).
         private const int IntervaloAutoBackupMs = 3 * 60 * 60 * 1000;
         private System.Windows.Forms.Timer _timerAutoBackup;
         private ToolStripMenuItem gestionBackupsToolStripMenuItem;
@@ -68,6 +67,7 @@ namespace IngSoftValdezAlegre
                 Item("pcf_menu_proveedores", "\uE8D7", PatenteEnum06AV.GestionarProveedores, false, () => new Controles.ProveedoresControl()),
                 Item("pcf_menu_componentes", "\uE950", PatenteEnum06AV.GestionarComponentes, false, () => new Controles.ComponentesControl()),
                 Item("pcf_menu_insumos", "\uE7B8", PatenteEnum06AV.GestionarInsumos, false, () => new Controles.InsumosControl()),
+                Item("pcf_menu_lineas", "\uE9F5", PatenteEnum06AV.GestionarLineasEnsamblaje, false, () => new Controles.LineasEnsamblajeControl()),
                 Item("pcf_menu_modelos", "\uE8A4", PatenteEnum06AV.GestionarModelosEstandar, false, () => new Controles.ModelosEstandarControl()),
             });
 
@@ -89,7 +89,7 @@ namespace IngSoftValdezAlegre
             AgregarGrupo("menu_grp_produccion", "\uE713", new List<ItemMenu>
             {
                 Item("pcf_menu_produccion", "\uE713", PatenteEnum06AV.GestionarProduccion, false, () => new Controles.ProduccionControl()),
-                Item("pcf_menu_lineas", "\uE9F5", PatenteEnum06AV.GestionarLineasEnsamblaje, false, () => new Controles.LineasEnsamblajeControl()),
+                Item("menu_facturas", "\uE8A5", PatenteEnum06AV.GestionarProduccion, false, () => new Controles.FacturasControl()),
             });
 
             AgregarGrupo("menu_grp_ayuda", "\uE897", new List<ItemMenu>
@@ -171,13 +171,9 @@ namespace IngSoftValdezAlegre
             ant?.Dispose();
         }
 
-        // Ancho útil real del área de módulos. Se toma de flpModulos.ClientSize, que
-        // YA descuenta la barra de scroll vertical cuando aparece; así los botones
-        // nunca sobresalen y no se dispara una barra de scroll horizontal fantasma.
         private int AnchoBotonSidebar() =>
             Math.Max(1, flpModulos.ClientSize.Width);
 
-        /// <summary>Crea (una sola vez) el botón de tema claro/oscuro en la barra superior.</summary>
         private void CrearBotonTema()
         {
             if (btnTema != null) return;
@@ -196,11 +192,10 @@ namespace IngSoftValdezAlegre
             ActualizarTextoBotonTema();
 
             flpTopActions.Controls.Add(btnTema);
-            flpTopActions.Controls.SetChildIndex(btnTema, 0);   // primero (a la izquierda del idioma)
+            flpTopActions.Controls.SetChildIndex(btnTema, 0);  
             toolTipMain.SetToolTip(btnTema, GestorIdioma06AV.Instancia.Obtener("cambiar_tema"));
         }
 
-        /// <summary>El botón muestra el modo al que se cambiaría: sol si está oscuro, luna si está claro.</summary>
         private void ActualizarTextoBotonTema()
         {
             if (btnTema != null)
