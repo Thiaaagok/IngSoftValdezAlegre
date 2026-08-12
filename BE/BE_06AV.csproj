@@ -48,6 +48,8 @@
     <Compile Include="Computadora06AV.cs" />
     <Compile Include="LineaEnsamblaje06AV.cs" />
     <Compile Include="Pago06AV.cs" />
+    <Compile Include="Venta06AV.cs" />
+    <Compile Include="ControlCalidad06AV.cs" />
     <Compile Include="OrdenProduccion06AV.cs" />
     <Compile Include="Insumo06AV.cs" />
     <Compile Include="Proveedor06AV.cs" />

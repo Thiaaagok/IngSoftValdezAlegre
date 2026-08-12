@@ -1,6 +1,5 @@
 namespace BE
 {
-    /// <summary>Tipo de componente que puede formar parte de una computadora.</summary>
     public enum TipoComponente06AV
     {
         Procesador,
@@ -14,31 +13,51 @@ namespace BE
         Otro
     }
 
-    /// <summary>Cómo se armó la computadora solicitada por el cliente.</summary>
     public enum TipoConfiguracion06AV
     {
         Estandar,
         Personalizada
     }
 
-    /// <summary>Estados por los que pasa una Orden de Producción (RFN1).</summary>
+    /// <summary>
+    /// Pendiente: registrada, todavía sin seña.
+    /// Señada: seña cobrada, habilitada para generar la orden de producción.
+    /// EnProduccion: ya tiene orden de producción asociada.
+    /// Entregada: el cliente retiró el equipo y canceló el saldo.
+    /// Anulada: la venta se dio de baja antes de producirse.
+    /// </summary>
+    public enum EstadoVenta06AV
+    {
+        Pendiente,
+        Senada,
+        EnProduccion,
+        Entregada,
+        Anulada
+    }
+
     public enum EstadoOrdenProduccion06AV
     {
         Pendiente,
         Planificada,
         EnEnsamblaje,
         Finalizada,
-        Entregada
+        Entregada,
+        EnRevision
     }
 
-    /// <summary>Tipo de pago que hace el cliente sobre una orden.</summary>
     public enum TipoPago06AV
     {
-        Sena,       
-        SaldoFinal  
+        Sena,
+        SaldoFinal
     }
 
-    /// <summary>Estados de un Pedido de Cotización (RFN2).</summary>
+    public enum FormaPago06AV
+    {
+        Efectivo,
+        Transferencia,
+        Tarjeta
+    }
+
     public enum EstadoCotizacion06AV
     {
         PorAprobar,
@@ -46,7 +65,6 @@ namespace BE
         Desaprobada
     }
 
-    /// <summary>Estados de una Orden de Compra de insumos (RFN2).</summary>
     public enum EstadoOrdenCompra06AV
     {
         Pendiente,

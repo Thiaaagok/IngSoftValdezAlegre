@@ -24,8 +24,11 @@ BEGIN TRY
         ('GestionarInsumos',           'Gestionar insumos'),
         ('GestionarProveedores',       'Gestionar proveedores'),
         ('GestionarLineasEnsamblaje',  'Gestionar líneas de ensamblaje'),
+        ('GestionarVentas',            'Gestionar ventas'),
+        ('GestionarEntregas',          'Entregar computadoras'),
         ('GestionarProduccion',        'Gestionar producción'),
-        ('GestionarCompras',           'Gestionar compras');
+        ('GestionarCompras',           'Gestionar compras'),
+        ('GestionarModelosEstandar',   'Gestionar modelos estándar');
 
     INSERT INTO Patentes (Id, Descripcion)
     SELECT p.Id, p.Descripcion

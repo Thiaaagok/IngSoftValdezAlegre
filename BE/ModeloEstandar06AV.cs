@@ -9,9 +9,7 @@ namespace BE
         public string Nombre { get; set; }
         public string Descripcion { get; set; }
         public List<Componente06AV> Componentes { get; set; } = new List<Componente06AV>();
-
         public decimal PrecioTotal => Componentes?.Sum(c => c.PrecioUnitario) ?? 0m;
-
         public override string ToString() =>
             $"{Nombre} ({Componentes?.Count ?? 0} comp.) - ${PrecioTotal:0.00}";
     }

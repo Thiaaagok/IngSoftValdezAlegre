@@ -6,20 +6,13 @@ namespace BE
     public class PedidoCotizacion06AV
     {
         public int Numero { get; set; }
-
-        /// <summary>Orden de compra que originó el pedido (número de compra).</summary>
         public int NumeroCompra { get; set; }
-
         public List<DetalleInsumo06AV> InsumosPedidos { get; set; } = new List<DetalleInsumo06AV>();
         public DateTime FechaEmision { get; set; } = DateTime.Now;
         public EstadoCotizacion06AV Estado { get; set; } = EstadoCotizacion06AV.PorAprobar;
         public Proveedor06AV Proveedor { get; set; }
-
-        /// <summary>Costo total ofrecido por el proveedor (RFN2).</summary>
         public decimal Costo { get; set; }
-
         public string Condiciones { get; set; }
-
         public override string ToString() =>
             $"Cotización #{Numero} - {Proveedor?.Nombre} - ${Costo:0.00} - {Estado}";
     }

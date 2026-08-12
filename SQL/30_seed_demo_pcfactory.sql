@@ -118,6 +118,97 @@ WHERE EXISTS (SELECT 1 FROM Componentes c WHERE c.Codigo = v.Codigo)
                   WHERE mc.IdModelo = m.Id AND mc.CodigoComponente = v.Codigo);
 PRINT '   Componentes de modelos estándar asociados.';
 
+-- ── 7) VENTAS DE DEMOSTRACIÓN (RFN1) ─────────────────────────
+--  Deja el circuito armado en distintos puntos para poder probar todo:
+--    Venta #1  Pendiente      → falta registrar la seña (CU03).
+--    Venta #2  Señada         → lista para que el gerente cree la orden (CU04).
+--    Venta #3  En producción  → orden ya planificada en Línea A (CU05).
+--  Solo se carga si todavía no hay ventas (para no duplicar al reejecutar).
+IF NOT EXISTS (SELECT 1 FROM Ventas)
+BEGIN
+    DECLARE @Demo TABLE (Orden INT, Dni NVARCHAR(20), Modelo NVARCHAR(150), Etapa INT);
+    --  Etapa: 0 = sin seña · 1 = con seña · 2 = con seña y orden planificada
+    INSERT INTO @Demo (Orden, Dni, Modelo, Etapa) VALUES
+        (1, N'30111222', N'PC Oficina', 0),
+        (2, N'28999888', N'PC Gamer',   1),
+        (3, N'33444555', N'PC Básica',  2);
+
+    DECLARE @o INT, @dni NVARCHAR(20), @modelo NVARCHAR(150), @etapa INT;
+    DECLARE @idModelo INT, @idPc INT, @total DECIMAL(12,2), @nroVenta INT, @nroOrden INT;
+    DECLARE @idLinea INT = (SELECT TOP 1 Id FROM LineasEnsamblaje WHERE Nombre = N'Línea A');
+
+    DECLARE cur CURSOR LOCAL FAST_FORWARD FOR
+        SELECT Orden, Dni, Modelo, Etapa FROM @Demo ORDER BY Orden;
+    OPEN cur;
+    FETCH NEXT FROM cur INTO @o, @dni, @modelo, @etapa;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SELECT @idModelo = Id FROM ModelosEstandar WHERE Nombre = @modelo;
+
+        SELECT @total = ISNULL(SUM(c.PrecioUnitario), 0)
+        FROM   ModeloEstandarComponentes mc
+        JOIN   Componentes c ON c.Codigo = mc.CodigoComponente
+        WHERE  mc.IdModelo = @idModelo;
+
+        -- Computadora de la venta (copia del modelo estándar)
+        INSERT INTO Computadoras (Nombre, TipoConfiguracion, PrecioTotal)
+        VALUES (@modelo, 0, @total);
+        SET @idPc = CAST(SCOPE_IDENTITY() AS INT);
+
+        INSERT INTO ComputadoraComponentes (IdComputadora, CodigoComponente, Cantidad)
+        SELECT @idPc, mc.CodigoComponente, 1
+        FROM   ModeloEstandarComponentes mc WHERE mc.IdModelo = @idModelo;
+
+        -- Venta
+        INSERT INTO Ventas (DniCliente, IdComputadora, FechaEntregaEstimada, Estado, UsuarioRegistro)
+        VALUES (@dni, @idPc, DATEADD(DAY, 15, CAST(GETDATE() AS DATE)), 0, N'admin');
+        SET @nroVenta = CAST(SCOPE_IDENTITY() AS INT);
+
+        -- La venta reserva los componentes (se consumen al cerrar la orden, CU06)
+        UPDATE c
+        SET    c.StockReservado = c.StockReservado + cc.Cantidad
+        FROM   Componentes c
+        JOIN   ComputadoraComponentes cc ON cc.CodigoComponente = c.Codigo
+        WHERE  cc.IdComputadora = @idPc;
+
+        IF @etapa >= 1
+        BEGIN
+            -- Seña del 50% (CU03)
+            INSERT INTO Pagos (NumeroVenta, Tipo, Monto, FormaPago, Usuario)
+            VALUES (@nroVenta, 0, ROUND(@total * 0.5, 2), 0, N'admin');
+
+            UPDATE Pagos
+            SET    NumeroRecibo = N'REC-' + RIGHT(N'00000000' + CAST(Id AS NVARCHAR(10)), 8)
+            WHERE  Id = CAST(SCOPE_IDENTITY() AS INT);
+
+            UPDATE Ventas SET Estado = 1 WHERE NumeroVenta = @nroVenta;   -- Señada
+        END
+
+        IF @etapa >= 2
+        BEGIN
+            -- Orden de producción planificada (CU04 + CU05)
+            INSERT INTO OrdenesProduccion (NumeroVenta, FechaEntregaEstimada, Estado,
+                                           IdLinea, FechaInicioPrevista, ResponsableTecnico)
+            VALUES (@nroVenta, DATEADD(DAY, 15, CAST(GETDATE() AS DATE)), 1,
+                    @idLinea, CAST(GETDATE() AS DATE), N'Técnico Demo');
+            SET @nroOrden = CAST(SCOPE_IDENTITY() AS INT);
+
+            UPDATE LineasEnsamblaje SET Disponible = 0 WHERE Id = @idLinea;
+            UPDATE Ventas SET Estado = 2 WHERE NumeroVenta = @nroVenta;   -- En producción
+        END
+
+        FETCH NEXT FROM cur INTO @o, @dni, @modelo, @etapa;
+    END
+
+    CLOSE cur;
+    DEALLOCATE cur;
+
+    PRINT '   Ventas de demostración cargadas (pendiente / señada / en producción).';
+END
+ELSE
+    PRINT '   Ya existían ventas: se omite la carga de ventas de demostración.';
+
 -- ── Recalcular el Dígito Verificador tras la carga masiva ────
 -- (opcional: la app lo recalcula sola; esto lo deja consistente ya mismo)
 IF OBJECT_ID('DV') IS NOT NULL

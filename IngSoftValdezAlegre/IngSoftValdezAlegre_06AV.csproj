@@ -84,6 +84,8 @@
     <Compile Include="Controles\InsumosControl.cs" />
     <Compile Include="Controles\ProveedoresControl.cs" />
     <Compile Include="Controles\LineasEnsamblajeControl.cs" />
+    <Compile Include="Controles\VentasControl.cs" />
+    <Compile Include="Controles\EntregasControl.cs" />
     <Compile Include="Controles\ProduccionControl.cs" />
     <Compile Include="Controles\ComprasControl.cs" />
     <Compile Include="Controles\ConsultarStockControl.cs" />
@@ -150,6 +152,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="FRMNuevoProveedor06AV.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FRMNuevoCliente06AV.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="FRMCotizacion06AV.cs">

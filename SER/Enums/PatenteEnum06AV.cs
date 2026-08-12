@@ -31,6 +31,8 @@ namespace SER
         GestionarInsumos,
         GestionarProveedores,
         GestionarLineasEnsamblaje,
+        GestionarVentas,
+        GestionarEntregas,
         GestionarProduccion,
         GestionarCompras,
         GestionarModelosEstandar

@@ -52,6 +52,36 @@ namespace DAL
             });
         }
 
+        /// <summary>CU01: reserva unidades al registrar la venta. Falla si no hay stock libre.</summary>
+        public void ReservarStock(string codigo, int cantidad)
+        {
+            EjecutarSPNonQuery("sp_Componentes_ReservarStock", new Dictionary<string, object>
+            {
+                { "@Codigo",   codigo   },
+                { "@Cantidad", cantidad }
+            });
+        }
+
+        /// <summary>Devuelve unidades reservadas al stock libre (venta anulada, orden vuelta atrás).</summary>
+        public void LiberarReserva(string codigo, int cantidad)
+        {
+            EjecutarSPNonQuery("sp_Componentes_LiberarReserva", new Dictionary<string, object>
+            {
+                { "@Codigo",   codigo   },
+                { "@Cantidad", cantidad }
+            });
+        }
+
+        /// <summary>CU06: descuenta el stock físico y libera la reserva al cerrar la orden.</summary>
+        public void ConsumirReserva(string codigo, int cantidad)
+        {
+            EjecutarSPNonQuery("sp_Componentes_ConsumirReserva", new Dictionary<string, object>
+            {
+                { "@Codigo",   codigo   },
+                { "@Cantidad", cantidad }
+            });
+        }
+
         private static Dictionary<string, object> Parametros(string codigo, string descripcion,
             int tipo, string marca, string modelo, decimal precioUnitario, int stockDisponible)
         {

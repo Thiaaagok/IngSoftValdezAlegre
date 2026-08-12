@@ -32,8 +32,8 @@ namespace IngSoftValdezAlegre.Controles
         public UsuariosControl()
         {
             InitializeComponent();
-            //AplicarTema();
             ConfigurarColumnas();
+            AplicarTema();
             AplicarIdioma();
             AjustarLayout();
             Resize += (s, e) => AjustarLayout();
@@ -41,27 +41,63 @@ namespace IngSoftValdezAlegre.Controles
             // Observer: suscribirse al cambio de idioma
             GestorIdioma06AV.Instancia.IdiomaChanged += AplicarIdioma;
             Disposed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
+
+            // Observer: suscribirse al cambio de tema (claro / oscuro)
+            Tema.TemaChanged += AplicarTema;
+            Disposed += (s, e) => Tema.TemaChanged -= AplicarTema;
         }
 
+        /// <summary>
+        /// Aplica la paleta activa (clara u oscura) a toda la pantalla. Se llama al
+        /// construir el control y cada vez que el usuario cambia de tema desde la topbar.
+        /// </summary>
         private void AplicarTema()
         {
+            // Recorre el árbol y aplica el estilo base a labels, entradas y paneles.
             Tema.AplicarControl(this);
+
             Tema.AplicarTitulo(lblTitulo);
             Tema.AplicarSubtitulo(lblFormTitulo);
             Tema.AplicarSubtitulo(lblMensajeTitulo);
             Tema.AplicarGrilla(grilla);
 
-            Tema.AplicarBotonPrimario(btnCrear);
-            Tema.AplicarBotonPrimario(btnModificar);
-            Tema.AplicarBotonAcento(btnActDesact);
-            Tema.AplicarBotonAcento(btnDesbloquear);
-            Tema.AplicarBotonPrimario(btnAplicar);
-            Tema.AplicarBotonSecundario(btnCancelar);
+            // Entradas del formulario "Datos del usuario".
+            foreach (Control c in new Control[] { txtDni, txtApellido, txtNombre, txtEmail, txtLogin, cmbRol })
+                Tema.AplicarEntrada(c);
 
-            txtMensaje.BackColor = Tema.Acero50;
+            // Los checks y radios pintan su propio fondo: transparente para que se
+            // vea el color del panel que tienen detrás.
+            foreach (Control c in new Control[] { chkActivo, chkBloqueado, radActivos, radTodos })
+            {
+                c.BackColor = Color.Transparent;
+                c.ForeColor = Tema.Texto;
+            }
+
+            // Cuadro de mensajes de modo.
+            txtMensaje.BackColor = Tema.FondoPanel;
             txtMensaje.ForeColor = Tema.Texto;
             txtMensaje.BorderStyle = BorderStyle.FixedSingle;
+
             lblCantidad.ForeColor = Tema.TextoSuave;
+
+            // AplicarControl deja todos los botones como "primario": se restituye el
+            // estilo real de cada uno según su estado actual.
+            RefrescarEstiloBotones();
+
+            // Las filas resaltadas se repintan con los colores de la paleta nueva.
+            PintarFilasInactivas();
+        }
+
+        /// <summary>
+        /// Reaplica el estilo de cada botón respetando si está habilitado o no.
+        /// Hace falta después de un cambio de tema, porque Tema.AplicarControl deja
+        /// todos los botones con el estilo "primario".
+        /// </summary>
+        private void RefrescarEstiloBotones()
+        {
+            foreach (Button b in new[] { btnCrear, btnDesbloquear, btnModificar,
+                                         btnActDesact, btnAplicar, btnCancelar })
+                HabilitarBoton(b, b.Enabled);
         }
 
         private void AjustarLayout()
@@ -513,7 +549,13 @@ namespace IngSoftValdezAlegre.Controles
                 else if (u.Bloqueado)
                 {
                     row.DefaultCellStyle.BackColor = Tema.AdvertenciaSuave;
-                    row.DefaultCellStyle.ForeColor = Tema.Grafito900;
+                    row.DefaultCellStyle.ForeColor = Tema.Advertencia;
+                }
+                else
+                {
+                    // Fila normal: sigue los colores de la grilla según el tema activo.
+                    row.DefaultCellStyle.BackColor = Color.Empty;
+                    row.DefaultCellStyle.ForeColor = Color.Empty;
                 }
             }
         }

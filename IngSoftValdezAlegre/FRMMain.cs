@@ -68,7 +68,6 @@ namespace IngSoftValdezAlegre
                 Item("pcf_menu_proveedores", "\uE8D7", PatenteEnum06AV.GestionarProveedores, false, () => new Controles.ProveedoresControl()),
                 Item("pcf_menu_componentes", "\uE950", PatenteEnum06AV.GestionarComponentes, false, () => new Controles.ComponentesControl()),
                 Item("pcf_menu_insumos", "\uE7B8", PatenteEnum06AV.GestionarInsumos, false, () => new Controles.InsumosControl()),
-                Item("pcf_menu_lineas", "\uE9F5", PatenteEnum06AV.GestionarLineasEnsamblaje, false, () => new Controles.LineasEnsamblajeControl()),
                 Item("pcf_menu_modelos", "\uE8A4", PatenteEnum06AV.GestionarModelosEstandar, false, () => new Controles.ModelosEstandarControl()),
             });
 
@@ -76,13 +75,21 @@ namespace IngSoftValdezAlegre
             {
                 Item("pcf_menu_compras", "\uE9D5", PatenteEnum06AV.GestionarCompras, false, () => new Controles.ComprasControl()),
                 Item("menu_consultar_stock", "\uE7B8", PatenteEnum06AV.GestionarComponentes, false, () => new Controles.ConsultarStockControl()),
-                Item("menu_generar_factura", "\uE8A5", PatenteEnum06AV.GestionarProduccion, false, () => new Controles.FacturasControl()),
             });
 
+            // Circuito comercial (recepcionista): venta, sena y retiro/facturacion.
             AgregarGrupo("menu_grp_venta", "\uE719", new List<ItemMenu>
             {
+                Item("pcf_menu_ventas", "\uE719", PatenteEnum06AV.GestionarVentas, false, () => new Controles.VentasControl()),
+                Item("pcf_menu_entregas", "\uE7B8", PatenteEnum06AV.GestionarEntregas, false, () => new Controles.EntregasControl()),
+                Item("menu_facturas", "\uE8A5", PatenteEnum06AV.GestionarVentas, false, () => new Controles.FacturasControl()),
+            });
+
+            // Circuito de fabrica (gerente / responsable tecnico).
+            AgregarGrupo("menu_grp_produccion", "\uE713", new List<ItemMenu>
+            {
                 Item("pcf_menu_produccion", "\uE713", PatenteEnum06AV.GestionarProduccion, false, () => new Controles.ProduccionControl()),
-                Item("menu_facturas", "\uE8A5", PatenteEnum06AV.GestionarProduccion, false, () => new Controles.FacturasControl()),
+                Item("pcf_menu_lineas", "\uE9F5", PatenteEnum06AV.GestionarLineasEnsamblaje, false, () => new Controles.LineasEnsamblajeControl()),
             });
 
             AgregarGrupo("menu_grp_ayuda", "\uE897", new List<ItemMenu>
@@ -285,8 +292,8 @@ namespace IngSoftValdezAlegre
         {
             var t = GestorIdioma06AV.Instancia;
 
-            Text = "PC Forge / Clinica";
-            lblSistema.Text = "PC FORGE/CLINICA";
+            Text = "PC Forge";
+            lblSistema.Text = "PC FORGE";
             lblMenuPrincipal.Text = t.Obtener("menu_principal");
             lblSidebarFooter.Text = t.Obtener("sidebar_footer");
 

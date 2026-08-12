@@ -12,27 +12,25 @@ using System.Windows.Forms;
 namespace IngSoftValdezAlegre.Controles
 {
     /// <summary>
-    /// Producción (RFN1) rediseñado como una sola pantalla centrada en la orden.
-    /// La lista muestra el estado de cada orden y, al seleccionarla, el panel de detalle
-    /// muestra el PROGRESO (Pendiente → Planificada → En ensamblaje → Finalizada → Entregada)
-    /// y el ÚNICO paso siguiente ("¿Qué sigue?"), además de "Registrar seña" y
-    /// "Volver al paso anterior". Los componentes de una orden "Personalizada" se eligen con
-    /// el asistente "Armá tu PC". La lógica de negocio no cambia (solo se agregó VolverAtras).
+    /// PRODUCCIÓN (RFN1) — pantalla del GERENTE y del RESPONSABLE TÉCNICO. Arranca
+    /// donde termina la venta: la orden se genera sobre una venta YA SEÑADA.
+    ///   CU04 Gestionar orden de producción → "＋ Nueva orden" (elige la venta señada)
+    ///   CU05 Asignar línea de ensamblaje   → acción "Asignar línea"
+    ///        Iniciar ensamblaje            → acción "Iniciar ensamblaje"
+    ///   CU06 Cerrar orden de producción    → acción "Cerrar orden" (checklist + N° serie)
+    ///
+    /// La entrega al cliente y el cobro del saldo (CU07) se hacen desde Ventas.
     /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class ProduccionControl : UserControl, IIdiomaAplicable06AV
     {
         private readonly OrdenProduccionBLL06AV _ordenesBLL = new OrdenProduccionBLL06AV();
-        private readonly ClientesBLL06AV _clientesBLL = new ClientesBLL06AV();
-        private readonly ComponentesBLL06AV _componentesBLL = new ComponentesBLL06AV();
         private readonly LineasEnsamblajeBLL06AV _lineasBLL = new LineasEnsamblajeBLL06AV();
-        private readonly ModelosEstandarBLL06AV _modelosBLL = new ModelosEstandarBLL06AV();
-        private bool _cargandoCombos;
-        private List<Componente06AV> _componentesElegidos = new List<Componente06AV>();
+
         private OrdenProduccion06AV _ordenSel;
 
         // Vistas
-        private Panel pnlGrilla, pnlFormOrden, pnlFormPlan;
+        private Panel pnlGrilla, pnlFormOrden, pnlFormPlan, pnlFormCierre;
 
         // Hub (lista + detalle)
         private Label lblTitulo;
@@ -42,21 +40,26 @@ namespace IngSoftValdezAlegre.Controles
         private Label lblDetTitulo, lblDetEstado;
         private FlowLayoutPanel flpDetalle;
 
-        // Formulario "Nueva orden"
-        private Label lblFormOrdenTit, lblCliente, lblTipo, lblModelo, lblComp, lblEntrega;
-        private ResumenPcControl06AV _resumen;
-        private ComboBox cboCliente, cboTipo, cboModelo;
-        private Button btnArmar;
+        // Formulario "Nueva orden" (CU04)
+        private Label lblFormOrdenTit, lblVenta, lblDetalleVenta, lblEntrega;
+        private ComboBox cboVenta;
         private DateTimePicker dtpEntrega;
         private Button btnRegistrar, btnVolverOrden;
 
-        // Formulario "Planificar"
+        // Formulario "Asignar línea" (CU05)
         private Label lblFormPlanTit, lblLinea, lblInicio, lblResp;
         private ComboBox cboLinea;
         private DateTimePicker dtpInicio;
         private TextBox txtResp;
         private Button btnConfirmarPlan, btnVolverPlan;
         private OrdenProduccion06AV _ordenPlan;
+
+        // Formulario "Cerrar orden" (CU06)
+        private Label lblFormCierreTit, lblChecklist, lblObs, lblRespCc;
+        private CheckBox chkEncendido, chkConexiones, chkSO, chkDrivers;
+        private TextBox txtObs, txtRespCc;
+        private Button btnConfirmarCierre, btnVolverCierre;
+        private OrdenProduccion06AV _ordenCierre;
 
         public ProduccionControl()
         {
@@ -67,7 +70,6 @@ namespace IngSoftValdezAlegre.Controles
             Disposed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
             Tema.TemaChanged += AplicarTema;
             Disposed += (s, e) => Tema.TemaChanged -= AplicarTema;
-            CargarCombos();
             MostrarGrilla();
             CargarOrdenes();
         }
@@ -80,9 +82,11 @@ namespace IngSoftValdezAlegre.Controles
             ConstruirHub();
             ConstruirFormOrden();
             ConstruirFormPlan();
+            ConstruirFormCierre();
 
             Controls.Add(pnlFormOrden);
             Controls.Add(pnlFormPlan);
+            Controls.Add(pnlFormCierre);
             Controls.Add(pnlGrilla);
         }
 
@@ -138,48 +142,38 @@ namespace IngSoftValdezAlegre.Controles
         private void ConstruirFormOrden()
         {
             lblFormOrdenTit = new Label { AutoSize = true, Location = new Point(6, 16) };
-            lblCliente = new Label(); lblTipo = new Label(); lblModelo = new Label();
-            lblComp = new Label(); lblEntrega = new Label();
-            _resumen = new ResumenPcControl06AV();
-            cboCliente = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 360 };
-            cboTipo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 360 };
-            cboTipo.DataSource = Enum.GetValues(typeof(TipoConfiguracion06AV));
-            cboTipo.SelectedIndexChanged += (s, e) => ActualizarModeloSegunTipo();
-            cboModelo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 360 };
-            cboModelo.SelectedIndexChanged += (s, e) => AplicarModeloSeleccionado();
-            btnArmar = new Button { Width = 190, Height = 32, AutoSize = false };
-            btnArmar.Click += (s, e) => AbrirAsistenteComponentes();
-            dtpEntrega = new DateTimePicker { Format = DateTimePickerFormat.Short, Value = DateTime.Today.AddDays(7), Width = 360 };
+            lblVenta = new Label(); lblEntrega = new Label();
+            lblDetalleVenta = new Label
+            {
+                AutoSize = true, MaximumSize = new Size(560, 0),
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Regular)
+            };
+
+            cboVenta = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 420 };
+            cboVenta.SelectedIndexChanged += (s, e) => MostrarDetalleVenta();
+
+            dtpEntrega = new DateTimePicker { Format = DateTimePickerFormat.Short, Value = DateTime.Today.AddDays(15), Width = 360 };
             btnRegistrar = NuevoBoton(150);
             btnVolverOrden = NuevoBoton(120);
             btnRegistrar.Click += (s, e) => RegistrarOrden();
             btnVolverOrden.Click += (s, e) => MostrarGrilla();
 
-            var pnlComp = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.TopDown, AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Margin = new Padding(0)
-            };
-            pnlComp.Controls.Add(btnArmar);
-            pnlComp.Controls.Add(_resumen);
+            var tabla = NuevaTabla();
+            AgregarFila(tabla, lblVenta, cboVenta);
+            AgregarFila(tabla, new Label(), lblDetalleVenta);
+            AgregarFila(tabla, lblEntrega, dtpEntrega);
 
-            var tablaOrden = NuevaTabla();
-            AgregarFila(tablaOrden, lblCliente, cboCliente);
-            AgregarFila(tablaOrden, lblTipo, cboTipo);
-            AgregarFila(tablaOrden, lblModelo, cboModelo);
-            AgregarFila(tablaOrden, lblComp, pnlComp);
-            AgregarFila(tablaOrden, lblEntrega, dtpEntrega);
-            var contOrden = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16, 8, 16, 8), AutoScroll = true };
-            contOrden.Controls.Add(tablaOrden);
-            var barraOrdenTop = new Panel { Dock = DockStyle.Top, Height = 56 };
-            barraOrdenTop.Controls.Add(lblFormOrdenTit);
-            var barraOrdenBot = new Panel { Dock = DockStyle.Bottom, Height = 60 };
-            barraOrdenBot.Controls.Add(BarraBotones(btnVolverOrden, btnRegistrar));
+            var cont = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16, 8, 16, 8), AutoScroll = true };
+            cont.Controls.Add(tabla);
+            var barraTop = new Panel { Dock = DockStyle.Top, Height = 56 };
+            barraTop.Controls.Add(lblFormOrdenTit);
+            var barraBot = new Panel { Dock = DockStyle.Bottom, Height = 60 };
+            barraBot.Controls.Add(BarraBotones(btnVolverOrden, btnRegistrar));
 
             pnlFormOrden = new Panel { Dock = DockStyle.Fill, Visible = false };
-            pnlFormOrden.Controls.Add(contOrden);
-            pnlFormOrden.Controls.Add(barraOrdenTop);
-            pnlFormOrden.Controls.Add(barraOrdenBot);
+            pnlFormOrden.Controls.Add(cont);
+            pnlFormOrden.Controls.Add(barraTop);
+            pnlFormOrden.Controls.Add(barraBot);
         }
 
         private void ConstruirFormPlan()
@@ -191,25 +185,72 @@ namespace IngSoftValdezAlegre.Controles
             txtResp = new TextBox { Width = 360 };
             btnConfirmarPlan = NuevoBoton(130);
             btnVolverPlan = NuevoBoton(120);
-            btnConfirmarPlan.Click += (s, e) => Planificar();
+            btnConfirmarPlan.Click += (s, e) => AsignarLinea();
             btnVolverPlan.Click += (s, e) => MostrarGrilla();
 
-            var tablaPlan = NuevaTabla();
-            AgregarFila(tablaPlan, lblLinea, cboLinea);
-            AgregarFila(tablaPlan, lblInicio, dtpInicio);
-            AgregarFila(tablaPlan, lblResp, txtResp);
-            var contPlan = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16, 8, 16, 8), AutoScroll = true };
-            contPlan.Controls.Add(tablaPlan);
-            var barraPlanTop = new Panel { Dock = DockStyle.Top, Height = 56 };
-            barraPlanTop.Controls.Add(lblFormPlanTit);
-            var barraPlanBot = new Panel { Dock = DockStyle.Bottom, Height = 60 };
-            barraPlanBot.Controls.Add(BarraBotones(btnVolverPlan, btnConfirmarPlan));
+            var tabla = NuevaTabla();
+            AgregarFila(tabla, lblLinea, cboLinea);
+            AgregarFila(tabla, lblInicio, dtpInicio);
+            AgregarFila(tabla, lblResp, txtResp);
+
+            var cont = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16, 8, 16, 8), AutoScroll = true };
+            cont.Controls.Add(tabla);
+            var barraTop = new Panel { Dock = DockStyle.Top, Height = 56 };
+            barraTop.Controls.Add(lblFormPlanTit);
+            var barraBot = new Panel { Dock = DockStyle.Bottom, Height = 60 };
+            barraBot.Controls.Add(BarraBotones(btnVolverPlan, btnConfirmarPlan));
 
             pnlFormPlan = new Panel { Dock = DockStyle.Fill, Visible = false };
-            pnlFormPlan.Controls.Add(contPlan);
-            pnlFormPlan.Controls.Add(barraPlanTop);
-            pnlFormPlan.Controls.Add(barraPlanBot);
+            pnlFormPlan.Controls.Add(cont);
+            pnlFormPlan.Controls.Add(barraTop);
+            pnlFormPlan.Controls.Add(barraBot);
         }
+
+        private void ConstruirFormCierre()
+        {
+            lblFormCierreTit = new Label { AutoSize = true, Location = new Point(6, 16) };
+            lblChecklist = new Label(); lblObs = new Label(); lblRespCc = new Label();
+
+            chkEncendido = NuevoCheck();
+            chkConexiones = NuevoCheck();
+            chkSO = NuevoCheck();
+            chkDrivers = NuevoCheck();
+
+            var flpChecks = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.TopDown, AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Margin = new Padding(0)
+            };
+            flpChecks.Controls.AddRange(new Control[] { chkEncendido, chkConexiones, chkSO, chkDrivers });
+
+            txtObs = new TextBox { Width = 400, Multiline = true, Height = 70, ScrollBars = ScrollBars.Vertical };
+            txtRespCc = new TextBox { Width = 360 };
+
+            btnConfirmarCierre = NuevoBoton(160);
+            btnVolverCierre = NuevoBoton(120);
+            btnConfirmarCierre.Click += (s, e) => CerrarOrden();
+            btnVolverCierre.Click += (s, e) => MostrarGrilla();
+
+            var tabla = NuevaTabla();
+            AgregarFila(tabla, lblChecklist, flpChecks);
+            AgregarFila(tabla, lblRespCc, txtRespCc);
+            AgregarFila(tabla, lblObs, txtObs);
+
+            var cont = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16, 8, 16, 8), AutoScroll = true };
+            cont.Controls.Add(tabla);
+            var barraTop = new Panel { Dock = DockStyle.Top, Height = 56 };
+            barraTop.Controls.Add(lblFormCierreTit);
+            var barraBot = new Panel { Dock = DockStyle.Bottom, Height = 60 };
+            barraBot.Controls.Add(BarraBotones(btnVolverCierre, btnConfirmarCierre));
+
+            pnlFormCierre = new Panel { Dock = DockStyle.Fill, Visible = false };
+            pnlFormCierre.Controls.Add(cont);
+            pnlFormCierre.Controls.Add(barraTop);
+            pnlFormCierre.Controls.Add(barraBot);
+        }
+
+        private static CheckBox NuevoCheck() =>
+            new CheckBox { AutoSize = true, Margin = new Padding(0, 3, 0, 3), Cursor = Cursors.Hand };
 
         private static Button NuevoBoton(int width = 110) =>
             new Button { Width = width, Height = 32, Margin = new Padding(6, 0, 0, 0), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
@@ -233,7 +274,7 @@ namespace IngSoftValdezAlegre.Controles
                 Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 ColumnCount = 2, Padding = new Padding(8)
             };
-            t.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
+            t.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160));
             t.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             return t;
         }
@@ -262,21 +303,33 @@ namespace IngSoftValdezAlegre.Controles
             Tema.AplicarTitulo(lblTitulo);
             Tema.AplicarSubtitulo(lblFormOrdenTit);
             Tema.AplicarSubtitulo(lblFormPlanTit);
+            Tema.AplicarSubtitulo(lblFormCierreTit);
             Tema.AplicarSubtitulo(lblDetTitulo);
             Tema.AplicarGrilla(grilla);
             Tema.AplicarBotonPrimario(btnNueva);
             Tema.AplicarBotonSecundario(btnRefrescar);
-            Tema.AplicarBotonAcento(btnArmar);
             Tema.AplicarBotonPrimario(btnRegistrar);
             Tema.AplicarBotonSecundario(btnVolverOrden);
             Tema.AplicarBotonPrimario(btnConfirmarPlan);
             Tema.AplicarBotonSecundario(btnVolverPlan);
+            Tema.AplicarBotonPrimario(btnConfirmarCierre);
+            Tema.AplicarBotonSecundario(btnVolverCierre);
+
+            // AgregarFila aplica el estilo de "entrada"; acá se restituye el look de etiqueta.
+            lblDetalleVenta.ForeColor = Tema.TextoSuave;
+            lblDetalleVenta.BackColor = Tema.FondoApp;
+            foreach (var chk in new[] { chkEncendido, chkConexiones, chkSO, chkDrivers })
+            {
+                chk.ForeColor = Tema.Texto;
+                chk.BackColor = Color.Transparent;
+            }
+            if (chkEncendido.Parent != null) chkEncendido.Parent.BackColor = Tema.FondoApp;
 
             pnlDetalle.BackColor = Tema.FondoPanel;
             flpDetalle.BackColor = Tema.FondoPanel;
             lblDetTitulo.BackColor = Tema.FondoPanel;
             lblDetEstado.BackColor = Tema.FondoPanel;
-            foreach (Control panel in new[] { pnlGrilla, pnlFormOrden, pnlFormPlan })
+            foreach (Control panel in new[] { pnlGrilla, pnlFormOrden, pnlFormPlan, pnlFormCierre })
             {
                 panel.BackColor = Tema.FondoApp;
                 foreach (Control hijo in panel.Controls)
@@ -294,22 +347,28 @@ namespace IngSoftValdezAlegre.Controles
             btnRefrescar.Text = t.Obtener("pcf_refrescar");
 
             lblFormOrdenTit.Text = t.Obtener("pcf_nueva_orden");
-            lblCliente.Text = t.Obtener("pcf_cliente") + ":";
-            lblTipo.Text = t.Obtener("tipo") + ":";
-            lblModelo.Text = t.Obtener("pcf_modelo") + ":";
-            lblComp.Text = t.Obtener("pcf_componentes") + ":";
-            btnArmar.Text = t.Obtener("pcf_elegir_componentes");
+            lblVenta.Text = t.Obtener("pcf_venta_senada") + ":";
             lblEntrega.Text = t.Obtener("pcf_f_entrega") + ":";
             btnRegistrar.Text = t.Obtener("pcf_registrar_orden");
             btnVolverOrden.Text = t.Obtener("volver");
-            ActualizarResumenComp();
 
-            lblFormPlanTit.Text = t.Obtener("pcf_planificar");
+            lblFormPlanTit.Text = t.Obtener("pcf_asignar_linea");
             lblLinea.Text = t.Obtener("pcf_linea") + ":";
             lblInicio.Text = t.Obtener("pcf_f_inicio") + ":";
             lblResp.Text = t.Obtener("pcf_responsable") + ":";
-            btnConfirmarPlan.Text = t.Obtener("pcf_planificar");
+            btnConfirmarPlan.Text = t.Obtener("pcf_asignar");
             btnVolverPlan.Text = t.Obtener("volver");
+
+            lblFormCierreTit.Text = t.Obtener("pcf_cerrar_orden");
+            lblChecklist.Text = t.Obtener("pcf_control_calidad") + ":";
+            lblRespCc.Text = t.Obtener("pcf_responsable") + ":";
+            lblObs.Text = t.Obtener("pcf_observaciones") + ":";
+            chkEncendido.Text = t.Obtener("pcf_cc_encendido");
+            chkConexiones.Text = t.Obtener("pcf_cc_conexiones");
+            chkSO.Text = t.Obtener("pcf_cc_so");
+            chkDrivers.Text = t.Obtener("pcf_cc_drivers");
+            btnConfirmarCierre.Text = t.Obtener("pcf_confirmar_cierre");
+            btnVolverCierre.Text = t.Obtener("volver");
 
             if (grilla.DataSource != null) CargarOrdenes();
             else ActualizarDetalle();
@@ -318,19 +377,6 @@ namespace IngSoftValdezAlegre.Controles
         // ══════════════════════════════════════════════════════════════
         //  Datos
         // ══════════════════════════════════════════════════════════════
-        private void CargarCombos()
-        {
-            try
-            {
-                _cargandoCombos = true;
-                cboCliente.DataSource = _clientesBLL.ObtenerTodos();
-                cboLinea.DataSource = _lineasBLL.ObtenerTodas();
-                cboModelo.DataSource = _modelosBLL.ObtenerTodos();
-            }
-            catch (Exception ex) { MostrarError(ex.Message); }
-            finally { _cargandoCombos = false; }
-        }
-
         private void CargarOrdenes()
         {
             try
@@ -344,10 +390,12 @@ namespace IngSoftValdezAlegre.Controles
                     return new OrdenVm
                     {
                         Numero = o.NumeroOrden,
+                        Venta = o.NumeroVenta,
                         Cliente = o.Cliente != null ? o.Cliente.Apellido + ", " + o.Cliente.Nombre : "",
-                        Entrega = o.FechaEntrega.ToShortDateString(),
+                        Entrega = o.FechaEntregaEstimada.ToShortDateString(),
+                        Linea = o.LineaEnsamblaje != null ? o.LineaEnsamblaje.Nombre : "-",
                         Estado = txt,
-                        Saldo = o.SaldoPendiente.ToString("C0"),
+                        Serie = string.IsNullOrWhiteSpace(o.NumeroSerie) ? "-" : o.NumeroSerie,
                         EstadoColor = col,
                         Orden = o
                     };
@@ -367,13 +415,14 @@ namespace IngSoftValdezAlegre.Controles
             var t = GestorIdioma06AV.Instancia;
             void H(string c, string k) { if (grilla.Columns[c] != null) grilla.Columns[c].HeaderText = t.Obtener(k); }
             H("Numero", "pcf_col_numero");
+            H("Venta", "pcf_venta");
             H("Cliente", "pcf_cliente");
             H("Entrega", "pcf_f_entrega");
+            H("Linea", "pcf_linea");
             H("Estado", "pcf_col_estado");
-            H("Saldo", "pcf_saldo");
-            if (grilla.Columns["Numero"] != null) grilla.Columns["Numero"].FillWeight = 32;
-            if (grilla.Columns["Saldo"] != null)
-                grilla.Columns["Saldo"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            H("Serie", "pcf_nro_serie");
+            if (grilla.Columns["Numero"] != null) grilla.Columns["Numero"].FillWeight = 26;
+            if (grilla.Columns["Venta"] != null) grilla.Columns["Venta"].FillWeight = 26;
 
             foreach (DataGridViewRow row in grilla.Rows)
                 if (row.DataBoundItem is OrdenVm vm && grilla.Columns["Estado"] != null)
@@ -406,6 +455,7 @@ namespace IngSoftValdezAlegre.Controles
                 case EstadoOrdenProduccion06AV.Planificada: texto = t.Obtener("pcf_est_op_planificada"); color = Tema.Primario; break;
                 case EstadoOrdenProduccion06AV.EnEnsamblaje: texto = t.Obtener("pcf_est_op_ensamblaje"); color = Tema.Acento; break;
                 case EstadoOrdenProduccion06AV.Finalizada: texto = t.Obtener("pcf_est_op_finalizada"); color = Tema.Exito; break;
+                case EstadoOrdenProduccion06AV.EnRevision: texto = t.Obtener("pcf_est_op_revision"); color = Tema.Peligro; break;
                 default: texto = t.Obtener("pcf_est_op_entregada"); color = Tema.TextoSuave; break;
             }
         }
@@ -435,7 +485,7 @@ namespace IngSoftValdezAlegre.Controles
             lblDetEstado.ForeColor = estColor;
             lblDetEstado.Font = new Font("Segoe UI Semibold", 9.5f, FontStyle.Bold);
 
-            // Progreso (stepper vertical)
+            // Progreso (stepper vertical). "En revisión" se dibuja sobre el paso de ensamblaje.
             flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_progreso"), fuerte: true));
             string[] pasos =
             {
@@ -443,7 +493,7 @@ namespace IngSoftValdezAlegre.Controles
                 t.Obtener("pcf_est_op_ensamblaje"), t.Obtener("pcf_est_op_finalizada"),
                 t.Obtener("pcf_est_op_entregada")
             };
-            int actual = (int)o.Estado;
+            int actual = o.Estado == EstadoOrdenProduccion06AV.EnRevision ? 2 : (int)o.Estado;
             for (int i = 0; i < pasos.Length; i++)
             {
                 string marca = i < actual ? "✔" : (i == actual ? "●" : "○");
@@ -453,9 +503,14 @@ namespace IngSoftValdezAlegre.Controles
 
             flpDetalle.Controls.Add(Separador());
 
-            // Datos
+            // Venta de origen
+            flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_venta")));
+            flpDetalle.Controls.Add(TextoSecundario(
+                "#" + o.NumeroVenta + "   ·   " +
+                (o.Computadora != null ? o.Computadora.Nombre : "-") + "   ·   " + o.PrecioTotal.ToString("C0")));
+
             flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_f_entrega")));
-            flpDetalle.Controls.Add(TextoSecundario(o.FechaEntrega.ToShortDateString()));
+            flpDetalle.Controls.Add(TextoSecundario(o.FechaEntregaEstimada.ToShortDateString()));
 
             if (o.LineaEnsamblaje != null || !string.IsNullOrWhiteSpace(o.ResponsableTecnico))
             {
@@ -465,15 +520,28 @@ namespace IngSoftValdezAlegre.Controles
                 flpDetalle.Controls.Add(TextoSecundario(ln + "   ·   " + rp));
             }
 
-            flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_total") + " / " + t.Obtener("pcf_abonado") + " / " + t.Obtener("pcf_saldo")));
-            flpDetalle.Controls.Add(TextoSecundario(
-                o.PrecioTotal.ToString("C0") + "   ·   " + o.TotalAbonado.ToString("C0") + "   ·   " + o.SaldoPendiente.ToString("C0")));
+            // Control de calidad y N° de serie
+            if (o.ControlCalidad != null && o.ControlCalidad.Registrado)
+            {
+                flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_control_calidad")));
+                var cc = o.ControlCalidad;
+                flpDetalle.Controls.Add(TextoSecundario(
+                    Tick(cc.Encendido) + " " + t.Obtener("pcf_cc_encendido") + "    " +
+                    Tick(cc.Conexiones) + " " + t.Obtener("pcf_cc_conexiones")));
+                flpDetalle.Controls.Add(TextoSecundario(
+                    Tick(cc.SistemaOperativo) + " " + t.Obtener("pcf_cc_so") + "    " +
+                    Tick(cc.Drivers) + " " + t.Obtener("pcf_cc_drivers")));
+                if (!string.IsNullOrWhiteSpace(cc.Observaciones))
+                    flpDetalle.Controls.Add(TextoSecundario(cc.Observaciones));
+            }
 
-            bool tieneSena = o.Pagos != null && o.Pagos.Any(p => p.Tipo == TipoPago06AV.Sena);
-            flpDetalle.Controls.Add(TextoSecundario(
-                (tieneSena ? "✔ " : "○ ") + (tieneSena ? t.Obtener("pcf_sena_registrada") : t.Obtener("pcf_sena_pendiente"))));
+            if (!string.IsNullOrWhiteSpace(o.NumeroSerie))
+            {
+                flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_nro_serie")));
+                flpDetalle.Controls.Add(TextoSecundario(o.NumeroSerie));
+            }
 
-            // "¿Qué sigue?"
+            // ── ¿Qué sigue? ──────────────────────────────────────
             flpDetalle.Controls.Add(Separador());
             flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_que_sigue"), fuerte: true));
 
@@ -481,34 +549,35 @@ namespace IngSoftValdezAlegre.Controles
             {
                 case EstadoOrdenProduccion06AV.Pendiente:
                     flpDetalle.Controls.Add(TextoSecundario(t.Obtener("pcf_hint_op_planificar")));
-                    AddAccion(t.Obtener("pcf_planificar"), Tema.AplicarBotonPrimario, AbrirFormPlan);
+                    AddAccion(t.Obtener("pcf_asignar_linea"), Tema.AplicarBotonPrimario, AbrirFormPlan);
                     break;
                 case EstadoOrdenProduccion06AV.Planificada:
                     flpDetalle.Controls.Add(TextoSecundario(t.Obtener("pcf_hint_op_ensamblar")));
                     AddAccion(t.Obtener("pcf_iniciar_ensamblaje"), Tema.AplicarBotonPrimario, Ensamblar);
                     break;
                 case EstadoOrdenProduccion06AV.EnEnsamblaje:
-                    flpDetalle.Controls.Add(TextoSecundario(t.Obtener("pcf_hint_op_finalizar")));
-                    AddAccion(t.Obtener("pcf_marcar_finalizada"), Tema.AplicarBotonPrimario, FinalizarOrden);
+                    flpDetalle.Controls.Add(TextoSecundario(t.Obtener("pcf_hint_op_cerrar")));
+                    AddAccion(t.Obtener("pcf_cerrar_orden"), Tema.AplicarBotonPrimario, AbrirFormCierre);
+                    break;
+                case EstadoOrdenProduccion06AV.EnRevision:
+                    flpDetalle.Controls.Add(TextoSecundario(t.Obtener("pcf_hint_op_revision")));
+                    AddAccion(t.Obtener("pcf_reintentar_cc"), Tema.AplicarBotonPrimario, AbrirFormCierre);
                     break;
                 case EstadoOrdenProduccion06AV.Finalizada:
                     flpDetalle.Controls.Add(TextoSecundario(t.Obtener("pcf_hint_op_entregar")));
-                    AddAccion(t.Obtener("pcf_entregar"), Tema.AplicarBotonPrimario, Entregar);
                     break;
                 case EstadoOrdenProduccion06AV.Entregada:
                     flpDetalle.Controls.Add(TextoSecundario("✓  " + t.Obtener("pcf_hint_op_entregada")));
                     break;
             }
 
-            // Acciones secundarias
-            if (o.Estado != EstadoOrdenProduccion06AV.Entregada && !tieneSena)
-                AddAccion(t.Obtener("pcf_registrar_sena"), Tema.AplicarBotonAcento, Sena);
-
             if (o.Estado == EstadoOrdenProduccion06AV.Planificada ||
                 o.Estado == EstadoOrdenProduccion06AV.EnEnsamblaje ||
-                o.Estado == EstadoOrdenProduccion06AV.Finalizada)
+                o.Estado == EstadoOrdenProduccion06AV.EnRevision)
                 AddAccion("←  " + t.Obtener("pcf_volver_atras"), Tema.AplicarBotonSecundario, VolverAtras);
         }
+
+        private static string Tick(bool ok) => ok ? "✔" : "✘";
 
         private void AddAccion(string texto, Action<Button> estilo, Action onClick)
         {
@@ -554,126 +623,151 @@ namespace IngSoftValdezAlegre.Controles
         {
             pnlFormOrden.Visible = false;
             pnlFormPlan.Visible = false;
+            pnlFormCierre.Visible = false;
             pnlGrilla.Visible = true;
             pnlGrilla.BringToFront();
             ActualizarDetalle();
         }
 
+        /// <summary>CU04: el gerente elige una venta señada sin orden y fija la fecha de entrega.</summary>
         private void AbrirFormOrden()
         {
-            CargarCombos();
-            if (cboTipo.Items.Count > 0) cboTipo.SelectedIndex = 0;
-            if (cboModelo.Items.Count > 0) cboModelo.SelectedIndex = 0;
-            _componentesElegidos = new List<Componente06AV>();
-            dtpEntrega.Value = DateTime.Today.AddDays(7);
-            ActualizarModeloSegunTipo();
-            ActualizarResumenComp();
+            List<Venta06AV> disponibles;
+            try { disponibles = _ordenesBLL.ObtenerVentasDisponibles() ?? new List<Venta06AV>(); }
+            catch (Exception ex) { MostrarError(ex.Message); return; }
+
+            // Escenario alternativo 3.1 del CU04.
+            if (disponibles.Count == 0)
+            {
+                MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_sin_ventas_pendientes"));
+                return;
+            }
+
+            cboVenta.DataSource = null;
+            cboVenta.DisplayMember = "Texto";
+            cboVenta.DataSource = disponibles.Select(v => new VentaVm
+            {
+                Venta = v,
+                Texto = $"#{v.NumeroVenta} — {(v.Cliente != null ? v.Cliente.NombreCompleto : "")} — " +
+                        $"{(v.Computadora != null ? v.Computadora.Nombre : "")} — {v.PrecioTotal:C0}"
+            }).ToList();
+
+            dtpEntrega.Value = disponibles[0].FechaEntregaEstimada < DateTime.Today
+                ? DateTime.Today.AddDays(15) : disponibles[0].FechaEntregaEstimada;
+            MostrarDetalleVenta();
+
             pnlGrilla.Visible = false;
             pnlFormPlan.Visible = false;
+            pnlFormCierre.Visible = false;
             pnlFormOrden.Visible = true;
             pnlFormOrden.BringToFront();
+        }
+
+        private void MostrarDetalleVenta()
+        {
+            var t = GestorIdioma06AV.Instancia;
+            var v = (cboVenta.SelectedItem as VentaVm)?.Venta;
+            if (v == null) { lblDetalleVenta.Text = string.Empty; return; }
+
+            var sena = v.Sena;
+            lblDetalleVenta.Text =
+                $"{t.Obtener("pcf_total")}: {v.PrecioTotal:C0}   ·   " +
+                $"{t.Obtener("pcf_sena")}: {(sena != null ? sena.Monto.ToString("C0") : "-")}   ·   " +
+                $"{t.Obtener("pcf_saldo")}: {v.SaldoPendiente:C0}\r\n" +
+                $"{t.Obtener("pcf_f_entrega_estimada")}: {v.FechaEntregaEstimada:dd/MM/yyyy}";
+
+            if (v.FechaEntregaEstimada >= DateTime.Today) dtpEntrega.Value = v.FechaEntregaEstimada;
         }
 
         private void AbrirFormPlan()
         {
             _ordenPlan = OrdenSeleccionada();
             if (_ordenPlan == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
-            CargarCombos();
+
+            List<LineaEnsamblaje06AV> lineas;
+            try { lineas = (_lineasBLL.ObtenerTodas() ?? new List<LineaEnsamblaje06AV>()).Where(l => l.Disponible).ToList(); }
+            catch (Exception ex) { MostrarError(ex.Message); return; }
+
+            // Escenario alternativo 1.1 del CU05.
+            if (lineas.Count == 0)
+            {
+                MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_sin_lineas"));
+                return;
+            }
+
+            cboLinea.DataSource = null;
+            cboLinea.DataSource = lineas;
             dtpInicio.Value = DateTime.Today;
             txtResp.Clear();
-            lblFormPlanTit.Text = $"{GestorIdioma06AV.Instancia.Obtener("pcf_planificar")} — {GestorIdioma06AV.Instancia.Obtener("pcf_orden")} #{_ordenPlan.NumeroOrden}";
+            lblFormPlanTit.Text = $"{GestorIdioma06AV.Instancia.Obtener("pcf_asignar_linea")} — " +
+                                  $"{GestorIdioma06AV.Instancia.Obtener("pcf_orden")} #{_ordenPlan.NumeroOrden}";
+
             pnlGrilla.Visible = false;
             pnlFormOrden.Visible = false;
+            pnlFormCierre.Visible = false;
             pnlFormPlan.Visible = true;
             pnlFormPlan.BringToFront();
         }
 
-        // ── Componentes: modelo estándar o asistente "Armá tu PC" ────
-        private void ActualizarModeloSegunTipo()
+        private void AbrirFormCierre()
         {
-            bool estandar = cboTipo.SelectedItem is TipoConfiguracion06AV tc && tc == TipoConfiguracion06AV.Estandar;
-            lblModelo.Enabled = estandar;
-            cboModelo.Enabled = estandar;
-            btnArmar.Enabled = !estandar;
-            if (estandar) AplicarModeloSeleccionado();
-            else
-            {
-                _componentesElegidos = new List<Componente06AV>();
-                ActualizarResumenComp();
-            }
+            _ordenCierre = OrdenSeleccionada();
+            if (_ordenCierre == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
+
+            var cc = _ordenCierre.ControlCalidad ?? new ControlCalidad06AV();
+            chkEncendido.Checked = cc.Encendido;
+            chkConexiones.Checked = cc.Conexiones;
+            chkSO.Checked = cc.SistemaOperativo;
+            chkDrivers.Checked = cc.Drivers;
+            txtObs.Text = cc.Observaciones ?? "";
+            txtRespCc.Text = string.IsNullOrWhiteSpace(cc.Responsable) ? _ordenCierre.ResponsableTecnico : cc.Responsable;
+
+            lblFormCierreTit.Text = $"{GestorIdioma06AV.Instancia.Obtener("pcf_cerrar_orden")} — " +
+                                    $"{GestorIdioma06AV.Instancia.Obtener("pcf_orden")} #{_ordenCierre.NumeroOrden}";
+
+            pnlGrilla.Visible = false;
+            pnlFormOrden.Visible = false;
+            pnlFormPlan.Visible = false;
+            pnlFormCierre.Visible = true;
+            pnlFormCierre.BringToFront();
         }
-
-        private void AplicarModeloSeleccionado()
-        {
-            if (_cargandoCombos) return;
-            if (!(cboTipo.SelectedItem is TipoConfiguracion06AV tc) || tc != TipoConfiguracion06AV.Estandar) return;
-            if (!(cboModelo.SelectedItem is ModeloEstandar06AV modelo)) return;
-            _componentesElegidos = new List<Componente06AV>(modelo.Componentes ?? new List<Componente06AV>());
-            ActualizarResumenComp();
-        }
-
-        private void AbrirAsistenteComponentes()
-        {
-            List<Componente06AV> todos;
-            try { todos = _componentesBLL.ObtenerTodos() ?? new List<Componente06AV>(); }
-            catch (Exception ex) { MostrarError(ex.Message); return; }
-            if (todos.Count == 0) { MostrarError("No hay componentes cargados."); return; }
-
-            using (var dlg = new FRMArmarPc06AV(todos, _componentesElegidos))
-            {
-                if (dlg.ShowDialog(FindForm()) == DialogResult.OK)
-                {
-                    _componentesElegidos = dlg.Seleccionados;
-                    ActualizarResumenComp();
-                }
-            }
-        }
-
-        private void ActualizarResumenComp() => _resumen.Mostrar(_componentesElegidos);
 
         // ══════════════════════════════════════════════════════════════
         //  Acciones (delegan en la BLL)
         // ══════════════════════════════════════════════════════════════
         private void RegistrarOrden()
         {
-            var cliente = cboCliente.SelectedItem as Cliente06AV;
-            if (cliente == null) { MostrarError("Elegí un cliente."); return; }
-            if (_componentesElegidos == null || _componentesElegidos.Count == 0)
-            { MostrarError("Elegí al menos un componente (botón “Armá tu PC”) o un modelo estándar."); return; }
-
-            var pc = new Computadora06AV
-            {
-                TipoConfiguracion = (TipoConfiguracion06AV)(cboTipo.SelectedItem ?? TipoConfiguracion06AV.Estandar),
-                Nombre = cboModelo.Enabled && cboModelo.SelectedItem is ModeloEstandar06AV m
-                    ? m.Nombre : cboTipo.SelectedItem?.ToString()
-            };
-            foreach (var c in _componentesElegidos) pc.Componentes.Add(c);
+            var v = (cboVenta.SelectedItem as VentaVm)?.Venta;
+            if (v == null) { MostrarError("Elegí una venta señada."); return; }
 
             try
             {
-                var orden = _ordenesBLL.RegistrarOrden(cliente, pc, dtpEntrega.Value);
+                var orden = _ordenesBLL.CrearOrden(v.NumeroVenta, dtpEntrega.Value);
                 MostrarGrilla();
                 CargarOrdenes();
                 SeleccionarOrden(orden.NumeroOrden);
                 ConfirmacionForm.MostrarInfo(
-                    $"Orden #{orden.NumeroOrden} registrada. Total: ${orden.PrecioTotal:0.00}.",
-                    "Producción", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
+                    $"Orden #{orden.NumeroOrden} registrada sobre la venta #{v.NumeroVenta}.",
+                    GestorIdioma06AV.Instancia.Obtener("pcf_produccion_titulo"),
+                    ConfirmacionForm.TipoConfirmacion.Info, FindForm());
             }
             catch (Exception ex) { MostrarError(ex.Message); }
         }
 
-        private void Sena()
+        private void AsignarLinea()
         {
-            var o = OrdenSeleccionada();
-            if (o == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
+            if (_ordenPlan == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
+            var linea = cboLinea.SelectedItem as LineaEnsamblaje06AV;
+            if (linea == null) { MostrarError("Elegí una línea de ensamblaje."); return; }
             try
             {
-                decimal sena = _ordenesBLL.RegistrarSena(o.NumeroOrden);
+                _ordenesBLL.AsignarLinea(_ordenPlan.NumeroOrden, linea.Id, dtpInicio.Value, txtResp.Text.Trim());
+                MostrarGrilla();
                 CargarOrdenes();
-                string recibo = ComprobantePcFactory06AV.GenerarReciboSena(o, sena);
-                ComprobantePcFactory06AV.Abrir(recibo);
-                ConfirmacionForm.MostrarInfo($"Seña registrada: ${sena:0.00}.\nRecibo generado en:\n{recibo}",
-                    "Producción", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
+                SeleccionarOrden(_ordenPlan.NumeroOrden);
+                ConfirmacionForm.MostrarInfo("Orden planificada.",
+                    GestorIdioma06AV.Instancia.Obtener("pcf_produccion_titulo"),
+                    ConfirmacionForm.TipoConfirmacion.Info, FindForm());
             }
             catch (Exception ex) { MostrarError(ex.Message); }
         }
@@ -687,61 +781,51 @@ namespace IngSoftValdezAlegre.Controles
                 _ordenesBLL.IniciarEnsamblaje(o.NumeroOrden);
                 CargarOrdenes();
                 ConfirmacionForm.MostrarInfo("Orden en ensamblaje.",
-                    "Producción", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
+                    GestorIdioma06AV.Instancia.Obtener("pcf_produccion_titulo"),
+                    ConfirmacionForm.TipoConfirmacion.Info, FindForm());
             }
             catch (Exception ex) { MostrarError(ex.Message); }
         }
 
-        private void FinalizarOrden()
+        /// <summary>CU06: registra el control de calidad; si aprueba, descuenta stock y cierra.</summary>
+        private void CerrarOrden()
         {
-            var o = OrdenSeleccionada();
-            if (o == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
-            try
-            {
-                _ordenesBLL.Finalizar(o.NumeroOrden);
-                CargarOrdenes();
-                ConfirmacionForm.MostrarInfo("Orden finalizada, lista para entregar.",
-                    "Producción", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
-            }
-            catch (Exception ex) { MostrarError(ex.Message); }
-        }
+            if (_ordenCierre == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
 
-        private void Planificar()
-        {
-            if (_ordenPlan == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
-            var linea = cboLinea.SelectedItem as LineaEnsamblaje06AV;
-            if (linea == null) { MostrarError("Elegí una línea de ensamblaje."); return; }
+            var cc = new ControlCalidad06AV
+            {
+                Encendido = chkEncendido.Checked,
+                Conexiones = chkConexiones.Checked,
+                SistemaOperativo = chkSO.Checked,
+                Drivers = chkDrivers.Checked,
+                Observaciones = txtObs.Text.Trim(),
+                Responsable = txtRespCc.Text.Trim()
+            };
+
+            if (!cc.Aprobado && string.IsNullOrWhiteSpace(cc.Observaciones))
+            {
+                MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_cc_obs_requerida"));
+                return;
+            }
+
             try
             {
-                _ordenesBLL.Planificar(_ordenPlan.NumeroOrden, linea.Id, dtpInicio.Value, txtResp.Text.Trim());
+                string serie = _ordenesBLL.RegistrarControlCalidad(_ordenCierre.NumeroOrden, cc);
                 MostrarGrilla();
                 CargarOrdenes();
-                CargarCombos();
-                SeleccionarOrden(_ordenPlan.NumeroOrden);
-                ConfirmacionForm.MostrarInfo("Orden planificada.",
-                    "Producción", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
-            }
-            catch (Exception ex) { MostrarError(ex.Message); }
-        }
+                SeleccionarOrden(_ordenCierre.NumeroOrden);
 
-        private void Entregar()
-        {
-            var o = OrdenSeleccionada();
-            if (o == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
-            bool ok = ConfirmacionForm.Mostrar(
-                $"¿Entregar la orden #{o.NumeroOrden}? Se registrará el saldo pendiente (${o.SaldoPendiente:0.00}).",
-                "Entregar", ConfirmacionForm.TipoConfirmacion.Advertencia, "Entregar", "Cancelar", FindForm());
-            if (!ok) return;
-            try
-            {
-                _ordenesBLL.Entregar(o.NumeroOrden);
-                CargarOrdenes();
-                CargarCombos();
-                var entregada = _ordenesBLL.ObtenerPorNumero(o.NumeroOrden) ?? o;
-                string factura = ComprobantePcFactory06AV.GenerarFactura(entregada);
-                ComprobantePcFactory06AV.Abrir(factura);
-                ConfirmacionForm.MostrarInfo($"Orden entregada y cerrada.\nFactura generada en:\n{factura}",
-                    "Producción", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
+                if (serie != null)
+                    ConfirmacionForm.MostrarInfo(
+                        $"Control de calidad aprobado.\nStock descontado y N° de serie asignado: {serie}.\n" +
+                        "La computadora queda lista para su retiro desde Ventas.",
+                        GestorIdioma06AV.Instancia.Obtener("pcf_produccion_titulo"),
+                        ConfirmacionForm.TipoConfirmacion.Info, FindForm());
+                else
+                    ConfirmacionForm.MostrarInfo(
+                        "El equipo no pasó el control de calidad: la orden queda En revisión.",
+                        GestorIdioma06AV.Instancia.Obtener("pcf_produccion_titulo"),
+                        ConfirmacionForm.TipoConfirmacion.Advertencia, FindForm());
             }
             catch (Exception ex) { MostrarError(ex.Message); }
         }
@@ -753,13 +837,13 @@ namespace IngSoftValdezAlegre.Controles
             bool ok = ConfirmacionForm.Mostrar(
                 $"¿Volver la orden #{o.NumeroOrden} al paso anterior?",
                 "Volver atrás", ConfirmacionForm.TipoConfirmacion.Advertencia,
-                GestorIdioma06AV.Instancia.Obtener("volver"), "Cancelar", FindForm());
+                GestorIdioma06AV.Instancia.Obtener("volver"), GestorIdioma06AV.Instancia.Obtener("cancelar"),
+                FindForm());
             if (!ok) return;
             try
             {
                 _ordenesBLL.VolverAtras(o.NumeroOrden);
                 CargarOrdenes();
-                CargarCombos();
             }
             catch (Exception ex) { MostrarError(ex.Message); }
         }
@@ -769,18 +853,27 @@ namespace IngSoftValdezAlegre.Controles
             ConfirmacionForm.TipoConfirmacion.Advertencia, FindForm());
 
         // ══════════════════════════════════════════════════════════════
-        //  View-model de la grilla
+        //  View-models
         // ══════════════════════════════════════════════════════════════
         private class OrdenVm
         {
             public int Numero { get; set; }
+            public int Venta { get; set; }
             public string Cliente { get; set; }
             public string Entrega { get; set; }
+            public string Linea { get; set; }
             public string Estado { get; set; }
-            public string Saldo { get; set; }
+            public string Serie { get; set; }
 
             [Browsable(false)] public Color EstadoColor { get; set; }
             [Browsable(false)] public OrdenProduccion06AV Orden { get; set; }
+        }
+
+        private class VentaVm
+        {
+            public Venta06AV Venta { get; set; }
+            public string Texto { get; set; }
+            public override string ToString() => Texto;
         }
     }
 }

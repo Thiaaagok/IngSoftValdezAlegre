@@ -1,39 +1,40 @@
 ﻿-- ============================================================
---  99_full_install.sql  —  SCRIPT MAESTRO GENERAL
---  IngSoftValdezAlegre — instalación COMPLETA de la base.
+--  99_recrear_todo_desde_cero.sql  —  RECREACIÓN TOTAL DE LA BASE
+--  IngSoftValdezAlegre / PC Factory.
 --
---  Deja el sistema listo para usar de cero: crea la base (si no
---  existe), todo el esquema (seguridad + auditoría + integridad +
---  PC Factory), los procedimientos almacenados, los seeds y los
---  DATOS DE DEMOSTRACIÓN.
+--  ⚠  DESTRUCTIVO: BORRA la base [IngSoftValdezAlegre] si existe y la
+--     vuelve a crear entera, con todo el esquema, los procedimientos,
+--     los seeds y los DATOS DE DEMOSTRACIÓN.
 --
---  USO:  abrir en SSMS y ejecutar (F5). No hace falta elegir base:
---        el script la crea y hace USE por sí mismo. Es IDEMPOTENTE,
---        se puede correr varias veces sin romper nada.
+--     Usalo cuando querés partir de cero (por ejemplo, después de
+--     cambiar el modelo de Venta / Orden de producción). Si en cambio
+--     querés actualizar sin perder datos, usá 99_full_install.sql.
+--
+--  USO:  abrir en SSMS y ejecutar (F5). No hace falta elegir base.
 --
 --  Credenciales iniciales:  Login: admin   Contraseña: Admin1234
 --  (el sistema obliga a cambiarla en el primer inicio de sesión).
 --
---  MODELO RFN1: la VENTA (recepcionista) y la ORDEN DE PRODUCCIÓN
---  (gerente) son documentos separados. La venta registra cliente,
---  computadora y seña del 50%; la orden se genera después sobre una
---  venta ya señada y avanza por planificación, ensamblaje, cierre
---  con control de calidad + Nº de serie, y entrega.
---
---  Generado a partir de los scripts individuales de la carpeta SQL\.
---  Excluidos a propósito (no aportan al alta limpia):
---    - 07_tabla_dv.sql              (00_schema ya crea la tabla DV)
---    - 08_patente_reparacion_dv.sql (reemplazado por 11, evita duplicar patente)
---    - 09_fix_patentes_duplicadas_rol.sql (mantenimiento puntual, rol fijo)
+--  Qué queda cargado como demo:
+--    · Componentes, insumos (3 bajo stock), proveedores, líneas,
+--      clientes y modelos estándar.
+--    · Venta #1  Pendiente     → falta cobrar la seña (CU03).
+--    · Venta #2  Señada        → lista para generar la orden (CU04).
+--    · Venta #3  En producción → orden ya planificada en Línea A (CU05).
 -- ============================================================
 
--- ── 0) Crear la base si no existe y posicionarse en ella ──────
-IF DB_ID(N'IngSoftValdezAlegre') IS NULL
-    CREATE DATABASE [IngSoftValdezAlegre];
+-- ── 0) Borrar la base si existe y crearla de nuevo ────────────
+IF DB_ID(N'IngSoftValdezAlegre') IS NOT NULL
+BEGIN
+    ALTER DATABASE [IngSoftValdezAlegre] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE [IngSoftValdezAlegre];
+END
+GO
+
+CREATE DATABASE [IngSoftValdezAlegre];
 GO
 USE [IngSoftValdezAlegre];
 GO
-
 
 -- ============================================================
 -- ==== 00_schema.sql
@@ -2572,7 +2573,7 @@ GO
 GO
 
 PRINT '=============================================================';
-PRINT ' Instalacion COMPLETA de IngSoftValdezAlegre finalizada.';
+PRINT ' Base IngSoftValdezAlegre RECREADA desde cero (con datos demo).';
 PRINT ' Login: admin   Password: Admin1234 (cambio obligatorio).';
 PRINT '=============================================================';
 GO

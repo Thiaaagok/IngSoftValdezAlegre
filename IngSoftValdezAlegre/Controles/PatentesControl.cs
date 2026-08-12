@@ -27,6 +27,10 @@ namespace IngSoftValdezAlegre.Controles
             GestorIdioma06AV.Instancia.IdiomaChanged += AplicarIdioma;
             Disposed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
 
+            // Observer: repintar cuando se cambia entre tema claro y oscuro.
+            Tema.TemaChanged += AplicarTema;
+            Disposed += (s, e) => Tema.TemaChanged -= AplicarTema;
+
             CargarDatos();
         }
 

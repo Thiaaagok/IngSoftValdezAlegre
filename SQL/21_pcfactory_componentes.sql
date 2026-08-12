@@ -2,6 +2,16 @@
 --  21_pcfactory_componentes.sql
 --  Tabla Componentes (PC Factory) + procedimientos ABM.
 --  Tipo se guarda como int (ordinal del enum BE.TipoComponente06AV).
+--
+--  STOCK EN DOS NIVELES (RFN1):
+--    StockDisponible : unidades físicas en depósito.
+--    StockReservado  : unidades comprometidas por ventas registradas cuya
+--                      orden de producción todavía no se cerró.
+--    Stock libre      = StockDisponible - StockReservado  (lo vendible).
+--
+--  La venta RESERVA (CU01) y el cierre de la orden de producción CONSUME
+--  la reserva descontando el stock físico (CU06, componentes efectivamente
+--  utilizados). Anular la venta o volver atrás la orden LIBERA la reserva.
 -- ============================================================
 
 IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Componentes')
@@ -12,15 +22,24 @@ CREATE TABLE Componentes (
     Marca           NVARCHAR(100)  NULL,
     Modelo          NVARCHAR(100)  NULL,
     PrecioUnitario  DECIMAL(12,2)  NOT NULL CONSTRAINT DF_Comp_Precio DEFAULT (0),
-    StockDisponible INT            NOT NULL CONSTRAINT DF_Comp_Stock   DEFAULT (0)
+    StockDisponible INT            NOT NULL CONSTRAINT DF_Comp_Stock   DEFAULT (0),
+    StockReservado  INT            NOT NULL CONSTRAINT DF_Comp_Reserva DEFAULT (0)
 );
+GO
+
+-- Alta de la columna en bases creadas con una versión anterior del script.
+IF NOT EXISTS (SELECT 1 FROM sys.columns
+               WHERE object_id = OBJECT_ID('Componentes') AND name = 'StockReservado')
+    ALTER TABLE Componentes
+        ADD StockReservado INT NOT NULL CONSTRAINT DF_Comp_Reserva DEFAULT (0);
 GO
 
 CREATE OR ALTER PROCEDURE sp_Componentes_ObtenerTodos
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT Codigo, Descripcion, Tipo, Marca, Modelo, PrecioUnitario, StockDisponible
+    SELECT Codigo, Descripcion, Tipo, Marca, Modelo, PrecioUnitario,
+           StockDisponible, StockReservado
     FROM   Componentes ORDER BY Descripcion;
 END
 GO
@@ -30,7 +49,8 @@ CREATE OR ALTER PROCEDURE sp_Componentes_ObtenerPorCodigo
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT Codigo, Descripcion, Tipo, Marca, Modelo, PrecioUnitario, StockDisponible
+    SELECT Codigo, Descripcion, Tipo, Marca, Modelo, PrecioUnitario,
+           StockDisponible, StockReservado
     FROM   Componentes WHERE Codigo = @Codigo;
 END
 GO
@@ -70,8 +90,60 @@ BEGIN
 END
 GO
 
--- Descuenta stock de un componente al usarlo en una orden de producción (RFN1).
--- Solo descuenta si hay stock suficiente; si no, no toca nada y avisa con error.
+-- ── Stock: reservar / liberar / consumir ─────────────────────
+
+-- CU01: al registrar la venta se reservan las unidades necesarias.
+-- Solo reserva si hay stock LIBRE suficiente; si no, no toca nada y avisa.
+CREATE OR ALTER PROCEDURE sp_Componentes_ReservarStock
+    @Codigo   NVARCHAR(50),
+    @Cantidad INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE Componentes
+    SET    StockReservado = StockReservado + @Cantidad
+    WHERE  Codigo = @Codigo
+      AND (StockDisponible - StockReservado) >= @Cantidad;
+
+    IF @@ROWCOUNT = 0
+        THROW 51001, 'Stock libre insuficiente o componente inexistente al reservar.', 1;
+END
+GO
+
+-- Devuelve unidades reservadas al stock libre (venta anulada, orden vuelta atrás).
+CREATE OR ALTER PROCEDURE sp_Componentes_LiberarReserva
+    @Codigo   NVARCHAR(50),
+    @Cantidad INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE Componentes
+    SET    StockReservado = CASE WHEN StockReservado - @Cantidad < 0
+                                 THEN 0 ELSE StockReservado - @Cantidad END
+    WHERE  Codigo = @Codigo;
+END
+GO
+
+-- CU06: al cerrar la orden se descuenta el stock físico de los componentes
+-- efectivamente utilizados y se libera la reserva correspondiente.
+CREATE OR ALTER PROCEDURE sp_Componentes_ConsumirReserva
+    @Codigo   NVARCHAR(50),
+    @Cantidad INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE Componentes
+    SET    StockDisponible = StockDisponible - @Cantidad,
+           StockReservado  = CASE WHEN StockReservado - @Cantidad < 0
+                                  THEN 0 ELSE StockReservado - @Cantidad END
+    WHERE  Codigo = @Codigo AND StockDisponible >= @Cantidad;
+
+    IF @@ROWCOUNT = 0
+        THROW 51002, 'Stock insuficiente o componente inexistente al consumir la reserva.', 1;
+END
+GO
+
+-- Descuento directo de stock (se mantiene por compatibilidad con RFN2 / ajustes).
 CREATE OR ALTER PROCEDURE sp_Componentes_DescontarStock
     @Codigo   NVARCHAR(50),
     @Cantidad INT

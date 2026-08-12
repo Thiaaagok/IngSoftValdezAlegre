@@ -50,10 +50,11 @@
     <Compile Include="InsumosBLL06AV.cs" />
     <Compile Include="ProveedoresBLL06AV.cs" />
     <Compile Include="LineasEnsamblajeBLL06AV.cs" />
+    <Compile Include="VentasBLL06AV.cs" />
+    <Compile Include="EntregasBLL06AV.cs" />
     <Compile Include="OrdenProduccionBLL06AV.cs" />
     <Compile Include="CompraInsumosBLL06AV.cs" />
     <Compile Include="IntegridadBLL06AV.cs" />
-    <Compile Include="DVBLL_06AV.cs" />
     <Compile Include="PatentesBLL06AV.cs" />
     <Compile Include="Excepciones\ExcepcionesBitacora.cs" />
     <Compile Include="Excepciones\ExcepcionesPcFactory06AV.cs" />

@@ -10,9 +10,7 @@ namespace BE
         public DateTime FechaLimite { get; set; }
         public string RepositorSolicitante { get; set; }
         public EstadoOrdenCompra06AV Estado { get; set; } = EstadoOrdenCompra06AV.Pendiente;
-
         public DateTime? FechaCierre { get; set; }
-
         public override string ToString() => $"OC #{NumeroCompra} - {Estado}";
     }
 }

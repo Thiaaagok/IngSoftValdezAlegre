@@ -50,6 +50,15 @@ namespace MPP
             _dal.DescontarStock(codigo, cantidad);
         }
 
+        /// <summary>CU01: compromete unidades para una venta (no las saca del depósito).</summary>
+        public void ReservarStock(string codigo, int cantidad) => _dal.ReservarStock(codigo, cantidad);
+
+        /// <summary>Devuelve al stock libre unidades reservadas.</summary>
+        public void LiberarReserva(string codigo, int cantidad) => _dal.LiberarReserva(codigo, cantidad);
+
+        /// <summary>CU06: descuenta el stock físico de las unidades efectivamente utilizadas.</summary>
+        public void ConsumirReserva(string codigo, int cantidad) => _dal.ConsumirReserva(codigo, cantidad);
+
         private Componente06AV Mapear(DataRow row)
         {
             return new Componente06AV
@@ -60,7 +69,9 @@ namespace MPP
                 Marca           = row["Marca"] == DBNull.Value ? "" : row["Marca"].ToString(),
                 Modelo          = row["Modelo"] == DBNull.Value ? "" : row["Modelo"].ToString(),
                 PrecioUnitario  = Convert.ToDecimal(row["PrecioUnitario"]),
-                StockDisponible = Convert.ToInt32(row["StockDisponible"])
+                StockDisponible = Convert.ToInt32(row["StockDisponible"]),
+                StockReservado  = row.Table.Columns.Contains("StockReservado") && row["StockReservado"] != DBNull.Value
+                                  ? Convert.ToInt32(row["StockReservado"]) : 0
             };
         }
     }
