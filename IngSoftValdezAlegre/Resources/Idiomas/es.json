@@ -453,4 +453,5 @@
   "pcf_menu_recibos": "Recibos de seña",
   "menu_recibos": "Recibos de seña",
   "pcf_stock_bajo": "Bajo stock",
-  "pcf_sin_componentes": "Todavía no elegiste componentes."
+  "pcf_sin_componentes": "Todavía no elegiste componentes.",
+  "error_permisos_inconsistentes": "Los permisos del rol están mal armados: hay una patente repetida (asignada directa y heredada de una familia). Corregilo desde Roles."

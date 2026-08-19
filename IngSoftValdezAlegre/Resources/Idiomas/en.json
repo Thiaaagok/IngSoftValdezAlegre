@@ -453,4 +453,5 @@
   "pcf_menu_recibos": "Deposit receipts",
   "menu_recibos": "Deposit receipts",
   "pcf_stock_bajo": "Low stock",
-  "pcf_sin_componentes": "No components picked yet."
+  "pcf_sin_componentes": "No components picked yet.",
+  "error_permisos_inconsistentes": "The role's permissions are inconsistent: a patent is duplicated (assigned directly and inherited from a family). Fix it from Roles."

@@ -453,4 +453,5 @@
   "pcf_menu_recibos": "Recibos de sinal",
   "menu_recibos": "Recibos de sinal",
   "pcf_stock_bajo": "Estoque baixo",
-  "pcf_sin_componentes": "Ainda não escolheu componentes."
+  "pcf_sin_componentes": "Ainda não escolheu componentes.",
+  "error_permisos_inconsistentes": "As permissões do papel estão inconsistentes: há uma patente repetida (atribuída direta e herdada de uma família). Corrija em Papéis."

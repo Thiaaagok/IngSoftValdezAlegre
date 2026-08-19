@@ -267,6 +267,19 @@ namespace IngSoftValdezAlegre
                     tipo: ConfirmacionForm.TipoConfirmacion.Error,
                     owner: this);
             }
+            catch (InvalidOperationException ex)
+            {
+                // El árbol de permisos del rol es inconsistente: el Composite rechazó
+                // una patente repetida (típicamente la misma patente asignada de forma
+                // directa al rol Y heredada de una de sus familias). No es un problema
+                // de conexión, así que se informa como lo que es.
+                var t = GestorIdioma06AV.Instancia;
+                ConfirmacionForm.MostrarInfo(
+                    t.Obtener("error_permisos_inconsistentes") + "\n\n" + ex.Message,
+                    titulo: t.Obtener("error"),
+                    tipo: ConfirmacionForm.TipoConfirmacion.Error,
+                    owner: this);
+            }
             catch (Exception ex)
             {
                 // Red de seguridad: cualquier otra falla (BD inaccesible, permisos,
