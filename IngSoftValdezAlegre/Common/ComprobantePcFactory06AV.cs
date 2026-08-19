@@ -11,8 +11,10 @@ using System.Windows.Forms;
 namespace IngSoftValdezAlegre.Common
 {
     /// <summary>
-    /// Arma los comprobantes de PC Factory (RFN1): recibo de seña (paso 3) y factura
-    /// al entregar (paso 6). Genera un PDF con <see cref="PdfSimple06AV"/> en
+    /// Arma los comprobantes de PC Factory (RFN1):
+    ///   · Recibo de seña  (CU03) — sobre la VENTA y el pago de seña.
+    ///   · Factura final   (CU07) — sobre la VENTA entregada y su orden de producción.
+    /// Genera un PDF con <see cref="PdfSimple06AV"/> en
     /// Documentos\PC Factory\Comprobantes y devuelve la ruta del archivo.
     /// </summary>
     public static class ComprobantePcFactory06AV

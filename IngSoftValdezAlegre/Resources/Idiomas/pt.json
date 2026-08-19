@@ -100,10 +100,6 @@
   "menu_generar_factura": "Gerar fatura",
   "menu_consultar_stock": "Consultar estoque",
   "menu_facturas": "Faturas",
-  "menu_recibos": "Recibos",
-  "pcf_stock_bajo": "Estoque baixo",
-  "pcf_f_emision": "Emissão",
-  "pcf_insumos_fusionados": "Os insumos agora são gerenciados em Componentes.",
   "menu_acerca_de": "Sobre",
   "fact_abrir": "Abrir fatura",
   "sidebar_footer": "Sistema de gestão",
@@ -453,4 +449,8 @@
   "pcf_desea_imprimir_recibo": "Deseja imprimir o recibo?",
   "pcf_desea_imprimir_factura": "Deseja imprimir a fatura?",
   "pcf_imprimir": "Imprimir",
-  "pcf_solo_guardar": "Não, apenas salvar"
+  "pcf_solo_guardar": "Não, apenas salvar",
+  "pcf_menu_recibos": "Recibos de sinal",
+  "menu_recibos": "Recibos de sinal",
+  "pcf_stock_bajo": "Estoque baixo",
+  "pcf_sin_componentes": "Ainda não escolheu componentes."

@@ -2,14 +2,10 @@ using System;
 
 namespace BE
 {
-    /// <summary>
-    /// Pago del cliente. La FK apunta a la Computadora06AV (no a la orden de producción),
-    /// porque la seña se cobra antes de que exista la orden.
-    /// </summary>
     public class Pago06AV
     {
         public int Id { get; set; }
-        public int NumeroOrden { get; set; }
+        public int NumeroVenta { get; set; }
         public TipoPago06AV Tipo { get; set; }
         public string NumeroRecibo { get; set; }
         public decimal Monto { get; set; }

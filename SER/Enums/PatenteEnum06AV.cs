@@ -1,9 +1,5 @@
 namespace SER
 {
-    /// <summary>
-    /// Identificadores de permisos. El nombre de cada valor debe ser idéntico al Id
-    /// de la tabla Patentes en la base de datos.
-    /// </summary>
     public enum PatenteEnum06AV
     {
         // Usuarios
@@ -17,7 +13,7 @@ namespace SER
         VerBitacora,
         ExportarBitacora,
 
-        // Acceso a pantallas de permisos
+        // Pantalla de permisos
         GestionarRoles,
         GestionarFamilias,
         GestionarPatentes,
@@ -38,3 +34,4 @@ namespace SER
         GestionarModelosEstandar
     }
 }
+

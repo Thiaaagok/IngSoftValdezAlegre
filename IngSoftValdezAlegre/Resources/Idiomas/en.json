@@ -100,10 +100,6 @@
   "menu_generar_factura": "Generate invoice",
   "menu_consultar_stock": "Check stock",
   "menu_facturas": "Invoices",
-  "menu_recibos": "Receipts",
-  "pcf_stock_bajo": "Low stock",
-  "pcf_f_emision": "Issued",
-  "pcf_insumos_fusionados": "Supplies are now managed from Components.",
   "menu_acerca_de": "About",
   "fact_abrir": "Open invoice",
   "sidebar_footer": "Management system",
@@ -453,4 +449,8 @@
   "pcf_desea_imprimir_recibo": "Do you want to print the receipt?",
   "pcf_desea_imprimir_factura": "Do you want to print the invoice?",
   "pcf_imprimir": "Print",
-  "pcf_solo_guardar": "No, just save it"
+  "pcf_solo_guardar": "No, just save it",
+  "pcf_menu_recibos": "Deposit receipts",
+  "menu_recibos": "Deposit receipts",
+  "pcf_stock_bajo": "Low stock",
+  "pcf_sin_componentes": "No components picked yet."

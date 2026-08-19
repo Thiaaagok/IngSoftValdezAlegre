@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -81,16 +81,15 @@
     <Compile Include="Controles\AbmBaseControl06AV.cs" />
     <Compile Include="Controles\ClientesControl.cs" />
     <Compile Include="Controles\ComponentesControl.cs" />
-    <Compile Include="Controles\InsumosControl.cs" />
     <Compile Include="Controles\ProveedoresControl.cs" />
     <Compile Include="Controles\LineasEnsamblajeControl.cs" />
     <Compile Include="Controles\VentasControl.cs" />
     <Compile Include="Controles\EntregasControl.cs" />
+    <Compile Include="Controles\RecibosControl.cs" />
     <Compile Include="Controles\ProduccionControl.cs" />
     <Compile Include="Controles\ComprasControl.cs" />
     <Compile Include="Controles\ConsultarStockControl.cs" />
     <Compile Include="Controles\FacturasControl.cs" />
-    <Compile Include="Controles\RecibosControl.cs" />
     <Compile Include="Controles\ModelosEstandarControl.cs" />
     <Compile Include="Controles\AbmBaseControl06AV.Designer.cs">
       <DependentUpon>AbmBaseControl06AV.cs</DependentUpon>
@@ -100,9 +99,6 @@
     </Compile>
     <Compile Include="Controles\ComponentesControl.Designer.cs">
       <DependentUpon>ComponentesControl.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Controles\InsumosControl.Designer.cs">
-      <DependentUpon>InsumosControl.cs</DependentUpon>
     </Compile>
     <Compile Include="Controles\ProveedoresControl.Designer.cs">
       <DependentUpon>ProveedoresControl.cs</DependentUpon>
@@ -191,9 +187,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Controles\ComponentesControl.resx">
       <DependentUpon>ComponentesControl.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Controles\InsumosControl.resx">
-      <DependentUpon>InsumosControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controles\ProveedoresControl.resx">
       <DependentUpon>ProveedoresControl.cs</DependentUpon>

@@ -38,6 +38,33 @@ namespace BLL
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo obtener la venta.", ex); }
         }
 
+        /// <summary>
+        /// Recibos de seña emitidos (CU03). El recibo no es una tabla aparte: es la
+        /// proyección del pago de seña de cada venta, con los importes congelados al
+        /// momento de cobrarla.
+        /// </summary>
+        public List<Recibo06AV> ObtenerRecibos()
+        {
+            try
+            {
+                return (_mpp.ObtenerTodas() ?? new List<Venta06AV>())
+                    .Where(v => v.TieneSena)
+                    .OrderByDescending(v => v.Sena.Fecha)
+                    .Select(v => new Recibo06AV
+                    {
+                        Id = v.Sena.NumeroRecibo,
+                        Pago = v.Sena,
+                        FechaEmision = v.Sena.Fecha,
+                        MontoAbonado = v.Sena.Monto,
+                        SaldoPendiente = v.PrecioTotal - v.Sena.Monto,
+                        Venta = v,
+                        FechaEntregaEstimada = v.FechaEntregaEstimada
+                    })
+                    .ToList();
+            }
+            catch (Exception ex) { throw new AccesoDatosException06AV("No se pudieron obtener los recibos.", ex); }
+        }
+
         /// <summary>Orden de producción asociada a la venta, o null si todavía no se generó.</summary>
         public OrdenProduccion06AV ObtenerOrdenDeVenta(int numeroVenta)
         {

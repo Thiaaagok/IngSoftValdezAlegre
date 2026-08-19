@@ -149,7 +149,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     SELECT c.Codigo, c.Descripcion, c.Tipo, c.Marca, c.Modelo, c.PrecioUnitario,
-           c.StockDisponible, c.StockReservado, cc.Cantidad
+           c.Stock, c.StockReservado, cc.Cantidad
     FROM   Componentes c
     INNER JOIN ComputadoraComponentes cc ON cc.CodigoComponente = c.Codigo
     WHERE  cc.IdComputadora = @IdComputadora

@@ -146,7 +146,7 @@ namespace MPP
             Marca = row["Marca"] == DBNull.Value ? "" : row["Marca"].ToString(),
             Modelo = row["Modelo"] == DBNull.Value ? "" : row["Modelo"].ToString(),
             PrecioUnitario = Convert.ToDecimal(row["PrecioUnitario"]),
-            StockDisponible = Convert.ToInt32(row["StockDisponible"]),
+            Stock = Convert.ToInt32(row["Stock"]),
             StockReservado = row.Table.Columns.Contains("StockReservado") && row["StockReservado"] != DBNull.Value
                              ? Convert.ToInt32(row["StockReservado"]) : 0
         };

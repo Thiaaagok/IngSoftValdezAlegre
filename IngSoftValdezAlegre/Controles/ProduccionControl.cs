@@ -12,12 +12,14 @@ using System.Windows.Forms;
 namespace IngSoftValdezAlegre.Controles
 {
     /// <summary>
-    /// Producción (RFN1) rediseñado como una sola pantalla centrada en la orden.
-    /// La lista muestra el estado de cada orden y, al seleccionarla, el panel de detalle
-    /// muestra el PROGRESO (Pendiente → Planificada → En ensamblaje → Finalizada → Entregada)
-    /// y el ÚNICO paso siguiente ("¿Qué sigue?"), además de "Registrar seña" y
-    /// "Volver al paso anterior". Los componentes de una orden "Personalizada" se eligen con
-    /// el asistente "Armá tu PC". La lógica de negocio no cambia (solo se agregó VolverAtras).
+    /// PRODUCCIÓN (RFN1) — pantalla del GERENTE y del RESPONSABLE TÉCNICO. Arranca
+    /// donde termina la venta: la orden se genera sobre una venta YA SEÑADA.
+    ///   CU04 Gestionar orden de producción → "＋ Nueva orden" (elige la venta señada)
+    ///   CU05 Asignar línea de ensamblaje   → acción "Asignar línea"
+    ///        Iniciar ensamblaje            → acción "Iniciar ensamblaje"
+    ///   CU06 Cerrar orden de producción    → acción "Cerrar orden" (checklist + N° serie)
+    ///
+    /// La entrega al cliente y el cobro del saldo (CU07) se hacen desde Ventas.
     /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class ProduccionControl : UserControl, IIdiomaAplicable06AV
@@ -740,29 +742,32 @@ namespace IngSoftValdezAlegre.Controles
 
             try
             {
-                var orden = _ordenesBLL.RegistrarOrden(cliente, pc, dtpEntrega.Value);
+                var orden = _ordenesBLL.CrearOrden(v.NumeroVenta, dtpEntrega.Value);
                 MostrarGrilla();
                 CargarOrdenes();
                 SeleccionarOrden(orden.NumeroOrden);
                 ConfirmacionForm.MostrarInfo(
-                    $"Orden #{orden.NumeroOrden} registrada. Total: ${orden.PrecioTotal:0.00}.",
-                    "Producción", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
+                    $"Orden #{orden.NumeroOrden} registrada sobre la venta #{v.NumeroVenta}.",
+                    GestorIdioma06AV.Instancia.Obtener("pcf_produccion_titulo"),
+                    ConfirmacionForm.TipoConfirmacion.Info, FindForm());
             }
             catch (Exception ex) { MostrarError(ex.Message); }
         }
 
         private void AsignarLinea()
         {
-            var o = OrdenSeleccionada();
-            if (o == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
+            if (_ordenPlan == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
+            var linea = cboLinea.SelectedItem as LineaEnsamblaje06AV;
+            if (linea == null) { MostrarError("Elegí una línea de ensamblaje."); return; }
             try
             {
-                decimal sena = _ordenesBLL.RegistrarSena(o.NumeroOrden);
+                _ordenesBLL.AsignarLinea(_ordenPlan.NumeroOrden, linea.Id, dtpInicio.Value, txtResp.Text.Trim());
+                MostrarGrilla();
                 CargarOrdenes();
-                string recibo = ComprobantePcFactory06AV.GenerarReciboSena(o, sena);
-                ComprobantePcFactory06AV.Abrir(recibo);
-                ConfirmacionForm.MostrarInfo($"Seña registrada: ${sena:0.00}.\nRecibo generado en:\n{recibo}",
-                    "Producción", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
+                SeleccionarOrden(_ordenPlan.NumeroOrden);
+                ConfirmacionForm.MostrarInfo("Orden planificada.",
+                    GestorIdioma06AV.Instancia.Obtener("pcf_produccion_titulo"),
+                    ConfirmacionForm.TipoConfirmacion.Info, FindForm());
             }
             catch (Exception ex) { MostrarError(ex.Message); }
         }
@@ -773,7 +778,7 @@ namespace IngSoftValdezAlegre.Controles
             if (o == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
             try
             {
-                _ordenesBLL.IniciarEnsamblaje(o.Id);
+                _ordenesBLL.IniciarEnsamblaje(o.NumeroOrden);
                 CargarOrdenes();
                 ConfirmacionForm.MostrarInfo("Orden en ensamblaje.",
                     GestorIdioma06AV.Instancia.Obtener("pcf_produccion_titulo"),
@@ -799,39 +804,28 @@ namespace IngSoftValdezAlegre.Controles
 
             if (!cc.Aprobado && string.IsNullOrWhiteSpace(cc.Observaciones))
             {
-                _ordenesBLL.Finalizar(o.NumeroOrden);
-                CargarOrdenes();
-                ConfirmacionForm.MostrarInfo("Orden finalizada, lista para entregar.",
-                    "Producción", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
+                MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_cc_obs_requerida"));
+                return;
             }
-            catch (Exception ex) { MostrarError(ex.Message); }
-        }
 
             try
             {
-                _ordenesBLL.Planificar(_ordenPlan.NumeroOrden, linea.Id, dtpInicio.Value, txtResp.Text.Trim());
+                string serie = _ordenesBLL.RegistrarControlCalidad(_ordenCierre.NumeroOrden, cc);
                 MostrarGrilla();
                 CargarOrdenes();
                 SeleccionarOrden(_ordenCierre.NumeroOrden);
 
-        private void Entregar()
-        {
-            var o = OrdenSeleccionada();
-            if (o == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
-            bool ok = ConfirmacionForm.Mostrar(
-                $"¿Entregar la orden #{o.NumeroOrden}? Se registrará el saldo pendiente (${o.SaldoPendiente:0.00}).",
-                "Entregar", ConfirmacionForm.TipoConfirmacion.Advertencia, "Entregar", "Cancelar", FindForm());
-            if (!ok) return;
-            try
-            {
-                _ordenesBLL.Entregar(o.NumeroOrden);
-                CargarOrdenes();
-                CargarCombos();
-                var entregada = _ordenesBLL.ObtenerPorNumero(o.NumeroOrden) ?? o;
-                string factura = ComprobantePcFactory06AV.GenerarFactura(entregada);
-                ComprobantePcFactory06AV.Abrir(factura);
-                ConfirmacionForm.MostrarInfo($"Orden entregada y cerrada.\nFactura generada en:\n{factura}",
-                    "Producción", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
+                if (serie != null)
+                    ConfirmacionForm.MostrarInfo(
+                        $"Control de calidad aprobado.\nStock descontado y N° de serie asignado: {serie}.\n" +
+                        "La computadora queda lista para su retiro desde Ventas.",
+                        GestorIdioma06AV.Instancia.Obtener("pcf_produccion_titulo"),
+                        ConfirmacionForm.TipoConfirmacion.Info, FindForm());
+                else
+                    ConfirmacionForm.MostrarInfo(
+                        "El equipo no pasó el control de calidad: la orden queda En revisión.",
+                        GestorIdioma06AV.Instancia.Obtener("pcf_produccion_titulo"),
+                        ConfirmacionForm.TipoConfirmacion.Advertencia, FindForm());
             }
             catch (Exception ex) { MostrarError(ex.Message); }
         }
@@ -848,7 +842,7 @@ namespace IngSoftValdezAlegre.Controles
             if (!ok) return;
             try
             {
-                _ordenesBLL.VolverAtras(o.Id);
+                _ordenesBLL.VolverAtras(o.NumeroOrden);
                 CargarOrdenes();
             }
             catch (Exception ex) { MostrarError(ex.Message); }

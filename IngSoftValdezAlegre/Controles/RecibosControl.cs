@@ -18,7 +18,7 @@ namespace IngSoftValdezAlegre.Controles
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class RecibosControl : UserControl, IIdiomaAplicable06AV
     {
-        private readonly OrdenProduccionBLL06AV _bll = new OrdenProduccionBLL06AV();
+        private readonly VentasBLL06AV _bll = new VentasBLL06AV();
 
         private Label lblTitulo;
         private Button btnRefrescar;
@@ -78,8 +78,8 @@ namespace IngSoftValdezAlegre.Controles
                     .Select(r => new ReciboVm
                     {
                         Numero = r.Id,
-                        Computadora = r.Pago?.Computadora?.Nombre ?? "",
-                        Cliente = r.Pago?.Computadora?.Cliente?.Dni ?? "",
+                        Computadora = r.Venta?.Computadora?.Nombre ?? "",
+                        Cliente = r.Venta?.Cliente?.NombreCompleto ?? "",
                         Emision = r.FechaEmision.ToShortDateString(),
                         Abonado = r.MontoAbonado.ToString("C0"),
                         Saldo = r.SaldoPendiente.ToString("C0"),

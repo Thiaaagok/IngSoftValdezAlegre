@@ -3,25 +3,17 @@ using System.Linq;
 
 namespace BE
 {
-    /// <summary>
-    /// Computadora registrada por el recepcionista. Existe de forma independiente:
-    /// se crea (y se le cobra la seña) ANTES de que el gerente arme la orden de producción.
-    /// Sus Componentes y su precio son un SNAPSHOT (copia) del momento de armarla, tanto
-    /// si viene de un ModeloEstandar06AV como si es Configurable.
-    /// </summary>
     public class Computadora06AV
     {
-        public string Id { get; set; }                     // PK (GeneradorCodigo06AV, ej. "PC-2026-0001")
-        public Cliente06AV Cliente { get; set; }           // la PC queda asociada al cliente desde que se registra
+        public int Id { get; set; }
 
         public string Nombre { get; set; }
+
         public TipoConfiguracion06AV TipoConfiguracion { get; set; }
-        public ModeloEstandar06AV ModeloOrigen { get; set; }   // nullable; solo si TipoConfiguracion == Estandar
 
-        public List<Componente06AV> Componentes { get; set; } = new List<Componente06AV>();   // snapshot (copia)
-        public List<Pago06AV> Pagos { get; set; } = new List<Pago06AV>();                     // pagos hechos sobre esta PC
+        public List<Componente06AV> Componentes { get; set; } = new List<Componente06AV>();
 
-        /// <summary>Precio total = suma del precio unitario de cada componente.</summary>
+        /// <summary>Precio total = suma de todos los componentes.</summary>
         public decimal PrecioTotal => Componentes?.Sum(c => c.PrecioUnitario) ?? 0m;
 
         public override string ToString() =>

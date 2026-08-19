@@ -6,49 +6,61 @@ using System.Data;
 
 namespace MPP
 {
-    /// <summary>
-    /// Mapea entre Componente06AV y la capa de acceso a datos. Tras el refactor,
-    /// Componente absorbe a Insumo: es la pieza comprable/stockeable (Stock/StockMinimo).
-    /// </summary>
+    /// <summary>Mapea entre Componente06AV y la capa de acceso a datos.</summary>
     public class ComponentesMPP06AV
     {
         private readonly ComponentesDAL06AV _dal = new ComponentesDAL06AV();
 
-        public List<Componente06AV> ObtenerTodos() => Listar(_dal.ObtenerTodos());
-
-        public List<Componente06AV> ObtenerBajoStock() => Listar(_dal.ObtenerBajoStock());
+        public List<Componente06AV> ObtenerTodos()
+        {
+            DataTable tabla = _dal.ObtenerTodos();
+            var lista = new List<Componente06AV>();
+            foreach (DataRow row in tabla.Rows)
+                lista.Add(Mapear(row));
+            return lista;
+        }
 
         public Componente06AV ObtenerPorCodigo(string codigo)
         {
             DataTable tabla = _dal.ObtenerPorCodigo(codigo);
-            return tabla.Rows.Count == 0 ? null : Mapear(tabla.Rows[0]);
+            if (tabla.Rows.Count == 0) return null;
+            return Mapear(tabla.Rows[0]);
+        }
+
+        /// <summary>RFN2: componentes que llegaron al mínimo y hay que reponer.</summary>
+        public List<Componente06AV> ObtenerBajoStock()
+        {
+            DataTable tabla = _dal.ObtenerBajoStock();
+            var lista = new List<Componente06AV>();
+            foreach (DataRow row in tabla.Rows)
+                lista.Add(Mapear(row));
+            return lista;
         }
 
         public void Agregar(Componente06AV c)
         {
-            _dal.Agregar(c.Codigo, c.Descripcion, c.Marca, c.Modelo,
-                         c.PrecioUnitario, c.Stock, c.StockMinimo, (int)c.Tipo);
+            _dal.Agregar(c.Codigo, c.Descripcion, (int)c.Tipo, c.Marca, c.Modelo,
+                         c.PrecioUnitario, c.Stock, c.StockMinimo);
         }
 
         public void Modificar(Componente06AV c)
         {
-            _dal.Modificar(c.Codigo, c.Descripcion, c.Marca, c.Modelo,
-                           c.PrecioUnitario, c.Stock, c.StockMinimo, (int)c.Tipo);
+            _dal.Modificar(c.Codigo, c.Descripcion, (int)c.Tipo, c.Marca, c.Modelo,
+                           c.PrecioUnitario, c.Stock, c.StockMinimo);
         }
 
-        public void Eliminar(string codigo) => _dal.Eliminar(codigo);
-
-        /// <summary>Descuenta <paramref name="cantidad"/> unidades del stock del componente.</summary>
-        public void DescontarStock(string codigo, int cantidad) => _dal.DescontarStock(codigo, cantidad);
-
-        /// <summary>Suma <paramref name="cantidad"/> unidades al stock (al recibir una compra).</summary>
+        /// <summary>RFN2: suma al stock lo efectivamente recibido del proveedor.</summary>
         public void SumarStock(string codigo, int cantidad) => _dal.SumarStock(codigo, cantidad);
 
-        private List<Componente06AV> Listar(DataTable tabla)
+        public void Eliminar(string codigo)
         {
-            var lista = new List<Componente06AV>();
-            foreach (DataRow row in tabla.Rows) lista.Add(Mapear(row));
-            return lista;
+            _dal.Eliminar(codigo);
+        }
+
+        /// <summary>Descuenta <paramref name="cantidad"/> unidades del stock del componente.</summary>
+        public void DescontarStock(string codigo, int cantidad)
+        {
+            _dal.DescontarStock(codigo, cantidad);
         }
 
         /// <summary>CU01: compromete unidades para una venta (no las saca del depósito).</summary>
@@ -70,7 +82,11 @@ namespace MPP
                 Marca           = row["Marca"] == DBNull.Value ? "" : row["Marca"].ToString(),
                 Modelo          = row["Modelo"] == DBNull.Value ? "" : row["Modelo"].ToString(),
                 PrecioUnitario  = Convert.ToDecimal(row["PrecioUnitario"]),
-                StockDisponible = Convert.ToInt32(row["StockDisponible"])
+                Stock           = Convert.ToInt32(row["Stock"]),
+                StockMinimo     = row.Table.Columns.Contains("StockMinimo") && row["StockMinimo"] != DBNull.Value
+                                  ? Convert.ToInt32(row["StockMinimo"]) : 0,
+                StockReservado  = row.Table.Columns.Contains("StockReservado") && row["StockReservado"] != DBNull.Value
+                                  ? Convert.ToInt32(row["StockReservado"]) : 0
             };
         }
     }

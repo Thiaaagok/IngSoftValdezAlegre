@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -47,11 +47,11 @@
     <Compile Include="FamiliasBLL06AV.cs" />
     <Compile Include="ClientesBLL06AV.cs" />
     <Compile Include="ComponentesBLL06AV.cs" />
-    <Compile Include="InsumosBLL06AV.cs" />
     <Compile Include="ProveedoresBLL06AV.cs" />
     <Compile Include="LineasEnsamblajeBLL06AV.cs" />
     <Compile Include="VentasBLL06AV.cs" />
     <Compile Include="EntregasBLL06AV.cs" />
+    <Compile Include="RolNegocio06AV.cs" />
     <Compile Include="OrdenProduccionBLL06AV.cs" />
     <Compile Include="CompraInsumosBLL06AV.cs" />
     <Compile Include="IntegridadBLL06AV.cs" />
@@ -60,7 +60,6 @@
     <Compile Include="Excepciones\ExcepcionesPcFactory06AV.cs" />
     <Compile Include="Excepciones\ExcepcionesUsuario.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RolNegocio06AV.cs" />
     <Compile Include="RolesBLL06AV.cs" />
     <Compile Include="ModelosEstandarBLL06AV.cs" />
     <Compile Include="UsuariosBLL06AV.cs" />

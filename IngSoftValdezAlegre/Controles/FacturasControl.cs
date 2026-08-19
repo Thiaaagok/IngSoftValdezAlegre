@@ -12,9 +12,9 @@ using System.Windows.Forms;
 namespace IngSoftValdezAlegre.Controles
 {
     /// <summary>
-    /// Facturas de venta: lista las órdenes de producción ya entregadas (que tienen
-    /// factura) y permite generar/abrir el PDF de la factura. La misma pantalla se usa
-    /// para "Facturas" (consultar) y "Generar factura".
+    /// Facturas de venta: lista las VENTAS ya entregadas (CU07) y permite regenerar
+    /// y abrir el PDF de la factura, con el detalle del anticipo, el saldo cancelado
+    /// y el número de serie del equipo.
     /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class FacturasControl : UserControl, IIdiomaAplicable06AV

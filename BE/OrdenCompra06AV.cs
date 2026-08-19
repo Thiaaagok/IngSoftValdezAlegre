@@ -18,6 +18,7 @@ namespace BE
         public Usuario06AV RepositorSolicitante { get; set; }   // SER.Usuario06AV (rol Repositor)
         public EstadoOrdenCompra06AV Estado { get; set; } = EstadoOrdenCompra06AV.Pendiente;
         public DateTime? FechaCierre { get; set; }
+
         public override string ToString() => $"OC #{NumeroCompra} - {Estado}";
     }
 }

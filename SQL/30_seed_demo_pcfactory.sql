@@ -1,4 +1,4 @@
--- ============================================================
+﻿-- ============================================================
 --  30_seed_demo_pcfactory.sql
 --  Carga de DATOS DE DEMOSTRACIÓN para todo lo nuevo de PC Factory:
 --  Componentes, Insumos (con faltantes para RFN2), Proveedores,
@@ -17,38 +17,32 @@ SET NOCOUNT ON;
 PRINT '>>> Cargando datos de demostración de PC Factory...';
 
 -- ── 1) COMPONENTES ───────────────────────────────────────────
-INSERT INTO Componentes (Codigo, Descripcion, Tipo, Marca, Modelo, PrecioUnitario, StockDisponible)
-SELECT v.Codigo, v.Descripcion, v.Tipo, v.Marca, v.Modelo, v.PrecioUnitario, v.StockDisponible
+INSERT INTO Componentes (Codigo, Descripcion, Tipo, Marca, Modelo, PrecioUnitario, Stock, StockMinimo)
+SELECT v.Codigo, v.Descripcion, v.Tipo, v.Marca, v.Modelo, v.PrecioUnitario, v.Stock, v.StockMinimo
 FROM (VALUES
-    (N'CPU-001', N'Procesador 6 núcleos',      0, N'Intel',   N'Core i5-12400',   180.00, 25),
-    (N'CPU-002', N'Procesador 6 núcleos',      0, N'AMD',     N'Ryzen 5 5600',    160.00, 20),
-    (N'RAM-001', N'Memoria RAM 16GB DDR4',     1, N'Kingston',N'Fury 3200',        55.00, 40),
-    (N'RAM-002', N'Memoria RAM 32GB DDR4',     1, N'Corsair', N'Vengeance 3600',  105.00, 15),
-    (N'SSD-001', N'Disco SSD 1TB NVMe',        2, N'Samsung', N'980 Pro',          80.00, 30),
-    (N'HDD-001', N'Disco HDD 2TB',             2, N'Seagate', N'Barracuda',        60.00, 18),
-    (N'MB-001',  N'Placa madre B660',          3, N'ASUS',    N'Prime B660',      130.00, 20),
-    (N'MB-002',  N'Placa madre B550',          3, N'Gigabyte',N'B550 Aorus',      120.00, 16),
-    (N'PSU-001', N'Fuente 650W 80+ Bronze',    4, N'EVGA',    N'650 BR',           70.00, 22),
-    (N'GAB-001', N'Gabinete ATX con vidrio',   5, N'NZXT',    N'H510',             65.00, 25),
-    (N'GPU-001', N'Placa de video RTX 3060',   6, N'MSI',     N'Ventus 3060',     330.00, 10),
-    (N'COOL-001',N'Cooler para CPU',           7, N'CoolerMaster', N'Hyper 212',   35.00, 30)
-) v(Codigo, Descripcion, Tipo, Marca, Modelo, PrecioUnitario, StockDisponible)
+    (N'CPU-001', N'Procesador 6 núcleos',      0, N'Intel',   N'Core i5-12400',   180.00, 25,  5),
+    (N'CPU-002', N'Procesador 6 núcleos',      0, N'AMD',     N'Ryzen 5 5600',    160.00, 20,  5),
+    (N'RAM-001', N'Memoria RAM 16GB DDR4',     1, N'Kingston',N'Fury 3200',        55.00, 40, 10),
+    (N'RAM-002', N'Memoria RAM 32GB DDR4',     1, N'Corsair', N'Vengeance 3600',  105.00, 15,  5),
+    (N'SSD-001', N'Disco SSD 1TB NVMe',        2, N'Samsung', N'980 Pro',          80.00, 30,  8),
+    (N'HDD-001', N'Disco HDD 2TB',             2, N'Seagate', N'Barracuda',        60.00, 18,  6),
+    (N'MB-001',  N'Placa madre B660',          3, N'ASUS',    N'Prime B660',      130.00, 20,  5),
+    (N'MB-002',  N'Placa madre B550',          3, N'Gigabyte',N'B550 Aorus',      120.00, 16,  5),
+    (N'PSU-001', N'Fuente 650W 80+ Bronze',    4, N'EVGA',    N'650 BR',           70.00, 22,  6),
+    (N'GAB-001', N'Gabinete ATX con vidrio',   5, N'NZXT',    N'H510',             65.00, 25,  6),
+    (N'GPU-001', N'Placa de video RTX 3060',   6, N'MSI',     N'Ventus 3060',     330.00, 10,  3),
+    (N'COOL-001',N'Cooler para CPU',           7, N'CoolerMaster', N'Hyper 212',   35.00, 30,  8)
+) v(Codigo, Descripcion, Tipo, Marca, Modelo, PrecioUnitario, Stock, StockMinimo)
 WHERE NOT EXISTS (SELECT 1 FROM Componentes c WHERE c.Codigo = v.Codigo);
 PRINT '   Componentes cargados.';
 
--- ── 2) INSUMOS (algunos por debajo del mínimo → faltantes RFN2) ─
-INSERT INTO Insumos (Codigo, Descripcion, Stock, StockMinimo)
-SELECT v.Codigo, v.Descripcion, v.Stock, v.StockMinimo
-FROM (VALUES
-    (N'INS-001', N'Pasta térmica',              5,  10),   -- FALTANTE
-    (N'INS-002', N'Cables SATA',               50,  20),
-    (N'INS-003', N'Tornillos (bolsa x100)',     8,  15),   -- FALTANTE
-    (N'INS-004', N'Bridas plásticas',         100,  30),
-    (N'INS-005', N'Alcohol isopropílico',       3,  12),   -- FALTANTE
-    (N'INS-006', N'Guantes antiestáticos',     40,  10)
-) v(Codigo, Descripcion, Stock, StockMinimo)
-WHERE NOT EXISTS (SELECT 1 FROM Insumos i WHERE i.Codigo = v.Codigo);
-PRINT '   Insumos cargados (3 quedan bajo stock para probar Compras).';
+-- ── 2) COMPONENTES BAJO MÍNIMO (RFN2) ───────────────────────
+--  Insumos se fusionó en Componentes: para tener faltantes con que probar
+--  Compras, se bajan tres componentes por debajo de su stock mínimo.
+UPDATE Componentes SET Stock = 2, StockMinimo = 10 WHERE Codigo = N'COOL-001';
+UPDATE Componentes SET Stock = 3, StockMinimo = 12 WHERE Codigo = N'HDD-001';
+UPDATE Componentes SET Stock = 4, StockMinimo = 15 WHERE Codigo = N'PSU-001';
+PRINT '   3 componentes quedan bajo stock para probar Compras.';
 
 -- ── 3) PROVEEDORES ───────────────────────────────────────────
 INSERT INTO Proveedores (Nombre, Cuit, Email, Telefono, Direccion)
