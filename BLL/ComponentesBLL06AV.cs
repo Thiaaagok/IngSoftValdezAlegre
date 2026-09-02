@@ -44,7 +44,12 @@ namespace BLL
         public void Crear(Componente06AV c)
         {
             Validar(c);
-            if (_mpp.ObtenerPorCodigo(c.Codigo) != null)
+            var existente = _mpp.ObtenerPorCodigo(c.Codigo);
+            if (existente != null && existente.BajaLogica)
+                throw new DuplicadoException06AV(
+                    $"El código {c.Codigo} pertenece a un componente dado de baja. " +
+                    "Restauralo desde la Bitácora de Cambios en lugar de crearlo de nuevo.");
+            if (existente != null)
                 throw new DuplicadoException06AV($"Ya existe un componente con el código {c.Codigo}.");
             try { _mpp.Agregar(c); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo crear el componente.", ex); }
@@ -63,17 +68,82 @@ namespace BLL
             AuditoriaPcFactory06AV.Modificacion($"Componente: {c.Codigo}", ModuloBitacora.Componentes);
         }
 
+        /// <summary>
+        /// Baja LÓGICA del componente (Bit_Lo_Bo = 1). Los componentes no se borran:
+        /// el trigger TR_Componentes_BloquearDelete impide el borrado físico y el
+        /// trigger de UPDATE deja la baja asentada en la bitácora de cambios.
+        /// </summary>
         public void Eliminar(string codigo)
         {
             ValidarCodigo(codigo);
-            if (_mpp.ObtenerPorCodigo(codigo) == null)
+            var actual = _mpp.ObtenerPorCodigo(codigo);
+            if (actual == null)
                 throw new NoEncontradoException06AV($"No existe un componente con el código {codigo}.");
-            try { _mpp.Eliminar(codigo); }
+            if (actual.BajaLogica)
+                throw new ValidacionException06AV("Codigo", $"El componente {codigo} ya está dado de baja.");
+            try { _mpp.BajaLogica(codigo); }
             catch (PcFactoryException06AV) { throw; }
-            catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo eliminar el componente.", ex); }
+            catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo dar de baja el componente.", ex); }
 
             AuditoriaPcFactory06AV.Baja($"Componente: {codigo}", ModuloBitacora.Componentes);
         }
+
+        /// <summary>Deshace la baja lógica de un componente.</summary>
+        public void Reactivar(string codigo)
+        {
+            ValidarCodigo(codigo);
+            var actual = _mpp.ObtenerPorCodigo(codigo);
+            if (actual == null)
+                throw new NoEncontradoException06AV($"No existe un componente con el código {codigo}.");
+            if (!actual.BajaLogica)
+                throw new ValidacionException06AV("Codigo", $"El componente {codigo} ya está vigente.");
+            try { _mpp.Reactivar(codigo); }
+            catch (PcFactoryException06AV) { throw; }
+            catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo reactivar el componente.", ex); }
+
+            AuditoriaPcFactory06AV.Modificacion($"Componente reactivado: {codigo}", ModuloBitacora.Componentes);
+        }
+
+        #region Bitácora de cambios (Componentes_C)
+
+        /// <summary>
+        /// Histórico de versiones de los componentes. Los filtros vacíos no filtran.
+        /// </summary>
+        public List<ComponenteHistorico06AV> ObtenerBitacora(string codigo, string descripcion,
+                                                             DateTime? fechaIni, DateTime? fechaFin)
+        {
+            if (fechaIni.HasValue && fechaFin.HasValue && fechaIni.Value.Date > fechaFin.Value.Date)
+                throw new ValidacionException06AV("FechaIni",
+                    "La fecha de inicio no puede ser posterior a la fecha de fin.");
+
+            try { return _mpp.ObtenerBitacora(codigo, descripcion, fechaIni, fechaFin); }
+            catch (PcFactoryException06AV) { throw; }
+            catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo obtener la bitácora de componentes.", ex); }
+        }
+
+        /// <summary>
+        /// Restaura como vigente una versión histórica. La app no escribe el
+        /// histórico: actualiza el componente y el trigger versiona el cambio.
+        /// </summary>
+        public void ActivarHistorico(ComponenteHistorico06AV version)
+        {
+            if (version == null)
+                throw new ValidacionException06AV("version", "Seleccioná una versión del histórico.");
+            if (version.IdHistorico <= 0)
+                throw new ValidacionException06AV("IdHistorico", "La versión histórica seleccionada no es válida.");
+            if (version.Activo)
+                throw new ValidacionException06AV("Act", "Esa versión ya es la vigente del componente.");
+
+            try { _mpp.ActivarHistorico(version.IdHistorico); }
+            catch (PcFactoryException06AV) { throw; }
+            catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo restaurar la versión histórica.", ex); }
+
+            AuditoriaPcFactory06AV.Modificacion(
+                $"Componente: {version.CodigoComponente} (restaurado del histórico #{version.IdHistorico})",
+                ModuloBitacora.Componentes);
+        }
+
+        #endregion
 
         private void Validar(Componente06AV c)
         {

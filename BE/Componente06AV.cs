@@ -37,6 +37,13 @@ namespace BE
         /// <summary>RFN2: el componente llegó al mínimo y dispara la orden de compra.</summary>
         public bool BajoStock => Stock <= StockMinimo;
 
+        /// <summary>
+        /// Baja lógica (columna Bit_Lo_Bo). Los componentes no se borran nunca:
+        /// el borrado físico está prohibido por trigger. Un componente dado de baja
+        /// no aparece en los listados, pero conserva su historial en Componentes_C.
+        /// </summary>
+        public bool BajaLogica { get; set; }
+
         public override string ToString() => $"{Descripcion} - {Marca} {Modelo}";
     }
 }

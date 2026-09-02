@@ -454,4 +454,17 @@
   "menu_recibos": "Deposit receipts",
   "pcf_stock_bajo": "Low stock",
   "pcf_sin_componentes": "No components picked yet.",
-  "error_permisos_inconsistentes": "The role's permissions are inconsistent: a patent is duplicated (assigned directly and inherited from a family). Fix it from Roles."
+  "error_permisos_inconsistentes": "The role's permissions are inconsistent: a patent is duplicated (assigned directly and inherited from a family). Fix it from Roles.",
+  "pcf_menu_bitacora_comp": "Component change log",
+  "pcf_bitacora_comp_titulo": "Component Change Log",
+  "pcf_bitacora_activar": "Activate",
+  "pcf_bitacora_versiones": "Versions:",
+  "pcf_bitacora_col_fecha": "Date",
+  "pcf_bitacora_col_hora": "Time",
+  "pcf_bitacora_col_vigente": "Current",
+  "pcf_bitacora_col_baja": "Deleted",
+  "pcf_bitacora_ya_vigente": "That version is already the current one.",
+  "pcf_bitacora_confirmar_activar": "Restore the version of component {0} from {1} as the current one?",
+  "pcf_bitacora_activada": "The historical version was restored as the current one.",
+  "pcf_confirmar_baja_componente": "Delete component {0}? Nothing is erased: the change log keeps it and it can be restored.",
+  "pcf_bitacora_col_minimo": "Minimum"

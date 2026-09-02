@@ -45,6 +45,7 @@
     <Compile Include="Enumeraciones06AV.cs" />
     <Compile Include="Cliente06AV.cs" />
     <Compile Include="Componente06AV.cs" />
+    <Compile Include="ComponenteHistorico06AV.cs" />
     <Compile Include="Computadora06AV.cs" />
     <Compile Include="LineaEnsamblaje06AV.cs" />
     <Compile Include="Pago06AV.cs" />

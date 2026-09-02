@@ -454,4 +454,17 @@
   "menu_recibos": "Recibos de sinal",
   "pcf_stock_bajo": "Estoque baixo",
   "pcf_sin_componentes": "Ainda não escolheu componentes.",
-  "error_permisos_inconsistentes": "As permissões do papel estão inconsistentes: há uma patente repetida (atribuída direta e herdada de uma família). Corrija em Papéis."
+  "error_permisos_inconsistentes": "As permissões do papel estão inconsistentes: há uma patente repetida (atribuída direta e herdada de uma família). Corrija em Papéis.",
+  "pcf_menu_bitacora_comp": "Histórico de componentes",
+  "pcf_bitacora_comp_titulo": "Histórico de Alterações de Componentes",
+  "pcf_bitacora_activar": "Ativar",
+  "pcf_bitacora_versiones": "Versões:",
+  "pcf_bitacora_col_fecha": "Data",
+  "pcf_bitacora_col_hora": "Hora",
+  "pcf_bitacora_col_vigente": "Vigente",
+  "pcf_bitacora_col_baja": "Baixa",
+  "pcf_bitacora_ya_vigente": "Essa versão já é a vigente do componente.",
+  "pcf_bitacora_confirmar_activar": "Restaurar como vigente a versão do componente {0} de {1}?",
+  "pcf_bitacora_activada": "A versão histórica foi restaurada como vigente.",
+  "pcf_confirmar_baja_componente": "Dar baixa no componente {0}? Nada é apagado: fica registrado no histórico e pode ser restaurado.",
+  "pcf_bitacora_col_minimo": "Mínimo"

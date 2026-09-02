@@ -454,4 +454,17 @@
   "menu_recibos": "Recibos de seña",
   "pcf_stock_bajo": "Bajo stock",
   "pcf_sin_componentes": "Todavía no elegiste componentes.",
-  "error_permisos_inconsistentes": "Los permisos del rol están mal armados: hay una patente repetida (asignada directa y heredada de una familia). Corregilo desde Roles."
+  "error_permisos_inconsistentes": "Los permisos del rol están mal armados: hay una patente repetida (asignada directa y heredada de una familia). Corregilo desde Roles.",
+  "pcf_menu_bitacora_comp": "Bitácora de componentes",
+  "pcf_bitacora_comp_titulo": "Bitácora de Cambios de Componentes",
+  "pcf_bitacora_activar": "Activar",
+  "pcf_bitacora_versiones": "Versiones:",
+  "pcf_bitacora_col_fecha": "Fecha",
+  "pcf_bitacora_col_hora": "Hora",
+  "pcf_bitacora_col_vigente": "Vigente",
+  "pcf_bitacora_col_baja": "Baja",
+  "pcf_bitacora_ya_vigente": "Esa versión ya es la vigente del componente.",
+  "pcf_bitacora_confirmar_activar": "¿Restaurar como vigente la versión del componente {0} del {1}?",
+  "pcf_bitacora_activada": "La versión histórica se restauró como vigente.",
+  "pcf_confirmar_baja_componente": "¿Dar de baja el componente {0}? No se borra: queda registrado en la bitácora de cambios y se puede restaurar.",
+  "pcf_bitacora_col_minimo": "Mínimo"

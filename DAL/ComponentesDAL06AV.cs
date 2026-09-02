@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -50,6 +51,28 @@ namespace DAL
             });
         }
 
+        /// <summary>
+        /// Baja lógica (Bit_Lo_Bo = 1). El borrado físico está prohibido por el
+        /// trigger TR_Componentes_BloquearDelete; este SP es la única baja posible.
+        /// </summary>
+        public void BajaLogica(string codigo)
+        {
+            EjecutarSPNonQuery("sp_Componentes_BajaLogica", new Dictionary<string, object>
+            {
+                { "@Codigo", codigo }
+            });
+        }
+
+        /// <summary>Deshace la baja lógica sin restaurar una versión histórica.</summary>
+        public void Reactivar(string codigo)
+        {
+            EjecutarSPNonQuery("sp_Componentes_Reactivar", new Dictionary<string, object>
+            {
+                { "@Codigo", codigo }
+            });
+        }
+
+        /// <summary>Se mantiene por compatibilidad: hoy delega en la baja lógica.</summary>
         public void Eliminar(string codigo)
         {
             EjecutarSPNonQuery("sp_Componentes_Eliminar", new Dictionary<string, object>
@@ -57,6 +80,38 @@ namespace DAL
                 { "@Codigo", codigo }
             });
         }
+
+        #region Bitácora de cambios (Componentes_C)
+
+        /// <summary>
+        /// Histórico de versiones de Componentes_C. Los filtros nulos no filtran.
+        /// La tabla la escriben solo los triggers: acá únicamente se lee.
+        /// </summary>
+        public DataTable ObtenerBitacora(string codigo, string descripcion,
+                                         DateTime? fechaIni, DateTime? fechaFin)
+        {
+            return EjecutarSP("sp_ComponentesC_Listar", new Dictionary<string, object>
+            {
+                { "@Codigo",      string.IsNullOrWhiteSpace(codigo)      ? (object)DBNull.Value : codigo.Trim()      },
+                { "@Descripcion", string.IsNullOrWhiteSpace(descripcion) ? (object)DBNull.Value : descripcion.Trim() },
+                { "@FechaIni",    fechaIni.HasValue ? (object)fechaIni.Value.Date : DBNull.Value },
+                { "@FechaFin",    fechaFin.HasValue ? (object)fechaFin.Value.Date : DBNull.Value }
+            });
+        }
+
+        /// <summary>
+        /// Restaura como vigente una versión histórica. El SP actualiza Componentes
+        /// y es el trigger de UPDATE el que asienta la restauración en el histórico.
+        /// </summary>
+        public void ActivarHistorico(int idHistorico)
+        {
+            EjecutarSPNonQuery("sp_ComponentesC_Activar", new Dictionary<string, object>
+            {
+                { "@IdHistorico", idHistorico }
+            });
+        }
+
+        #endregion
 
         /// <summary>Descuenta stock de un componente (al usarlo en una orden). Atómico en el SP.</summary>
         public void DescontarStock(string codigo, int cantidad)

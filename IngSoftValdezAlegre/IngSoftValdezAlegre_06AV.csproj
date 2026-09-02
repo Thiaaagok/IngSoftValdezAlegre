@@ -81,6 +81,7 @@
     <Compile Include="Controles\AbmBaseControl06AV.cs" />
     <Compile Include="Controles\ClientesControl.cs" />
     <Compile Include="Controles\ComponentesControl.cs" />
+    <Compile Include="Controles\BitacoraComponentesControl.cs" />
     <Compile Include="Controles\ProveedoresControl.cs" />
     <Compile Include="Controles\LineasEnsamblajeControl.cs" />
     <Compile Include="Controles\VentasControl.cs" />

@@ -138,6 +138,10 @@
       <Link>Scripts\28_pcfactory_modelos.sql</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\SQL\29_pcfactory_bitacora_componentes.sql">
+      <Link>Scripts\29_pcfactory_bitacora_componentes.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="..\SQL\30_seed_demo_pcfactory.sql">
       <Link>Scripts\30_seed_demo_pcfactory.sql</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

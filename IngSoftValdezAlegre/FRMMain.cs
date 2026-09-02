@@ -67,6 +67,7 @@ namespace IngSoftValdezAlegre
                 Item("pcf_menu_clientes", "\uE716", PatenteEnum06AV.GestionarClientes, false, () => new Controles.ClientesControl()),
                 Item("pcf_menu_proveedores", "\uE8D7", PatenteEnum06AV.GestionarProveedores, false, () => new Controles.ProveedoresControl()),
                 Item("pcf_menu_componentes", "\uE950", PatenteEnum06AV.GestionarComponentes, false, () => new Controles.ComponentesControl()),
+                Item("pcf_menu_bitacora_comp", "\uE81C", PatenteEnum06AV.GestionarComponentes, false, () => new Controles.BitacoraComponentesControl()),
                 Item("pcf_menu_modelos", "\uE8A4", PatenteEnum06AV.GestionarModelosEstandar, false, () => new Controles.ModelosEstandarControl()),
             });
 
@@ -542,7 +543,8 @@ namespace IngSoftValdezAlegre
             }
         }
 
-        private void MostrarControl(UserControl control)
+        /// <summary>Reemplaza el módulo visible en el área de contenido.</summary>
+        public void MostrarControl(UserControl control)
         {
             foreach (Control c in panelPrincipal.Controls)
             {

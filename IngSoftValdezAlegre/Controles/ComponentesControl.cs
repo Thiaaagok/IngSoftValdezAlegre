@@ -110,7 +110,9 @@ namespace IngSoftValdezAlegre.Controles
                 MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro"));
                 return;
             }
-            if (!Confirmar($"¿Eliminar el componente {c.Codigo}?",
+            // El borrado es lógico: el trigger de la base impide el DELETE físico
+            // y la baja queda asentada en la bitácora de cambios.
+            if (!Confirmar(string.Format(GestorIdioma06AV.Instancia.Obtener("pcf_confirmar_baja_componente"), c.Codigo),
                            GestorIdioma06AV.Instancia.Obtener("eliminar"))) return;
             try { _bll.Eliminar(c.Codigo); RecargarGrilla(); }
             catch (Exception ex) { MostrarError(ex.Message); }
