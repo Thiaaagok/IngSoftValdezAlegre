@@ -74,6 +74,7 @@ namespace IngSoftValdezAlegre
             AgregarGrupo("menu_grp_compra", "\uE7BF", new List<ItemMenu>
             {
                 Item("pcf_menu_compras", "\uE9D5", PatenteEnum06AV.GestionarCompras, false, () => new Controles.ComprasControl()),
+                Item("pcf_menu_cotizaciones", "\uE8EC", PatenteEnum06AV.GestionarCotizaciones, false, () => new Controles.CotizacionesControl()),
                 Item("menu_consultar_stock", "\uE7B8", PatenteEnum06AV.GestionarComponentes, false, () => new Controles.ConsultarStockControl()),
             });
 

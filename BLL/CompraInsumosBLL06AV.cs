@@ -45,11 +45,33 @@ namespace BLL
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudieron obtener las cotizaciones de la orden.", ex); }
         }
 
-        // ── Paso 1: registrar la orden de compra (rol Repositor) ──
+        // ── Autorización ─────────────────────────────────────────
+        /// <summary>
+        /// Exige que el usuario de la sesión tenga la patente indicada.
+        /// La autorización del sistema se maneja SIEMPRE por patentes (patrón
+        /// Composite: Rol → Familias → Patentes), no por el nombre del rol.
+        /// </summary>
+        private static void ExigirPatente(PatenteEnum06AV patente, string accion)
+        {
+            var usuario = UsuarioSesion06AV.Instancia().UsuarioActual;
+            if (usuario == null)
+                throw new ValidacionException06AV("usuario",
+                    $"Se requiere un usuario autenticado para {accion}.");
+
+            if (!UsuarioSesion06AV.Instancia().TienePermiso(patente))
+                throw new ValidacionException06AV("patente",
+                    $"El usuario '{usuario.Login}' no tiene el permiso '{patente}' requerido para {accion}.");
+        }
+
+        // ── Paso 1: registrar la orden de compra (patente RegistrarOrdenCompra) ──
         public OrdenCompra06AV RegistrarOrdenCompra(List<DetalleComponente06AV> faltantes,
                                                     DateTime fechaLimite, Usuario06AV repositor)
         {
-            RolNegocio06AV.Exigir(repositor, RolUsuario06AV.Repositor, "registrar una orden de compra");
+            ExigirPatente(PatenteEnum06AV.RegistrarOrdenCompra, "registrar una orden de compra");
+
+            if (repositor == null)
+                throw new ValidacionException06AV("repositor",
+                    "Se requiere un usuario autenticado para registrar una orden de compra.");
 
             if (faltantes == null || faltantes.Count == 0)
                 throw new ValidacionException06AV("faltantes", "La orden debe incluir al menos un componente.");
@@ -68,8 +90,7 @@ namespace BLL
             // (Pendiente o Enviada), no por negación de Finalizada.
             var enTramite = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             foreach (var abierta in _mpp.ObtenerOrdenesCompra()
-                                        .Where(o => o.Estado == EstadoOrdenCompra06AV.Pendiente
-                                                 || o.Estado == EstadoOrdenCompra06AV.Enviada))
+                                        .Where(o => o.Estado != EstadoOrdenCompra06AV.Finalizada))
                 foreach (var d in abierta.ComponentesFaltantes)
                     if (d.Componente != null && !enTramite.ContainsKey(d.Componente.Codigo))
                         enTramite[d.Componente.Codigo] = abierta.NumeroCompra;
@@ -129,10 +150,10 @@ namespace BLL
             return cot;
         }
 
-        // ── Paso 4: aprobar / desaprobar (rol Gerente de Compras) ─
+        // ── Paso 4: aprobar / desaprobar (patente AprobarCotizacion) ─
         public void AprobarCotizacion(string numeroCotizacion, Usuario06AV gerente)
         {
-            RolNegocio06AV.Exigir(gerente, RolUsuario06AV.GerenteCompras, "aprobar una cotización");
+            ExigirPatente(PatenteEnum06AV.AprobarCotizacion, "aprobar una cotización");
             var cot = BuscarCotizacion(numeroCotizacion);
             if (cot.Estado != EstadoCotizacion06AV.PorAprobar)
                 throw new ValidacionException06AV("estado", "Solo se puede aprobar una cotización 'Por aprobar'.");
@@ -140,6 +161,14 @@ namespace BLL
             try
             {
                 _mpp.CambiarEstadoCotizacion(numeroCotizacion, EstadoCotizacion06AV.Aprobado, gerente.Dni);
+
+                // Se adjudica a un solo proveedor: el resto de las ofertas abiertas de la
+                // misma orden quedan desaprobadas en el mismo acto, para que no queden
+                // dos cotizaciones vigentes compitiendo por la misma compra.
+                foreach (var otra in _mpp.ObtenerCotizacionesPorOrden(cot.NumeroCompra))
+                    if (otra.Numero != numeroCotizacion && otra.Estado == EstadoCotizacion06AV.PorAprobar)
+                        _mpp.CambiarEstadoCotizacion(otra.Numero, EstadoCotizacion06AV.Desaprobada, gerente.Dni);
+
                 _mpp.CambiarEstadoOrdenCompra(cot.NumeroCompra, EstadoOrdenCompra06AV.Enviada);
             }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo aprobar la cotización.", ex); }
@@ -149,7 +178,7 @@ namespace BLL
 
         public void DesaprobarCotizacion(string numeroCotizacion, Usuario06AV gerente)
         {
-            RolNegocio06AV.Exigir(gerente, RolUsuario06AV.GerenteCompras, "desaprobar una cotización");
+            ExigirPatente(PatenteEnum06AV.AprobarCotizacion, "desaprobar una cotización");
             var cot = BuscarCotizacion(numeroCotizacion);
             if (cot.Estado != EstadoCotizacion06AV.PorAprobar)
                 throw new ValidacionException06AV("estado", "Solo se puede desaprobar una cotización 'Por aprobar'.");
@@ -166,12 +195,63 @@ namespace BLL
         /// deja la orden Finalizada y guarda la fecha de cierre = fecha de entrega.
         /// El proveedor y el total se navegan desde la cotización aprobada de la OC.
         /// </summary>
-        public FacturaCompra06AV RegistrarFacturaCompra(string idOrdenCompra, DateTime fechaEntrega, string observaciones)
+        /// <summary>
+        /// Lo que todavía falta recibir de una orden: lo pedido menos lo ya recibido en
+        /// recepciones anteriores. Devuelve sólo los componentes con saldo pendiente.
+        /// </summary>
+        public List<DetalleComponente06AV> ObtenerPendienteDeRecibir(string idOrdenCompra)
         {
             var oc = BuscarOrden(idOrdenCompra);
-            if (oc.Estado != EstadoOrdenCompra06AV.Enviada)
+
+            var recibido = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                foreach (FacturaCompra06AV f in _mpp.ObtenerFacturasPorOrden(oc.Id))
+                    foreach (DetalleComponente06AV d in f.ComponentesRecibidos)
+                    {
+                        if (d.Componente == null) continue;
+                        string cod = d.Componente.Codigo;
+                        recibido[cod] = (recibido.ContainsKey(cod) ? recibido[cod] : 0) + d.Cantidad;
+                    }
+            }
+            catch (Exception ex)
+            {
+                throw new AccesoDatosException06AV("No se pudieron leer las recepciones de la orden.", ex);
+            }
+
+            var pendiente = new List<DetalleComponente06AV>();
+            foreach (DetalleComponente06AV d in oc.ComponentesFaltantes)
+            {
+                if (d.Componente == null) continue;
+                int ya = recibido.ContainsKey(d.Componente.Codigo) ? recibido[d.Componente.Codigo] : 0;
+                int falta = d.Cantidad - ya;
+                if (falta > 0)
+                    pendiente.Add(new DetalleComponente06AV { Componente = d.Componente, Cantidad = falta });
+            }
+            return pendiente;
+        }
+
+        /// <summary>
+        /// Paso 5 del RFN2 — RECEPCIÓN. Antes se asumía que llegaba todo lo pedido; ahora
+        /// se declara qué llegó realmente, como un control de recepción:
+        ///
+        ///   · suma al stock ÚNICAMENTE las unidades recibidas;
+        ///   · si con esta entrega se completó todo lo pedido, la orden queda Finalizada;
+        ///   · si quedó algo sin llegar, la orden pasa a Recibida parcial y el faltante
+        ///     queda anotado en las observaciones de la factura, para poder reclamarlo y
+        ///     recibirlo después contra la misma orden.
+        ///
+        /// <paramref name="recibidos"/> null significa "llegó todo lo pendiente".
+        /// </summary>
+        public FacturaCompra06AV RegistrarFacturaCompra(string idOrdenCompra, DateTime fechaEntrega,
+                                                        string observaciones,
+                                                        List<DetalleComponente06AV> recibidos = null)
+        {
+            var oc = BuscarOrden(idOrdenCompra);
+            if (oc.Estado != EstadoOrdenCompra06AV.Enviada &&
+                oc.Estado != EstadoOrdenCompra06AV.RecibidaParcial)
                 throw new ValidacionException06AV("estado",
-                    "Solo se puede facturar/recibir una orden Enviada (con cotización aprobada).");
+                    "Solo se puede recibir una orden Enviada o Recibida parcial.");
 
             var cotAprobada = _mpp.ObtenerCotizacionesPorOrden(oc.Id)
                                   .Where(c => c.Estado == EstadoCotizacion06AV.Aprobado)
@@ -180,10 +260,64 @@ namespace BLL
             if (cotAprobada == null)
                 throw new ValidacionException06AV("cotizacion", "La orden no tiene una cotización aprobada.");
 
-            var recibidos = oc.ComponentesFaltantes;
-            decimal total = cotAprobada.Costo > 0
-                ? cotAprobada.Costo
+            List<DetalleComponente06AV> pendiente = ObtenerPendienteDeRecibir(oc.Id);
+            if (pendiente.Count == 0)
+                throw new ValidacionException06AV("estado", "Esta orden ya recibió todo lo pedido.");
+
+            // Sin detalle explícito: llegó todo lo que estaba pendiente.
+            if (recibidos == null)
+                recibidos = pendiente.Select(d => new DetalleComponente06AV
+                {
+                    Componente = d.Componente,
+                    Cantidad = d.Cantidad
+                }).ToList();
+
+            recibidos = recibidos.Where(d => d.Componente != null && d.Cantidad > 0).ToList();
+            if (recibidos.Count == 0)
+                throw new ValidacionException06AV("recibidos",
+                    "Marcá al menos un componente recibido para registrar la entrega.");
+
+            // No se puede recibir más de lo que falta: el stock no se infla por un error de carga.
+            foreach (DetalleComponente06AV d in recibidos)
+            {
+                DetalleComponente06AV esperado = pendiente
+                    .FirstOrDefault(x => string.Equals(x.Componente.Codigo, d.Componente.Codigo,
+                                                       StringComparison.OrdinalIgnoreCase));
+                if (esperado == null)
+                    throw new ValidacionException06AV("recibidos",
+                        $"'{d.Componente.Codigo}' no está pendiente de recepción en esta orden.");
+                if (d.Cantidad > esperado.Cantidad)
+                    throw new ValidacionException06AV("cantidad",
+                        $"De '{d.Componente.Codigo}' faltan {esperado.Cantidad} unidades y se están " +
+                        $"declarando {d.Cantidad}.");
+            }
+
+            // Qué queda sin llegar DESPUÉS de esta recepción.
+            var faltanteFinal = new List<DetalleComponente06AV>();
+            foreach (DetalleComponente06AV p in pendiente)
+            {
+                DetalleComponente06AV llega = recibidos
+                    .FirstOrDefault(x => string.Equals(x.Componente.Codigo, p.Componente.Codigo,
+                                                       StringComparison.OrdinalIgnoreCase));
+                int resto = p.Cantidad - (llega != null ? llega.Cantidad : 0);
+                if (resto > 0)
+                    faltanteFinal.Add(new DetalleComponente06AV { Componente = p.Componente, Cantidad = resto });
+            }
+
+            bool completa = faltanteFinal.Count == 0;
+
+            // El costo cotizado cubre la orden entera: se prorratea por unidades recibidas
+            // para que la suma de las recepciones parciales dé el total adjudicado.
+            int unidadesOrden = oc.ComponentesFaltantes.Sum(d => d.Cantidad);
+            int unidadesRecibidas = recibidos.Sum(d => d.Cantidad);
+            decimal total = cotAprobada.Costo > 0 && unidadesOrden > 0
+                ? Math.Round(cotAprobada.Costo * unidadesRecibidas / unidadesOrden, 2)
                 : recibidos.Sum(d => d.Componente.PrecioUnitario * d.Cantidad);
+
+            string detalleFaltante = completa
+                ? string.Empty
+                : "Pendiente de recibir: " +
+                  string.Join(", ", faltanteFinal.Select(d => d.Componente.Codigo + " x" + d.Cantidad)) + ".";
 
             var factura = new FacturaCompra06AV
             {
@@ -192,19 +326,37 @@ namespace BLL
                 FechaEntrega = fechaEntrega,
                 ComponentesRecibidos = recibidos,
                 Total = total,
-                Observaciones = observaciones
+                Observaciones = string.Join("  ", new[] { observaciones, detalleFaltante }
+                                                 .Where(x => !string.IsNullOrWhiteSpace(x)))
             };
 
+            var sumados = new List<DetalleComponente06AV>();
             try
             {
                 _mpp.AgregarFacturaCompra(factura);
-                foreach (DetalleComponente06AV d in recibidos)
-                    _componentes.SumarStock(d.Componente.Codigo, d.Cantidad);
-                _mpp.CerrarOrdenCompra(oc.Id, fechaEntrega);
-            }
-            catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo registrar la factura de compra.", ex); }
 
-            AuditoriaPcFactory06AV.Alta($"Factura de compra {factura.NumeroFactura} (OC #{oc.NumeroCompra})", ModuloBitacora.Compras);
+                foreach (DetalleComponente06AV d in recibidos)
+                {
+                    _componentes.SumarStock(d.Componente.Codigo, d.Cantidad);
+                    sumados.Add(d);
+                }
+
+                if (completa) _mpp.CerrarOrdenCompra(oc.Id, fechaEntrega);
+                else _mpp.CambiarEstadoOrdenCompra(oc.Id, EstadoOrdenCompra06AV.RecibidaParcial);
+            }
+            catch (Exception ex)
+            {
+                // Compensación: si algo falló después de sumar, se devuelve el stock sumado.
+                foreach (DetalleComponente06AV d in sumados)
+                    try { _componentes.SumarStock(d.Componente.Codigo, -d.Cantidad); } catch { }
+                throw new AccesoDatosException06AV("No se pudo registrar la recepción de la orden.", ex);
+            }
+
+            AuditoriaPcFactory06AV.Alta(
+                $"Recepción {factura.NumeroFactura} (OC #{oc.NumeroCompra}, {unidadesRecibidas} u." +
+                (completa ? ", completa)" : ", parcial)"),
+                ModuloBitacora.Compras);
+
             return factura;
         }
 

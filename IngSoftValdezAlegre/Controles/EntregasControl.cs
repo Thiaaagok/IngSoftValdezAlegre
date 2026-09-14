@@ -1,6 +1,7 @@
 using BE;
 using BLL;
 using IngSoftValdezAlegre.Common;
+using IngSoftValdezAlegre.UI;
 using SER;
 using System;
 using System.Collections.Generic;
@@ -45,6 +46,8 @@ namespace IngSoftValdezAlegre.Controles
 
         // Formulario de cobro del saldo final
         private Label lblFormCobroTit, lblCobroDetalle, lblMonto, lblMontoValor, lblFormaPago, lblReferencia;
+        private FichaDatos06AV fichaCobro;
+        private FlowLayoutPanel flpFormaPago;
         private ComboBox cboFormaPago;
         private TextBox txtReferencia;
         private Button btnConfirmar, btnVolver;
@@ -138,33 +141,52 @@ namespace IngSoftValdezAlegre.Controles
             pnlGrilla.Controls.Add(barraSup);
         }
 
+        /// <summary>
+        /// REGISTRAR ENTREGA — el cierre del circuito de venta: se cobra el saldo y se
+        /// entrega el equipo. Los datos del cliente, el equipo y el número de serie
+        /// dejaron de ser un párrafo de tres renglones con puntos medios y pasaron a una
+        /// ficha con un dato por casillero; el saldo a cobrar —lo único que cambia de
+        /// manos— es el número grande de esa ficha, y la forma de pago son tarjetas.
+        /// </summary>
         private void ConstruirFormCobro()
         {
-            lblFormCobroTit = new Label { AutoSize = true, Location = new Point(6, 16) };
-            lblCobroDetalle = new Label { AutoSize = true, MaximumSize = new Size(620, 0), Location = new Point(8, 6) };
-            lblMonto = new Label(); lblFormaPago = new Label(); lblReferencia = new Label();
+            lblFormCobroTit = new Label { AutoSize = true, Location = new Point(16, 14) };
+            lblCobroDetalle = new Label { AutoSize = true, Location = new Point(18, 40) };
+            lblMonto = new Label();
+            lblFormaPago = TituloSeccion(38);
+            lblReferencia = new Label();
             lblMontoValor = new Label { AutoSize = true };
 
-            cboFormaPago = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 360 };
-            txtReferencia = new TextBox { Width = 360 };
+            fichaCobro = new FichaDatos06AV { Dock = DockStyle.Top, Height = 190 };
 
-            btnConfirmar = NuevoBoton(190);
+            flpFormaPago = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top, Height = 84,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true, Padding = new Padding(0, 2, 0, 2)
+            };
+
+            cboFormaPago = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 240, Visible = false };
+            txtReferencia = new TextBox { Width = 320 };
+
+            btnConfirmar = NuevoBoton(230);
             btnVolver = NuevoBoton(120);
             btnConfirmar.Click += (s, e) => ConfirmarEntrega();
             btnVolver.Click += (s, e) => MostrarGrilla();
 
             var tabla = NuevaTabla();
-            AgregarFila(tabla, lblMonto, lblMontoValor);
-            AgregarFila(tabla, lblFormaPago, cboFormaPago);
+            tabla.Dock = DockStyle.Top;
             AgregarFila(tabla, lblReferencia, txtReferencia);
 
-            var cont = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16, 8, 16, 8), AutoScroll = true };
+            var cont = new Panel { Dock = DockStyle.Fill, Padding = new Padding(18, 6, 18, 8), AutoScroll = true };
             cont.Controls.Add(tabla);
-            var cabecera = new Panel { Dock = DockStyle.Top, Height = 66, Padding = new Padding(8, 6, 8, 6) };
-            cabecera.Controls.Add(lblCobroDetalle);
-            cont.Controls.Add(cabecera);
+            cont.Controls.Add(flpFormaPago);
+            cont.Controls.Add(lblFormaPago);
+            cont.Controls.Add(fichaCobro);
+            cont.Controls.Add(cboFormaPago);
 
-            var barraTop = new Panel { Dock = DockStyle.Top, Height = 56 };
+            var barraTop = new Panel { Dock = DockStyle.Top, Height = 70 };
+            barraTop.Controls.Add(lblCobroDetalle);
             barraTop.Controls.Add(lblFormCobroTit);
             var barraBot = new Panel { Dock = DockStyle.Bottom, Height = 60 };
             barraBot.Controls.Add(BarraBotones(btnVolver, btnConfirmar));
@@ -173,6 +195,48 @@ namespace IngSoftValdezAlegre.Controles
             pnlFormCobro.Controls.Add(cont);
             pnlFormCobro.Controls.Add(barraTop);
             pnlFormCobro.Controls.Add(barraBot);
+        }
+
+        /// <summary>Título de bloque con alto holgado, para que la fuente no se corte.</summary>
+        private static Label TituloSeccion(int alto) => new Label
+        {
+            Dock = DockStyle.Top,
+            Height = alto,
+            AutoSize = false,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Padding = new Padding(2, 6, 0, 0)
+        };
+
+        private void ArmarTarjetasFormaPago()
+        {
+            flpFormaPago.SuspendLayout();
+            foreach (Control c in flpFormaPago.Controls.Cast<Control>().ToList()) c.Dispose();
+            flpFormaPago.Controls.Clear();
+
+            foreach (object item in cboFormaPago.Items)
+            {
+                var tarjeta = new TarjetaOpcion06AV
+                {
+                    Valor = item,
+                    Titulo = item.ToString(),
+                    Icono = IconoPcf06AV.Caja,
+                    Width = 210,
+                    Height = 58,
+                    Seleccionada = ReferenceEquals(item, cboFormaPago.SelectedItem)
+                };
+                object itemLocal = item;
+                tarjeta.Elegida += (s, e) => ElegirFormaPago(itemLocal);
+                flpFormaPago.Controls.Add(tarjeta);
+            }
+
+            flpFormaPago.ResumeLayout();
+        }
+
+        private void ElegirFormaPago(object item)
+        {
+            cboFormaPago.SelectedItem = item;
+            foreach (Control c in flpFormaPago.Controls)
+                if (c is TarjetaOpcion06AV t) t.Seleccionada = ReferenceEquals(t.Valor, item);
         }
 
         private static Button NuevoBoton(int width = 110) =>
@@ -237,8 +301,18 @@ namespace IngSoftValdezAlegre.Controles
             lblMontoValor.ForeColor = Tema.Primario;
             lblMontoValor.BackColor = Tema.FondoApp;
             lblMontoValor.Font = new Font("Segoe UI Semibold", 13f, FontStyle.Bold);
+            lblCobroDetalle.Font = Tema.FuenteRegular;
             lblCobroDetalle.ForeColor = Tema.TextoSuave;
             lblCobroDetalle.BackColor = Tema.FondoApp;
+            if (fichaCobro != null)
+            {
+                fichaCobro.BackColor = Tema.FondoApp;
+                flpFormaPago.BackColor = Tema.FondoApp;
+                lblFormaPago.Font = Tema.FuenteSubtit;
+                lblFormaPago.ForeColor = Tema.TextoFuerte;
+                lblFormaPago.BackColor = Tema.FondoApp;
+                fichaCobro.Invalidate();
+            }
             lblBuscar.ForeColor = Tema.TextoSuave;
 
             pnlDetalle.BackColor = Tema.FondoPanel;
@@ -264,7 +338,7 @@ namespace IngSoftValdezAlegre.Controles
             lblBuscar.Text = t.Obtener("pcf_buscar_orden_dni") + ":";
 
             lblMonto.Text = t.Obtener("pcf_saldo_a_cobrar") + ":";
-            lblFormaPago.Text = t.Obtener("pcf_forma_pago") + ":";
+            lblFormaPago.Text = t.Obtener("pcf_sena_forma");
             lblReferencia.Text = t.Obtener("pcf_referencia") + ":";
             btnConfirmar.Text = t.Obtener("pcf_confirmar_entrega");
             btnVolver.Text = t.Obtener("volver");
@@ -528,17 +602,31 @@ namespace IngSoftValdezAlegre.Controles
                                    t.Obtener("pcf_orden") + " #" + _ordenCobro.NumeroOrden;
 
             string cli = _ordenCobro.Cliente != null ? _ordenCobro.Cliente.NombreCompleto : "";
-            string dni = _ordenCobro.Cliente != null ? "DNI " + _ordenCobro.Cliente.Dni : "";
-            lblCobroDetalle.Text =
-                cli + "   ·   " + dni + "\r\n" +
-                (_ordenCobro.Computadora != null ? _ordenCobro.Computadora.Nombre : "") +
-                "   ·   " + t.Obtener("pcf_nro_serie") + " " + _ordenCobro.NumeroSerie + "\r\n" +
-                t.Obtener("pcf_total") + " " + _ordenCobro.PrecioTotal.ToString("C2") +
-                "   ·   " + t.Obtener("pcf_abonado") + " " + _ordenCobro.TotalAbonado.ToString("C2");
+            string dni = _ordenCobro.Cliente != null ? _ordenCobro.Cliente.Dni : "-";
+            decimal saldo = v != null ? v.SaldoPendiente : _ordenCobro.SaldoPendiente;
 
-            lblMontoValor.Text = (v != null ? v.SaldoPendiente : _ordenCobro.SaldoPendiente).ToString("C2");
+            lblCobroDetalle.Text = t.Obtener("pcf_entrega_ayuda");
+
+            fichaCobro.Titulo = t.Obtener("pcf_orden") + " #" + _ordenCobro.NumeroOrden;
+            fichaCobro.RotuloDestacado = t.Obtener("pcf_saldo_cobrar");
+            fichaCobro.ValorDestacado = saldo.ToString("C2");
+            fichaCobro.ColorDestacado = Tema.Acento;
+            fichaCobro.Definir(new[]
+            {
+                new DatoFicha06AV(t.Obtener("pcf_cliente"), cli),
+                new DatoFicha06AV("DNI", dni),
+                new DatoFicha06AV(t.Obtener("pcf_equipo"),
+                                  _ordenCobro.Computadora != null ? _ordenCobro.Computadora.Nombre : "-"),
+                new DatoFicha06AV(t.Obtener("pcf_nro_serie"), _ordenCobro.NumeroSerie),
+                new DatoFicha06AV(t.Obtener("pcf_total"), _ordenCobro.PrecioTotal.ToString("C2")),
+                new DatoFicha06AV(t.Obtener("pcf_abonado"), _ordenCobro.TotalAbonado.ToString("C2"))
+            });
+            fichaCobro.Height = fichaCobro.AltoNecesario;
+
+            lblMontoValor.Text = saldo.ToString("C2");
             txtReferencia.Clear();
             if (cboFormaPago.Items.Count > 0) cboFormaPago.SelectedIndex = 0;
+            ArmarTarjetasFormaPago();
 
             pnlGrilla.Visible = false;
             pnlFormCobro.Visible = true;

@@ -78,6 +78,24 @@
     <Compile Include="Controles\RolesControl.Designer.cs">
       <DependentUpon>RolesControl.cs</DependentUpon>
     </Compile>
+    <Compile Include="UI\Pintura06AV.cs" />
+    <Compile Include="UI\Iconos06AV.cs" />
+    <Compile Include="UI\RielEnsamblajeControl06AV.cs" />
+    <Compile Include="UI\TarjetaOrden06AV.cs" />
+    <Compile Include="UI\TableroEstacionesControl06AV.cs" />
+    <Compile Include="UI\MedidorReposicion06AV.cs" />
+    <Compile Include="UI\TarjetaFaltante06AV.cs" />
+    <Compile Include="UI\PasosWizard06AV.cs" />
+    <Compile Include="UI\SelectorCantidad06AV.cs" />
+    <Compile Include="UI\TarjetaCotizacion06AV.cs" />
+    <Compile Include="UI\ChasisPcControl06AV.cs" />
+    <Compile Include="UI\ItemChequeo06AV.cs" />
+    <Compile Include="UI\FichaDatos06AV.cs" />
+    <Compile Include="UI\RecepcionControl06AV.cs" />
+    <Compile Include="UI\FilaRecepcion06AV.cs" />
+    <Compile Include="UI\TarjetaOpcion06AV.cs" />
+    <Compile Include="UI\TarjetaComponente06AV.cs" />
+    <Compile Include="UI\AsistenteCompraControl06AV.cs" />
     <Compile Include="Controles\AbmBaseControl06AV.cs" />
     <Compile Include="Controles\ClientesControl.cs" />
     <Compile Include="Controles\ComponentesControl.cs" />
@@ -89,6 +107,7 @@
     <Compile Include="Controles\RecibosControl.cs" />
     <Compile Include="Controles\ProduccionControl.cs" />
     <Compile Include="Controles\ComprasControl.cs" />
+    <Compile Include="Controles\CotizacionesControl.cs" />
     <Compile Include="Controles\ConsultarStockControl.cs" />
     <Compile Include="Controles\FacturasControl.cs" />
     <Compile Include="Controles\ModelosEstandarControl.cs" />

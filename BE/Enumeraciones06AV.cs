@@ -19,16 +19,6 @@ namespace BE
         Configurable
     }
 
-    /// <summary>Rol de negocio de un usuario en el circuito de compras/ventas (RFN1/RFN2).</summary>
-    public enum RolUsuario06AV
-    {
-        Repositor,
-        GerenteCompras,
-        Almacenista,
-        Recepcionista,
-        Gerente
-    }
-
     /// <summary>
     /// Pendiente: registrada, todavía sin seña.
     /// Señada: seña cobrada, habilitada para generar la orden de producción.
@@ -75,10 +65,20 @@ namespace BE
         Desaprobada
     }
 
+    /// <summary>
+    /// Pendiente: registrada, esperando cotización.
+    /// Enviada: cotización adjudicada, esperando la mercadería.
+    /// Finalizada: llegó todo lo pedido.
+    /// RecibidaParcial: llegó parte; el resto sigue pendiente en la misma orden.
+    ///
+    /// El valor numérico se persiste: los existentes NO se reordenan, los nuevos
+    /// se agregan al final.
+    /// </summary>
     public enum EstadoOrdenCompra06AV
     {
         Pendiente,
         Enviada,
-        Finalizada
+        Finalizada,
+        RecibidaParcial
     }
 }

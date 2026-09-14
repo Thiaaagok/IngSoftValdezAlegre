@@ -31,7 +31,16 @@ namespace SER
         GestionarEntregas,
         GestionarProduccion,
         GestionarCompras,
-        GestionarModelosEstandar
+        GestionarModelosEstandar,
+
+        // Acciones sensibles del circuito de compras (RFN2).
+        // Separan funciones dentro del mismo módulo: quien registra la orden
+        // no es necesariamente quien aprueba la cotización.
+        RegistrarOrdenCompra,
+        AprobarCotizacion,
+
+        // Mesa de cotizaciones: acceso al módulo de comparación de ofertas.
+        GestionarCotizaciones
     }
 }
 

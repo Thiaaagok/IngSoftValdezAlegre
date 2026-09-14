@@ -1,6 +1,7 @@
 using BE;
 using BLL;
 using IngSoftValdezAlegre.Common;
+using IngSoftValdezAlegre.UI;
 using SER;
 using System;
 using System.Collections.Generic;
@@ -19,7 +20,6 @@ namespace IngSoftValdezAlegre.Controles
 
         private List<OrdenCompra06AV> _ordenes = new List<OrdenCompra06AV>();
         private List<PedidoCotizacion06AV> _cotizaciones = new List<PedidoCotizacion06AV>();
-        private BindingList<FaltanteVm06AV> _faltantes = new BindingList<FaltanteVm06AV>();
 
         private OrdenCompra06AV _ocSel;
 
@@ -33,12 +33,13 @@ namespace IngSoftValdezAlegre.Controles
         private Label lblDetTitulo, lblDetEstado;
         private FlowLayoutPanel flpDetalle;
 
+        // Vista "nueva orden": asistente de 3 pasos (ver UI/AsistenteCompraControl06AV).
         private Panel pnlForm;
-        private Label lblFormTitulo, lblLimite, lblRepositor;
-        private DataGridView grFaltantes;
-        private DateTimePicker dtpLimite;
-        private TextBox txtRepositor;
-        private Button btnCrear, btnVolver;
+        private AsistenteCompraControl06AV asistente;
+
+        // Vista "recepción": control de lo que realmente llegó (RFN2 paso 5).
+        private Panel pnlRecepcion;
+        private RecepcionControl06AV recepcion;
 
         public ComprasControl()
         {
@@ -60,6 +61,7 @@ namespace IngSoftValdezAlegre.Controles
 
             Controls.Add(pnlLista);
             Controls.Add(pnlForm);
+            Controls.Add(pnlRecepcion);
         }
 
         private void ConstruirVistaLista()
@@ -114,45 +116,19 @@ namespace IngSoftValdezAlegre.Controles
 
         private void ConstruirVistaFormulario()
         {
-            lblFormTitulo = new Label { Dock = DockStyle.Top, AutoSize = false, Height = 40, Padding = new Padding(6, 10, 0, 0) };
-
-            grFaltantes = new DataGridView
-            {
-                Dock = DockStyle.Fill, AllowUserToAddRows = false, AllowUserToDeleteRows = false,
-                MultiSelect = false, SelectionMode = DataGridViewSelectionMode.CellSelect,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                RowHeadersVisible = false, BorderStyle = BorderStyle.None
-            };
-            grFaltantes.DataBindingComplete += (s, e) => FormatearGrillaFaltantes();
-            grFaltantes.CurrentCellDirtyStateChanged += (s, e) =>
-            {
-                if (grFaltantes.IsCurrentCellDirty)
-                    grFaltantes.CommitEdit(DataGridViewDataErrorContexts.Commit);
-            };
-
-            lblLimite = new Label { AutoSize = true, Padding = new Padding(0, 6, 0, 0) };
-            lblRepositor = new Label { AutoSize = true, Padding = new Padding(12, 6, 0, 0) };
-            dtpLimite = new DateTimePicker { Format = DateTimePickerFormat.Short, Value = DateTime.Today.AddDays(5), Width = 140 };
-            txtRepositor = new TextBox { Width = 220 };
-            btnCrear = NuevoBoton(160);
-            btnVolver = NuevoBoton(120);
-            btnCrear.Click += (s, e) => CrearOrden();
-            btnVolver.Click += (s, e) => MostrarLista();
-
-            var barraForm = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Bottom, Height = 58, FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false, Padding = new Padding(8, 12, 8, 8)
-            };
-            barraForm.Controls.AddRange(new Control[]
-            {
-                lblLimite, dtpLimite, lblRepositor, txtRepositor, btnCrear, btnVolver
-            });
+            asistente = new AsistenteCompraControl06AV { Dock = DockStyle.Fill };
+            asistente.Cancelado += (s, e) => MostrarLista();
+            asistente.Confirmado += (s, orden) => CrearOrden(orden);
 
             pnlForm = new Panel { Dock = DockStyle.Fill, Visible = false };
-            pnlForm.Controls.Add(grFaltantes);  // Fill primero
-            pnlForm.Controls.Add(barraForm);    // Bottom
-            pnlForm.Controls.Add(lblFormTitulo);// Top
+            pnlForm.Controls.Add(asistente);
+
+            recepcion = new RecepcionControl06AV { Dock = DockStyle.Fill };
+            recepcion.Cancelado += (s, e) => MostrarLista();
+            recepcion.Confirmado += (s, r) => ConfirmarRecepcion(r);
+
+            pnlRecepcion = new Panel { Dock = DockStyle.Fill, Visible = false };
+            pnlRecepcion.Controls.Add(recepcion);
         }
 
         private static Button NuevoBoton(int width) =>
@@ -161,6 +137,7 @@ namespace IngSoftValdezAlegre.Controles
         private void MostrarLista()
         {
             pnlForm.Visible = false;
+            pnlRecepcion.Visible = false;
             pnlLista.Visible = true;
             pnlLista.BringToFront();
         }
@@ -168,9 +145,7 @@ namespace IngSoftValdezAlegre.Controles
         private void AbrirFormularioNueva()
         {
             CargarFaltantes();
-            var actual = UsuarioSesion06AV.Instancia().UsuarioActual;
-            txtRepositor.Text = actual?.Login ?? "";
-            txtRepositor.ReadOnly = true;   // el repositor es el usuario autenticado (RFN2)
+            pnlRecepcion.Visible = false;
             pnlLista.Visible = false;
             pnlForm.Visible = true;
             pnlForm.BringToFront();
@@ -231,6 +206,10 @@ namespace IngSoftValdezAlegre.Controles
             {
                 texto = t.Obtener("pcf_est_finalizada"); color = Tema.Exito; paso = Paso.Finalizada; return;
             }
+            if (oc.Estado == EstadoOrdenCompra06AV.RecibidaParcial)
+            {
+                texto = t.Obtener("pcf_est_parcial"); color = Tema.Advertencia; paso = Paso.Recibir; return;
+            }
             if (oc.Estado == EstadoOrdenCompra06AV.Enviada)
             {
                 texto = t.Obtener("pcf_est_enviada"); color = Tema.Acento; paso = Paso.Recibir; return;
@@ -246,41 +225,39 @@ namespace IngSoftValdezAlegre.Controles
             texto = t.Obtener("pcf_est_pendiente"); color = Tema.Advertencia; paso = Paso.Cotizar;
         }
 
+        /// <summary>
+        /// Arma los candidatos a reposición y se los pasa al asistente.
+        /// Los componentes ya incluidos en una OC en curso viajan marcados como
+        /// bloqueados (RFN2): se muestran, pero no se pueden volver a pedir.
+        /// </summary>
         private void CargarFaltantes()
         {
             try
             {
                 try { _ordenes = _bll.ObtenerOrdenesCompra() ?? _ordenes; } catch { }
                 var enTramite = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                foreach (var o in _ordenes.Where(o => o.Estado == EstadoOrdenCompra06AV.Pendiente
-                                                   || o.Estado == EstadoOrdenCompra06AV.Enviada))
+                foreach (var o in _ordenes.Where(o => o.Estado != EstadoOrdenCompra06AV.Finalizada))
                     foreach (var d in o.ComponentesFaltantes)
                         if (d.Componente != null && !enTramite.ContainsKey(d.Componente.Codigo))
                             enTramite[d.Componente.Codigo] = o.NumeroCompra;
 
-                _faltantes = new BindingList<FaltanteVm06AV>();
+                var items = new List<FaltanteItem06AV>();
                 foreach (var i in _bll.ObtenerFaltantes())
                 {
                     bool bloq = enTramite.TryGetValue(i.Codigo, out int ocNum);
-                    _faltantes.Add(new FaltanteVm06AV
+                    items.Add(new FaltanteItem06AV
                     {
-                        Incluir = !bloq,
-                        Bloqueado = bloq,
                         Codigo = i.Codigo,
-                        Descripcion = bloq ? i.Descripcion + "  — ya pedido (OC #" + ocNum + ")" : i.Descripcion,
-                        Stock = i.Stock, StockMinimo = i.StockMinimo,
-                        Cantidad = Math.Max(1, i.StockMinimo - i.Stock + 1)
+                        Descripcion = i.Descripcion,
+                        Stock = i.Stock,
+                        StockMinimo = i.StockMinimo,
+                        Bloqueado = bloq,
+                        OrdenBloqueo = ocNum
                     });
                 }
-                grFaltantes.DataSource = null;
-                grFaltantes.DataSource = _faltantes;
 
-                bool hay = _faltantes.Count > 0;
-                btnCrear.Enabled = hay;
-                var t = GestorIdioma06AV.Instancia;
-                lblFormTitulo.Text = hay
-                    ? t.Obtener("pcf_nueva_oc")
-                    : t.Obtener("pcf_nueva_oc") + "  —  " + t.Obtener("pcf_sin_faltantes");
+                var actual = UsuarioSesion06AV.Instancia().UsuarioActual;
+                asistente.Cargar(items, actual?.Login);
             }
             catch (Exception ex) { MostrarError(ex.Message); }
         }
@@ -437,38 +414,64 @@ namespace IngSoftValdezAlegre.Controles
             catch (Exception ex) { MostrarError(ex.Message); }
         }
 
+        /// <summary>
+        /// Abre el control de recepción con lo que todavía falta de la orden. Ya no se
+        /// da por sentado que llegó todo: el operador declara qué bajó del camión.
+        /// </summary>
         private void Recibir()
         {
             if (_ocSel == null) return;
-            bool ok = ConfirmacionForm.Mostrar(
-                $"¿Registrar la factura de compra de la orden #{_ocSel.NumeroCompra}? Se sumará el stock y la orden quedará finalizada.",
-                "Recibir", ConfirmacionForm.TipoConfirmacion.Advertencia, "Recibir", "Cancelar", FindForm());
-            if (!ok) return;
+
+            List<DetalleComponente06AV> pendiente;
+            try { pendiente = _bll.ObtenerPendienteDeRecibir(_ocSel.Id); }
+            catch (Exception ex) { MostrarError(ex.Message); return; }
+
+            if (pendiente == null || pendiente.Count == 0)
+            {
+                MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_rec_ya_completa"));
+                return;
+            }
+
+            recepcion.Cargar(_ocSel.NumeroCompra, pendiente);
+
+            pnlLista.Visible = false;
+            pnlForm.Visible = false;
+            pnlRecepcion.Visible = true;
+            pnlRecepcion.BringToFront();
+        }
+
+        private void ConfirmarRecepcion(RecepcionArmada06AV r)
+        {
+            if (_ocSel == null || r == null) return;
+            var t = GestorIdioma06AV.Instancia;
+
             try
             {
-                _bll.RegistrarFacturaCompra(_ocSel.Id, DateTime.Today, "");
-                ConfirmacionForm.MostrarInfo("Factura de compra registrada: stock actualizado y orden finalizada.",
-                    "Compras", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
+                _bll.RegistrarFacturaCompra(_ocSel.Id, r.FechaEntrega, r.Observaciones, r.Recibidos);
+
+                ConfirmacionForm.MostrarInfo(
+                    r.Completa
+                        ? t.Obtener("pcf_rec_ok_completa", _ocSel.NumeroCompra)
+                        : t.Obtener("pcf_rec_ok_parcial", _ocSel.NumeroCompra),
+                    t.Obtener("pcf_rec_titulo"),
+                    r.Completa ? ConfirmacionForm.TipoConfirmacion.Info
+                               : ConfirmacionForm.TipoConfirmacion.Advertencia,
+                    FindForm());
+
+                MostrarLista();
                 CargarOrdenes();
             }
             catch (Exception ex) { MostrarError(ex.Message); }
         }
 
-        private void CrearOrden()
+        private void CrearOrden(OrdenArmada06AV orden)
         {
-            var detalles = new List<DetalleComponente06AV>();
-            foreach (var f in _faltantes)
-                if (f.Incluir && f.Cantidad > 0)
-                    detalles.Add(new DetalleComponente06AV
-                    {
-                        Cantidad = f.Cantidad,
-                        Componente = new Componente06AV { Codigo = f.Codigo, Descripcion = f.Descripcion, Stock = f.Stock, StockMinimo = f.StockMinimo }
-                    });
+            if (orden == null || orden.Detalles == null || orden.Detalles.Count == 0) return;
 
             try
             {
                 var repositor = UsuarioSesion06AV.Instancia().UsuarioActual;
-                var oc = _bll.RegistrarOrdenCompra(detalles, dtpLimite.Value, repositor);
+                var oc = _bll.RegistrarOrdenCompra(orden.Detalles, orden.FechaLimite, repositor);
                 ConfirmacionForm.MostrarInfo($"Orden de compra #{oc.NumeroCompra} creada.",
                     "Compras", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
                 MostrarLista();
@@ -505,30 +508,6 @@ namespace IngSoftValdezAlegre.Controles
                 }
         }
 
-        private void FormatearGrillaFaltantes()
-        {
-            var t = GestorIdioma06AV.Instancia;
-            foreach (DataGridViewColumn col in grFaltantes.Columns)
-                col.ReadOnly = col.Name != "Cantidad" && col.Name != "Incluir";
-
-            void H(string col, string key) { if (grFaltantes.Columns[col] != null) grFaltantes.Columns[col].HeaderText = t.Obtener(key); }
-            H("Incluir", "pcf_col_incluir");
-            H("Codigo", "pcf_col_codigo");
-            H("Descripcion", "pcf_col_descripcion");
-            H("Stock", "pcf_col_stock");
-            H("StockMinimo", "pcf_col_minimo");
-            H("Cantidad", "pcf_col_cantidad");
-            if (grFaltantes.Columns["Incluir"] != null) grFaltantes.Columns["Incluir"].FillWeight = 28;
-
-            // Insumos ya pedidos en otra orden: en gris y bloqueados (no se pueden tildar).
-            foreach (DataGridViewRow row in grFaltantes.Rows)
-                if (row.DataBoundItem is FaltanteVm06AV vm && vm.Bloqueado)
-                {
-                    row.DefaultCellStyle.ForeColor = Tema.TextoSuave;
-                    if (grFaltantes.Columns["Incluir"] != null) row.Cells["Incluir"].ReadOnly = true;
-                    if (grFaltantes.Columns["Cantidad"] != null) row.Cells["Cantidad"].ReadOnly = true;
-                }
-        }
 
         private Label Etiqueta(string texto, bool fuerte = false)
         {
@@ -564,19 +543,17 @@ namespace IngSoftValdezAlegre.Controles
             Tema.AplicarControl(this);
             Tema.AplicarTitulo(lblTitulo);
             Tema.AplicarGrilla(grOC);
-            Tema.AplicarGrilla(grFaltantes);
             Tema.AplicarBotonSecundario(btnActualizar);
             Tema.AplicarBotonPrimario(btnNueva);
-            Tema.AplicarBotonPrimario(btnCrear);
-            Tema.AplicarBotonSecundario(btnVolver);
-            Tema.AplicarSubtitulo(lblFormTitulo);
+            asistente.AplicarTema();
             Tema.AplicarSubtitulo(lblDetTitulo);
 
             pnlDetalle.BackColor = Tema.FondoPanel;
             flpDetalle.BackColor = Tema.FondoPanel;
             lblDetTitulo.BackColor = Tema.FondoPanel;
             lblDetEstado.BackColor = Tema.FondoPanel;
-            foreach (var p in new[] { pnlLista, pnlForm }) p.BackColor = Tema.FondoApp;
+            foreach (var p in new[] { pnlLista, pnlForm, pnlRecepcion }) p.BackColor = Tema.FondoApp;
+            recepcion.AplicarTema();
 
             ActualizarDetalle();
         }
@@ -587,11 +564,8 @@ namespace IngSoftValdezAlegre.Controles
             lblTitulo.Text = t.Obtener("pcf_compras_titulo");
             btnActualizar.Text = t.Obtener("pcf_actualizar");
             btnNueva.Text = "＋ " + t.Obtener("pcf_nueva_oc");
-            lblFormTitulo.Text = t.Obtener("pcf_nueva_oc");
-            lblLimite.Text = t.Obtener("pcf_f_limite") + ":";
-            lblRepositor.Text = t.Obtener("pcf_repositor") + ":";
-            btnCrear.Text = t.Obtener("pcf_crear_orden");
-            btnVolver.Text = t.Obtener("pcf_atras");
+            asistente.AplicarIdioma();
+            recepcion.AplicarIdioma();
 
             if (grOC.DataSource != null) CargarOrdenes();
             else ActualizarDetalle();
@@ -614,15 +588,5 @@ namespace IngSoftValdezAlegre.Controles
             [Browsable(false)] public PedidoCotizacion06AV Cotizacion { get; set; }
         }
 
-        private class FaltanteVm06AV
-        {
-            public bool Incluir { get; set; }
-            [Browsable(false)] public bool Bloqueado { get; set; }
-            public string Codigo { get; set; }
-            public string Descripcion { get; set; }
-            public int Stock { get; set; }
-            public int StockMinimo { get; set; }
-            public int Cantidad { get; set; }
-        }
     }
 }

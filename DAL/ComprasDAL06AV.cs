@@ -95,6 +95,20 @@ namespace DAL
             });
         }
 
+        /// <summary>Facturas (recepciones) registradas contra una orden de compra.</summary>
+        public DataTable ObtenerFacturasPorOrden(string idOrdenCompra) =>
+            EjecutarSP("sp_FacturaCompra_ObtenerPorOrden", new Dictionary<string, object>
+            {
+                { "@IdOrdenCompra", idOrdenCompra }
+            });
+
+        /// <summary>Detalle (componente + cantidad) de una factura de compra.</summary>
+        public DataTable ObtenerFacturaCompraDetalle(string numeroFactura) =>
+            EjecutarSP("sp_FacturaCompra_ObtenerDetalle", new Dictionary<string, object>
+            {
+                { "@NumeroFactura", numeroFactura }
+            });
+
         public void AgregarFacturaCompraDetalle(string numeroFactura, string codigoComponente, int cantidad)
         {
             EjecutarSPNonQuery("sp_FacturaCompra_AgregarDetalle", new Dictionary<string, object>

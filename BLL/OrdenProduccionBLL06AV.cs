@@ -193,6 +193,11 @@ namespace BLL
                     "No se pudo cerrar la orden (se restituyó el stock). Detalle: " + ex.Message, ex);
             }
 
+            // La línea se ocupa al planificar y se libera acá: el equipo terminado sale
+            // del puesto. Sin esto las líneas quedaban tomadas para siempre y, con todas
+            // ocupadas, no se podía planificar ninguna orden nueva.
+            LiberarLinea(orden);
+
             AuditoriaPcFactory06AV.Modificacion(
                 $"Orden #{numeroOrden} finalizada (N° de serie {numeroSerie})", ModuloBitacora.Produccion);
             return numeroSerie;
@@ -247,11 +252,7 @@ namespace BLL
                 if (anterior == EstadoOrdenProduccion06AV.Pendiente)
                 {
                     _mpp.Desplanificar(numeroOrden);
-                    if (orden.LineaEnsamblaje != null)
-                    {
-                        orden.LineaEnsamblaje.Disponible = true;
-                        _lineasMpp.Modificar(orden.LineaEnsamblaje);
-                    }
+                    LiberarLinea(orden);
                 }
                 else
                 {
@@ -268,6 +269,22 @@ namespace BLL
         // ══════════════════════════════════════════════════════════
         //  Helpers
         // ══════════════════════════════════════════════════════════
+        /// <summary>
+        /// Devuelve la línea al pool de disponibles. Se llama al finalizar la orden y al
+        /// desplanificarla: son los dos momentos en que el equipo deja de ocupar el puesto.
+        /// No rompe el cierre si falla (la orden ya se cerró bien).
+        /// </summary>
+        private void LiberarLinea(OrdenProduccion06AV orden)
+        {
+            if (orden == null || orden.LineaEnsamblaje == null) return;
+            try
+            {
+                orden.LineaEnsamblaje.Disponible = true;
+                _lineasMpp.Modificar(orden.LineaEnsamblaje);
+            }
+            catch { }
+        }
+
         /// <summary>N° de serie legible y único por orden: SN-AAAA-00042.</summary>
         private static string GenerarNumeroSerie(OrdenProduccion06AV orden) =>
             $"SN-{DateTime.Now:yyyy}-{orden.NumeroOrden:00000}";

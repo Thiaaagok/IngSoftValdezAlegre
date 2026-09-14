@@ -51,7 +51,6 @@
     <Compile Include="LineasEnsamblajeBLL06AV.cs" />
     <Compile Include="VentasBLL06AV.cs" />
     <Compile Include="EntregasBLL06AV.cs" />
-    <Compile Include="RolNegocio06AV.cs" />
     <Compile Include="OrdenProduccionBLL06AV.cs" />
     <Compile Include="CompraInsumosBLL06AV.cs" />
     <Compile Include="IntegridadBLL06AV.cs" />

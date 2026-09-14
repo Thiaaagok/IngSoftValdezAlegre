@@ -146,6 +146,22 @@
       <Link>Scripts\30_seed_demo_pcfactory.sql</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\SQL\31_pcfactory_patentes_compras.sql">
+      <Link>Scripts\31_pcfactory_patentes_compras.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SQL\32_sincronizar_patentes.sql">
+      <Link>Scripts\32_sincronizar_patentes.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SQL\33_liberar_lineas_trabadas.sql">
+      <Link>Scripts\33_liberar_lineas_trabadas.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SQL\34_recepcion_parcial.sql">
+      <Link>Scripts\34_recepcion_parcial.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

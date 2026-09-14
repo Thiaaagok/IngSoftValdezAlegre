@@ -1,6 +1,7 @@
 using BE;
 using BLL;
 using IngSoftValdezAlegre.Common;
+using IngSoftValdezAlegre.UI;
 using SER;
 using System;
 using System.Collections.Generic;
@@ -48,13 +49,21 @@ namespace IngSoftValdezAlegre.Controles
 
         // Formulario "Nueva venta"
         private Label lblFormVentaTit, lblCliente, lblTipo, lblModelo, lblComp, lblEntrega;
+        private Label lblResumenTit, lblResumenVacio, lblTotalRotulo, lblTotalValor, lblVentaAyuda;
         private ResumenPcControl06AV _resumen;
-        private ComboBox cboCliente, cboTipo, cboModelo;
+        private ComboBox cboCliente;
+        private FlowLayoutPanel flpTipo, flpModelos;
+        private Panel pnlTicket, pnlArmar;
+        private TipoConfiguracion06AV _tipoElegido = TipoConfiguracion06AV.Estandar;
+        private ModeloEstandar06AV _modeloElegido;
+        private List<ModeloEstandar06AV> _modelos = new List<ModeloEstandar06AV>();
         private Button btnNuevoCliente, btnArmar, btnRegistrar, btnVolverVenta;
         private DateTimePicker dtpEntrega;
 
         // Formulario "Registrar seña" (CU03)
         private Label lblFormPagoTit, lblPagoDetalle, lblMonto, lblFormaPago, lblReferencia;
+        private FichaDatos06AV fichaPago;
+        private FlowLayoutPanel flpFormaPago;
         private Label lblMontoValor;
         private ComboBox cboFormaPago;
         private TextBox txtReferencia;
@@ -138,95 +147,273 @@ namespace IngSoftValdezAlegre.Controles
             pnlGrilla.Controls.Add(barraSup);
         }
 
+        /// <summary>
+        /// NUEVA VENTA — armado del pedido a la izquierda, ticket a la derecha.
+        ///
+        /// El formulario anterior era una tabla de etiqueta+control donde todo pesaba
+        /// lo mismo: el combo de tipo, el de modelo y la lista de ocho componentes
+        /// compartían jerarquía con la fecha de entrega, y el total aparecía perdido
+        /// al final de la lista.
+        ///
+        /// La venta tiene en realidad dos mitades distintas: DECIDIR (quién compra,
+        /// qué equipo, para cuándo) y CONFIRMAR (qué lleva y cuánto sale). Por eso la
+        /// pantalla se parte: a la izquierda los pasos de la decisión, cada uno en su
+        /// bloque; a la derecha un ticket fijo con el equipo y el total en grande, que
+        /// se actualiza con cada cambio y tiene el botón de registrar al pie.
+        ///
+        /// El tipo de configuración dejó de ser un combo: son dos tarjetas, porque la
+        /// elección cambia toda la pantalla (modelos vs. configurador) y merece verse.
+        /// </summary>
         private void ConstruirFormVenta()
         {
-            lblFormVentaTit = new Label { AutoSize = true, Location = new Point(6, 16) };
-            lblCliente = new Label(); lblTipo = new Label(); lblModelo = new Label();
-            lblComp = new Label(); lblEntrega = new Label();
+            lblFormVentaTit = new Label { AutoSize = true, Location = new Point(16, 14) };
+            lblVentaAyuda = new Label { AutoSize = true, Location = new Point(18, 40) };
+            // TextAlign centrado en vertical + alto generoso: con Padding arriba y alto
+            // justo, la fuente de subtítulo se cortaba por abajo.
+            lblCliente = TituloSeccion(32);
+            lblTipo = TituloSeccion(40);
+            lblModelo = TituloSeccion(40);
+            lblComp = new Label();
+            lblEntrega = new Label();
             _resumen = new ResumenPcControl06AV();
 
-            cboCliente = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 310 };
-            btnNuevoCliente = new Button { Width = 44, Height = 26, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Margin = new Padding(6, 0, 0, 0) };
+            // ── Cliente ──────────────────────────────────────────
+            cboCliente = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 340 };
+            btnNuevoCliente = new Button { Width = 44, Height = 28, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Margin = new Padding(8, 0, 0, 0) };
             btnNuevoCliente.Click += (s, e) => AbrirNuevoCliente();
 
             var pnlCliente = new FlowLayoutPanel
             {
-                FlowDirection = FlowDirection.LeftToRight, AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Margin = new Padding(0)
+                Dock = DockStyle.Top, Height = 38,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false, Margin = new Padding(0)
             };
             pnlCliente.Controls.Add(cboCliente);
             pnlCliente.Controls.Add(btnNuevoCliente);
 
-            cboTipo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 360 };
-            cboTipo.DataSource = Enum.GetValues(typeof(TipoConfiguracion06AV));
-            cboTipo.SelectedIndexChanged += (s, e) => ActualizarModeloSegunTipo();
-            cboModelo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 360 };
-            cboModelo.SelectedIndexChanged += (s, e) => AplicarModeloSeleccionado();
+            // ── Tipo de equipo (dos tarjetas) ────────────────────
+            flpTipo = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top, Height = 80,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false, Padding = new Padding(0, 2, 0, 2)
+            };
 
-            btnArmar = new Button { Width = 190, Height = 32, AutoSize = false, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            // ── Modelos estándar / configurador ─────────────────
+            flpModelos = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top, Height = 156,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true, AutoScroll = true,
+                Padding = new Padding(0, 2, 0, 2)
+            };
+
+            btnArmar = new Button
+            {
+                Width = 230, Height = 40, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand,
+                Location = new Point(0, 6)
+            };
             btnArmar.Click += (s, e) => AbrirAsistenteComponentes();
 
-            dtpEntrega = new DateTimePicker { Format = DateTimePickerFormat.Short, Value = DateTime.Today.AddDays(15), Width = 360 };
-            btnRegistrar = NuevoBoton(150);
-            btnVolverVenta = NuevoBoton(120);
+            // El botón va dentro de un panel acoplado: un Button suelto en un panel con
+            // hijos Dock.Top se queda en (0,0) y se monta encima del primer bloque.
+            pnlArmar = new Panel { Dock = DockStyle.Top, Height = 52 };
+            pnlArmar.Controls.Add(btnArmar);
+
+            // ── Entrega ──────────────────────────────────────────
+            dtpEntrega = new DateTimePicker { Format = DateTimePickerFormat.Short, Value = DateTime.Today.AddDays(15), Width = 220 };
+            var tablaEntrega = NuevaTabla();
+            tablaEntrega.Dock = DockStyle.Top;
+            AgregarFila(tablaEntrega, lblEntrega, dtpEntrega);
+
+            var cont = new Panel { Dock = DockStyle.Fill, Padding = new Padding(18, 6, 18, 8), AutoScroll = true };
+            cont.Controls.Add(tablaEntrega);
+            cont.Controls.Add(pnlArmar);
+            cont.Controls.Add(flpModelos);
+            cont.Controls.Add(lblModelo);
+            cont.Controls.Add(flpTipo);
+            cont.Controls.Add(lblTipo);
+            cont.Controls.Add(pnlCliente);
+            cont.Controls.Add(lblCliente);
+
+            // ── Ticket (derecha) ─────────────────────────────────
+            lblResumenTit = new Label { Dock = DockStyle.Top, Height = 30, AutoSize = false };
+            lblResumenVacio = new Label { Dock = DockStyle.Top, Height = 52, AutoSize = false, Padding = new Padding(0, 4, 0, 0) };
+
+            var flpResumen = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false, AutoScroll = true,
+                Padding = new Padding(0, 2, 0, 4)
+            };
+            flpResumen.Controls.Add(_resumen);
+
+            lblTotalRotulo = new Label { Dock = DockStyle.Top, Height = 20, AutoSize = false };
+            lblTotalValor = new Label { Dock = DockStyle.Top, Height = 44, AutoSize = false };
+
+            btnRegistrar = NuevoBoton(240);
+            btnVolverVenta = NuevoBoton(240);
             btnRegistrar.Click += (s, e) => RegistrarVenta();
             btnVolverVenta.Click += (s, e) => MostrarGrilla();
+            btnRegistrar.Margin = new Padding(0, 6, 0, 4);
+            btnVolverVenta.Margin = new Padding(0, 0, 0, 4);
 
-            var pnlComp = new FlowLayoutPanel
+            var flpAcciones = new FlowLayoutPanel
             {
-                FlowDirection = FlowDirection.TopDown, AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Margin = new Padding(0)
+                Dock = DockStyle.Bottom,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false, AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink
             };
-            pnlComp.Controls.Add(btnArmar);
-            pnlComp.Controls.Add(_resumen);
+            flpAcciones.Controls.Add(btnRegistrar);
+            flpAcciones.Controls.Add(btnVolverVenta);
 
-            var tabla = NuevaTabla();
-            AgregarFila(tabla, lblCliente, pnlCliente);
-            AgregarFila(tabla, lblTipo, cboTipo);
-            AgregarFila(tabla, lblModelo, cboModelo);
-            AgregarFila(tabla, lblComp, pnlComp);
-            AgregarFila(tabla, lblEntrega, dtpEntrega);
+            var pnlTotal = new Panel { Dock = DockStyle.Bottom, Height = 70 };
+            pnlTotal.Controls.Add(lblTotalValor);
+            pnlTotal.Controls.Add(lblTotalRotulo);
 
-            var cont = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16, 8, 16, 8), AutoScroll = true };
-            cont.Controls.Add(tabla);
-            var barraTop = new Panel { Dock = DockStyle.Top, Height = 56 };
+            pnlTicket = new Panel { Dock = DockStyle.Right, Width = 340, Padding = new Padding(18, 14, 18, 12) };
+            pnlTicket.Controls.Add(flpResumen);
+            pnlTicket.Controls.Add(lblResumenVacio);
+            pnlTicket.Controls.Add(lblResumenTit);
+            pnlTicket.Controls.Add(pnlTotal);
+            pnlTicket.Controls.Add(flpAcciones);
+
+            var barraTop = new Panel { Dock = DockStyle.Top, Height = 70 };
+            barraTop.Controls.Add(lblVentaAyuda);
             barraTop.Controls.Add(lblFormVentaTit);
-            var barraBot = new Panel { Dock = DockStyle.Bottom, Height = 60 };
-            barraBot.Controls.Add(BarraBotones(btnVolverVenta, btnRegistrar));
 
             pnlFormVenta = new Panel { Dock = DockStyle.Fill, Visible = false };
             pnlFormVenta.Controls.Add(cont);
+            pnlFormVenta.Controls.Add(pnlTicket);
             pnlFormVenta.Controls.Add(barraTop);
-            pnlFormVenta.Controls.Add(barraBot);
+
+            ArmarTarjetasTipo();
         }
 
+        /// <summary>Las dos formas de comprar un equipo, como tarjetas excluyentes.</summary>
+        private void ArmarTarjetasTipo()
+        {
+            var t = GestorIdioma06AV.Instancia;
+
+            flpTipo.SuspendLayout();
+            foreach (Control c in flpTipo.Controls.Cast<Control>().ToList()) c.Dispose();
+            flpTipo.Controls.Clear();
+
+            foreach (TipoConfiguracion06AV tipo in new[]
+                     { TipoConfiguracion06AV.Estandar, TipoConfiguracion06AV.Configurable })
+            {
+                bool estandar = tipo == TipoConfiguracion06AV.Estandar;
+                var tarjeta = new TarjetaOpcion06AV
+                {
+                    Valor = tipo,
+                    Titulo = t.Obtener(estandar ? "pcf_venta_tipo_estandar" : "pcf_venta_tipo_config"),
+                    Subtitulo = t.Obtener(estandar ? "pcf_venta_tipo_estandar_det" : "pcf_venta_tipo_config_det"),
+                    Icono = estandar ? IconoPcf06AV.Caja : IconoPcf06AV.Destornillador,
+                    Width = 300,
+                    Seleccionada = tipo == _tipoElegido
+                };
+                TipoConfiguracion06AV tipoLocal = tipo;
+                tarjeta.Elegida += (s, e) => ElegirTipo(tipoLocal);
+                flpTipo.Controls.Add(tarjeta);
+            }
+
+            flpTipo.ResumeLayout();
+        }
+
+        private void ElegirTipo(TipoConfiguracion06AV tipo)
+        {
+            _tipoElegido = tipo;
+            foreach (Control c in flpTipo.Controls)
+                if (c is TarjetaOpcion06AV t)
+                    t.Seleccionada = t.Valor is TipoConfiguracion06AV v && v == tipo;
+            ActualizarModeloSegunTipo();
+        }
+
+        /// <summary>Cada modelo estándar como tarjeta con su cantidad de piezas y precio.</summary>
+        private void ArmarTarjetasModelo()
+        {
+            var t = GestorIdioma06AV.Instancia;
+
+            flpModelos.SuspendLayout();
+            foreach (Control c in flpModelos.Controls.Cast<Control>().ToList()) c.Dispose();
+            flpModelos.Controls.Clear();
+
+            foreach (ModeloEstandar06AV m in _modelos)
+            {
+                var tarjeta = new TarjetaOpcion06AV
+                {
+                    Valor = m,
+                    Titulo = m.Nombre,
+                    Subtitulo = t.Obtener("pcf_armar_n_componentes", m.Componentes != null ? m.Componentes.Count : 0),
+                    Etiqueta = m.PrecioTotal.ToString("C0"),
+                    Icono = IconoPcf06AV.Caja,
+                    Width = 300,
+                    Seleccionada = _modeloElegido != null && _modeloElegido.Id == m.Id
+                };
+                ModeloEstandar06AV mLocal = m;
+                tarjeta.Elegida += (s, e) => ElegirModelo(mLocal);
+                flpModelos.Controls.Add(tarjeta);
+            }
+
+            flpModelos.ResumeLayout();
+        }
+
+        private void ElegirModelo(ModeloEstandar06AV modelo)
+        {
+            _modeloElegido = modelo;
+            foreach (Control c in flpModelos.Controls)
+                if (c is TarjetaOpcion06AV t)
+                    t.Seleccionada = t.Valor is ModeloEstandar06AV m && modelo != null && m.Id == modelo.Id;
+            AplicarModeloSeleccionado();
+        }
+
+        /// <summary>
+        /// REGISTRAR SEÑA — el monto es fijo (50% del total) y no se discute: lo único
+        /// que decide el cajero es CÓMO cobra. Por eso el importe pasó a ser el número
+        /// grande de una ficha de contexto, junto con quién compra y qué lleva, y la
+        /// forma de pago dejó de ser un combo para ser tres tarjetas visibles.
+        /// </summary>
         private void ConstruirFormPago()
         {
-            lblFormPagoTit = new Label { AutoSize = true, Location = new Point(6, 16) };
-            lblPagoDetalle = new Label { AutoSize = true, MaximumSize = new Size(560, 0), Location = new Point(8, 8) };
-            lblMonto = new Label(); lblFormaPago = new Label(); lblReferencia = new Label();
-            lblMontoValor = new Label { AutoSize = true, Font = new Font("Segoe UI Semibold", 13f, FontStyle.Bold) };
+            lblFormPagoTit = new Label { AutoSize = true, Location = new Point(16, 14) };
+            lblPagoDetalle = new Label { AutoSize = true, Location = new Point(18, 40) };
+            lblMonto = new Label();
+            lblFormaPago = TituloSeccion(38);
+            lblReferencia = new Label();
+            lblMontoValor = new Label { AutoSize = true };
 
-            cboFormaPago = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 360 };
-            txtReferencia = new TextBox { Width = 360 };
+            fichaPago = new FichaDatos06AV { Dock = DockStyle.Top, Height = 150 };
 
-            btnConfirmarPago = NuevoBoton(150);
+            flpFormaPago = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top, Height = 84,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true, Padding = new Padding(0, 2, 0, 2)
+            };
+
+            cboFormaPago = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 240, Visible = false };
+            txtReferencia = new TextBox { Width = 320 };
+
+            btnConfirmarPago = NuevoBoton(210);
             btnVolverPago = NuevoBoton(120);
             btnConfirmarPago.Click += (s, e) => ConfirmarPago();
             btnVolverPago.Click += (s, e) => MostrarGrilla();
 
             var tabla = NuevaTabla();
-            AgregarFila(tabla, lblMonto, lblMontoValor);
-            AgregarFila(tabla, lblFormaPago, cboFormaPago);
+            tabla.Dock = DockStyle.Top;
             AgregarFila(tabla, lblReferencia, txtReferencia);
 
-            var cont = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16, 8, 16, 8), AutoScroll = true };
+            var cont = new Panel { Dock = DockStyle.Fill, Padding = new Padding(18, 6, 18, 8), AutoScroll = true };
             cont.Controls.Add(tabla);
-            var cabecera = new Panel { Dock = DockStyle.Top, Height = 46, Padding = new Padding(8, 6, 8, 6) };
-            cabecera.Controls.Add(lblPagoDetalle);
-            cont.Controls.Add(cabecera);
+            cont.Controls.Add(flpFormaPago);
+            cont.Controls.Add(lblFormaPago);
+            cont.Controls.Add(fichaPago);
+            cont.Controls.Add(cboFormaPago);
 
-            var barraTop = new Panel { Dock = DockStyle.Top, Height = 56 };
+            var barraTop = new Panel { Dock = DockStyle.Top, Height = 70 };
+            barraTop.Controls.Add(lblPagoDetalle);
             barraTop.Controls.Add(lblFormPagoTit);
             var barraBot = new Panel { Dock = DockStyle.Bottom, Height = 60 };
             barraBot.Controls.Add(BarraBotones(btnVolverPago, btnConfirmarPago));
@@ -236,6 +423,49 @@ namespace IngSoftValdezAlegre.Controles
             pnlFormPago.Controls.Add(barraTop);
             pnlFormPago.Controls.Add(barraBot);
         }
+
+        /// <summary>Las formas de pago como tarjetas: son tres, no tiene sentido esconderlas.</summary>
+        private void ArmarTarjetasFormaPago()
+        {
+            flpFormaPago.SuspendLayout();
+            foreach (Control c in flpFormaPago.Controls.Cast<Control>().ToList()) c.Dispose();
+            flpFormaPago.Controls.Clear();
+
+            foreach (object item in cboFormaPago.Items)
+            {
+                var tarjeta = new TarjetaOpcion06AV
+                {
+                    Valor = item,
+                    Titulo = item.ToString(),
+                    Icono = IconoPcf06AV.Caja,
+                    Width = 210,
+                    Height = 58,
+                    Seleccionada = ReferenceEquals(item, cboFormaPago.SelectedItem)
+                };
+                object itemLocal = item;
+                tarjeta.Elegida += (s, e) => ElegirFormaPago(itemLocal);
+                flpFormaPago.Controls.Add(tarjeta);
+            }
+
+            flpFormaPago.ResumeLayout();
+        }
+
+        private void ElegirFormaPago(object item)
+        {
+            cboFormaPago.SelectedItem = item;
+            foreach (Control c in flpFormaPago.Controls)
+                if (c is TarjetaOpcion06AV t) t.Seleccionada = ReferenceEquals(t.Valor, item);
+        }
+
+        /// <summary>Título de bloque: alto holgado y texto centrado, para que nunca se corte.</summary>
+        private static Label TituloSeccion(int alto) => new Label
+        {
+            Dock = DockStyle.Top,
+            Height = alto,
+            AutoSize = false,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Padding = new Padding(2, 6, 0, 0)
+        };
 
         private static Button NuevoBoton(int width = 110) =>
             new Button { Width = width, Height = 32, Margin = new Padding(6, 0, 0, 0), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
@@ -310,6 +540,52 @@ namespace IngSoftValdezAlegre.Controles
             flpDetalle.BackColor = Tema.FondoPanel;
             lblDetTitulo.BackColor = Tema.FondoPanel;
             lblDetEstado.BackColor = Tema.FondoPanel;
+            if (fichaPago != null)
+            {
+                fichaPago.BackColor = Tema.FondoApp;
+                flpFormaPago.BackColor = Tema.FondoApp;
+                lblFormaPago.Font = Tema.FuenteSubtit;
+                lblFormaPago.ForeColor = Tema.TextoFuerte;
+                lblFormaPago.BackColor = Tema.FondoApp;
+                lblPagoDetalle.Font = Tema.FuenteRegular;
+                lblPagoDetalle.ForeColor = Tema.TextoSuave;
+                lblPagoDetalle.BackColor = Tema.FondoApp;
+                fichaPago.Invalidate();
+            }
+
+            if (pnlTicket != null)
+            {
+                pnlTicket.BackColor = Tema.FondoPanel;
+                foreach (Control c in pnlTicket.Controls) c.BackColor = Tema.FondoPanel;
+                Tema.AplicarSubtitulo(lblResumenTit);
+                lblResumenTit.BackColor = Tema.FondoPanel;
+                lblResumenVacio.Font = Tema.FuenteRegular;
+                lblResumenVacio.ForeColor = Tema.TextoSuave;
+                lblResumenVacio.BackColor = Tema.FondoPanel;
+                lblTotalRotulo.Font = Tema.FuenteMini;
+                lblTotalRotulo.ForeColor = Tema.TextoSuave;
+                lblTotalRotulo.BackColor = Tema.FondoPanel;
+                lblTotalValor.Font = new Font("Segoe UI Semibold", 22f, FontStyle.Bold);
+                lblTotalValor.ForeColor = Tema.TextoFuerte;
+                lblTotalValor.BackColor = Tema.FondoPanel;
+                _resumen.BackColor = Tema.FondoPanel;
+                Tema.AplicarBotonSecundario(btnVolverVenta);
+                Tema.AplicarBotonAcento(btnArmar);
+
+                foreach (Label l in new[] { lblCliente, lblTipo, lblModelo })
+                {
+                    l.Font = Tema.FuenteSubtit;
+                    l.ForeColor = Tema.TextoFuerte;
+                    l.BackColor = Tema.FondoApp;
+                }
+                lblVentaAyuda.Font = Tema.FuenteRegular;
+                lblVentaAyuda.ForeColor = Tema.TextoSuave;
+                lblVentaAyuda.BackColor = Tema.FondoApp;
+                foreach (Control c in new Control[] { flpTipo, flpModelos, pnlArmar })
+                    c.BackColor = Tema.FondoApp;
+                ActualizarResumenComp();
+            }
+
             foreach (Control panel in new[] { pnlGrilla, pnlFormVenta, pnlFormPago })
             {
                 panel.BackColor = Tema.FondoApp;
@@ -328,19 +604,26 @@ namespace IngSoftValdezAlegre.Controles
             btnRefrescar.Text = t.Obtener("pcf_refrescar");
 
             lblFormVentaTit.Text = t.Obtener("pcf_nueva_venta");
-            lblCliente.Text = t.Obtener("pcf_cliente") + ":";
+            lblVentaAyuda.Text = t.Obtener("pcf_venta_ayuda");
+            lblCliente.Text = t.Obtener("pcf_venta_paso_cliente");
+            lblResumenTit.Text = t.Obtener("pcf_venta_ticket");
+            lblResumenVacio.Text = t.Obtener("pcf_venta_ticket_vacio");
+            lblTotalRotulo.Text = t.Obtener("pcf_armar_total");
             btnNuevoCliente.Text = "＋";
-            lblTipo.Text = t.Obtener("tipo") + ":";
-            lblModelo.Text = t.Obtener("pcf_modelo") + ":";
+            lblTipo.Text = t.Obtener("pcf_venta_paso_tipo");
+            lblModelo.Text = t.Obtener("pcf_venta_paso_modelo");
+            ArmarTarjetasTipo();
+            ArmarTarjetasModelo();
             lblComp.Text = t.Obtener("pcf_componentes") + ":";
             btnArmar.Text = t.Obtener("pcf_elegir_componentes");
             lblEntrega.Text = t.Obtener("pcf_f_entrega_estimada") + ":";
+            btnVolverVenta.Text = t.Obtener("volver");
             btnRegistrar.Text = t.Obtener("pcf_registrar_venta");
             btnVolverVenta.Text = t.Obtener("volver");
             ActualizarResumenComp();
 
             lblMonto.Text = t.Obtener("pcf_monto") + ":";
-            lblFormaPago.Text = t.Obtener("pcf_forma_pago") + ":";
+            lblFormaPago.Text = t.Obtener("pcf_sena_forma");
             lblReferencia.Text = t.Obtener("pcf_referencia") + ":";
             btnVolverPago.Text = t.Obtener("volver");
             CargarFormasPago();
@@ -358,7 +641,8 @@ namespace IngSoftValdezAlegre.Controles
             {
                 _cargandoCombos = true;
                 cboCliente.DataSource = _clientesBLL.ObtenerTodos();
-                cboModelo.DataSource = _modelosBLL.ObtenerTodos();
+                _modelos = _modelosBLL.ObtenerTodos() ?? new List<ModeloEstandar06AV>();
+                ArmarTarjetasModelo();
             }
             catch (Exception ex) { MostrarError(ex.Message); }
             finally { _cargandoCombos = false; }
@@ -631,8 +915,10 @@ namespace IngSoftValdezAlegre.Controles
         private void AbrirFormVenta()
         {
             CargarCombos();
-            if (cboTipo.Items.Count > 0) cboTipo.SelectedIndex = 0;
-            if (cboModelo.Items.Count > 0) cboModelo.SelectedIndex = 0;
+            _tipoElegido = TipoConfiguracion06AV.Estandar;
+            _modeloElegido = _modelos.FirstOrDefault();
+            ArmarTarjetasTipo();
+            ArmarTarjetasModelo();
             _componentesElegidos = new List<Componente06AV>();
             dtpEntrega.Value = DateTime.Today.AddDays(15);
             ActualizarModeloSegunTipo();
@@ -655,14 +941,26 @@ namespace IngSoftValdezAlegre.Controles
                                   t.Obtener("pcf_venta") + " #" + _ventaPago.NumeroVenta;
 
             string cli = _ventaPago.Cliente != null ? _ventaPago.Cliente.NombreCompleto : "";
-            lblPagoDetalle.Text = cli + "   ·   " +
-                (_ventaPago.Computadora != null ? _ventaPago.Computadora.Nombre : "") +
-                "   ·   " + t.Obtener("pcf_total") + " " + _ventaPago.PrecioTotal.ToString("C0");
+            lblPagoDetalle.Text = t.Obtener("pcf_sena_ayuda");
+
+            fichaPago.Titulo = t.Obtener("pcf_venta") + " #" + _ventaPago.NumeroVenta;
+            fichaPago.RotuloDestacado = t.Obtener("pcf_sena_a_cobrar");
+            fichaPago.ValorDestacado = _ventaPago.MontoSenaRequerido.ToString("C2");
+            fichaPago.ColorDestacado = Tema.Primario;
+            fichaPago.Definir(new[]
+            {
+                new DatoFicha06AV(t.Obtener("pcf_cliente"), cli),
+                new DatoFicha06AV(t.Obtener("pcf_total"), _ventaPago.PrecioTotal.ToString("C0")),
+                new DatoFicha06AV(t.Obtener("pcf_equipo"),
+                                  _ventaPago.Computadora != null ? _ventaPago.Computadora.Nombre : "-", true)
+            });
+            fichaPago.Height = fichaPago.AltoNecesario;
 
             lblMontoValor.Text = _ventaPago.MontoSenaRequerido.ToString("C2");
             btnConfirmarPago.Text = t.Obtener("pcf_confirmar_sena");
             txtReferencia.Clear();
             if (cboFormaPago.Items.Count > 0) cboFormaPago.SelectedIndex = 0;
+            ArmarTarjetasFormaPago();
 
             pnlGrilla.Visible = false;
             pnlFormVenta.Visible = false;
@@ -671,12 +969,20 @@ namespace IngSoftValdezAlegre.Controles
         }
 
         // ── Componentes: modelo estándar o asistente "Armá tu PC" ────
+        /// <summary>
+        /// El tipo elegido decide qué mitad de la pantalla tiene sentido: con Estándar
+        /// se muestran los modelos y se esconde el configurador; con Configurable, al revés.
+        /// Mostrar las dos cosas a la vez era lo que hacía el formulario viejo, con el
+        /// combo de modelo grisado pero igual presente.
+        /// </summary>
         private void ActualizarModeloSegunTipo()
         {
-            bool estandar = cboTipo.SelectedItem is TipoConfiguracion06AV tc && tc == TipoConfiguracion06AV.Estandar;
-            lblModelo.Enabled = estandar;
-            cboModelo.Enabled = estandar;
-            btnArmar.Enabled = !estandar;
+            bool estandar = _tipoElegido == TipoConfiguracion06AV.Estandar;
+
+            lblModelo.Visible = estandar;
+            flpModelos.Visible = estandar;
+            pnlArmar.Visible = !estandar;
+
             if (estandar) AplicarModeloSeleccionado();
             else
             {
@@ -688,9 +994,9 @@ namespace IngSoftValdezAlegre.Controles
         private void AplicarModeloSeleccionado()
         {
             if (_cargandoCombos) return;
-            if (!(cboTipo.SelectedItem is TipoConfiguracion06AV tc) || tc != TipoConfiguracion06AV.Estandar) return;
-            if (!(cboModelo.SelectedItem is ModeloEstandar06AV modelo)) return;
-            _componentesElegidos = new List<Componente06AV>(modelo.Componentes ?? new List<Componente06AV>());
+            if (_tipoElegido != TipoConfiguracion06AV.Estandar) return;
+            if (_modeloElegido == null) { ActualizarResumenComp(); return; }
+            _componentesElegidos = new List<Componente06AV>(_modeloElegido.Componentes ?? new List<Componente06AV>());
             ActualizarResumenComp();
         }
 
@@ -711,7 +1017,19 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
-        private void ActualizarResumenComp() => _resumen.Mostrar(_componentesElegidos);
+        private void ActualizarResumenComp()
+        {
+            _resumen.Mostrar(_componentesElegidos);
+
+            bool hay = _componentesElegidos != null && _componentesElegidos.Count > 0;
+            decimal total = hay ? _componentesElegidos.Sum(c => c.PrecioUnitario) : 0m;
+
+            lblResumenVacio.Visible = !hay;
+            lblTotalValor.Text = total.ToString("C0");
+            btnRegistrar.Enabled = hay;
+            if (hay) Tema.AplicarBotonPrimario(btnRegistrar);
+            else Tema.AplicarBotonDeshabilitado(btnRegistrar);
+        }
 
         /// <summary>CU02: alta rápida de cliente sin abandonar la venta.</summary>
         private void AbrirNuevoCliente()
@@ -738,9 +1056,10 @@ namespace IngSoftValdezAlegre.Controles
 
             var pc = new Computadora06AV
             {
-                TipoConfiguracion = (TipoConfiguracion06AV)(cboTipo.SelectedItem ?? TipoConfiguracion06AV.Estandar),
-                Nombre = cboModelo.Enabled && cboModelo.SelectedItem is ModeloEstandar06AV m
-                    ? m.Nombre : cboTipo.SelectedItem?.ToString()
+                TipoConfiguracion = _tipoElegido,
+                Nombre = _tipoElegido == TipoConfiguracion06AV.Estandar && _modeloElegido != null
+                    ? _modeloElegido.Nombre
+                    : _tipoElegido.ToString()
             };
             foreach (var c in _componentesElegidos) pc.Componentes.Add(c);
 

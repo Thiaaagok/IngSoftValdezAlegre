@@ -91,6 +91,43 @@ namespace MPP
                 _dal.AgregarFacturaCompraDetalle(f.NumeroFactura, d.Componente.Codigo, d.Cantidad);
         }
 
+        /// <summary>
+        /// Recepciones ya registradas contra una orden. Se usa para saber cuánto falta
+        /// todavía cuando una orden quedó Recibida parcial.
+        /// </summary>
+        public List<FacturaCompra06AV> ObtenerFacturasPorOrden(string idOrdenCompra)
+        {
+            var lista = new List<FacturaCompra06AV>();
+            foreach (DataRow row in _dal.ObtenerFacturasPorOrden(idOrdenCompra).Rows)
+            {
+                string numero = row["NumeroFactura"].ToString();
+                var f = new FacturaCompra06AV
+                {
+                    NumeroFactura = numero,
+                    NumeroCompra = row["IdOrdenCompra"].ToString(),
+                    FechaEmision = Convert.ToDateTime(row["FechaEmision"]),
+                    FechaEntrega = Convert.ToDateTime(row["FechaEntrega"]),
+                    Total = row["Total"] == DBNull.Value ? 0m : Convert.ToDecimal(row["Total"]),
+                    Observaciones = row["Observaciones"] == DBNull.Value ? "" : row["Observaciones"].ToString(),
+                    ComponentesRecibidos = ObtenerDetalleFactura(numero)
+                };
+                lista.Add(f);
+            }
+            return lista;
+        }
+
+        private List<DetalleComponente06AV> ObtenerDetalleFactura(string numeroFactura)
+        {
+            var lista = new List<DetalleComponente06AV>();
+            foreach (DataRow r in _dal.ObtenerFacturaCompraDetalle(numeroFactura).Rows)
+                lista.Add(new DetalleComponente06AV
+                {
+                    Componente = MapearComponente(r),
+                    Cantidad = Convert.ToInt32(r["Cantidad"])
+                });
+            return lista;
+        }
+
         // ── Helpers de mapeo ─────────────────────────────────────
         private OrdenCompra06AV MapearOrdenCompra(DataRow row)
         {
