@@ -2843,3 +2843,37 @@ PRINT ' Instalacion COMPLETA de IngSoftValdezAlegre finalizada.';
 PRINT ' Login: admin   Password: Admin1234 (cambio obligatorio).';
 PRINT '=============================================================';
 GO
+
+-- ============================================================
+--  Recepción de mercadería con control (ver 34_recepcion_parcial.sql).
+--  Sin estos dos SP, "Recibir insumos" falla al intentar leer las
+--  recepciones ya registradas contra la orden.
+-- ============================================================
+GO
+CREATE OR ALTER PROCEDURE sp_FacturaCompra_ObtenerPorOrden
+    @IdOrdenCompra NVARCHAR(30)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT  f.NumeroFactura, f.IdOrdenCompra, f.FechaEmision,
+            f.FechaEntrega, f.Total, f.Observaciones
+    FROM    FacturaCompra f
+    WHERE   f.IdOrdenCompra = @IdOrdenCompra
+    ORDER BY f.FechaEmision;
+END
+GO
+
+CREATE OR ALTER PROCEDURE sp_FacturaCompra_ObtenerDetalle
+    @NumeroFactura NVARCHAR(30)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT  d.CodigoComponente, d.Cantidad,
+            c.Descripcion, c.Marca, c.Modelo, c.PrecioUnitario,
+            c.Stock, c.StockMinimo, c.Tipo
+    FROM    FacturaCompraDetalle d
+            JOIN Componentes c ON c.Codigo = d.CodigoComponente
+    WHERE   d.NumeroFactura = @NumeroFactura
+    ORDER BY c.Descripcion;
+END
+GO

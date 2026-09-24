@@ -37,6 +37,10 @@ namespace IngSoftValdezAlegre.Controles
         private Panel pnlForm;
         private AsistenteCompraControl06AV asistente;
 
+        // Vista "pedir cotización": proveedor + precio en una sola pantalla (RFN2 paso 3).
+        private Panel pnlCotizacion;
+        private PedidoCotizacionControl06AV cotizador;
+
         // Vista "recepción": control de lo que realmente llegó (RFN2 paso 5).
         private Panel pnlRecepcion;
         private RecepcionControl06AV recepcion;
@@ -61,6 +65,7 @@ namespace IngSoftValdezAlegre.Controles
 
             Controls.Add(pnlLista);
             Controls.Add(pnlForm);
+            Controls.Add(pnlCotizacion);
             Controls.Add(pnlRecepcion);
         }
 
@@ -123,6 +128,14 @@ namespace IngSoftValdezAlegre.Controles
             pnlForm = new Panel { Dock = DockStyle.Fill, Visible = false };
             pnlForm.Controls.Add(asistente);
 
+            cotizador = new PedidoCotizacionControl06AV { Dock = DockStyle.Fill };
+            cotizador.Cancelado += (s, e) => MostrarLista();
+            cotizador.Confirmado += (s, c) => RegistrarCotizacion(c);
+            cotizador.NuevoProveedor += (s, e) => AltaProveedorDesdeCotizador();
+
+            pnlCotizacion = new Panel { Dock = DockStyle.Fill, Visible = false };
+            pnlCotizacion.Controls.Add(cotizador);
+
             recepcion = new RecepcionControl06AV { Dock = DockStyle.Fill };
             recepcion.Cancelado += (s, e) => MostrarLista();
             recepcion.Confirmado += (s, r) => ConfirmarRecepcion(r);
@@ -137,6 +150,7 @@ namespace IngSoftValdezAlegre.Controles
         private void MostrarLista()
         {
             pnlForm.Visible = false;
+            pnlCotizacion.Visible = false;
             pnlRecepcion.Visible = false;
             pnlLista.Visible = true;
             pnlLista.BringToFront();
@@ -146,6 +160,7 @@ namespace IngSoftValdezAlegre.Controles
         {
             CargarFaltantes();
             pnlRecepcion.Visible = false;
+            pnlCotizacion.Visible = false;
             pnlLista.Visible = false;
             pnlForm.Visible = true;
             pnlForm.BringToFront();
@@ -328,27 +343,8 @@ namespace IngSoftValdezAlegre.Controles
             var t = GestorIdioma06AV.Instancia;
             flpDetalle.Controls.Add(TextoSecundario(t.Obtener("pcf_hint_cotizar")));
 
-            flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_proveedor")));
-            var cbo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 330, Margin = new Padding(0, 2, 0, 6) };
-            CargarProveedoresEn(cbo);
-            Tema.AplicarEntrada(cbo);
-            flpDetalle.Controls.Add(cbo);
-
-            var btnNuevoProv = BotonDetalle(t.Obtener("pcf_nuevo_proveedor"), Tema.AplicarBotonSecundario);
-            btnNuevoProv.Click += (s, e) =>
-            {
-                using (var dlg = new FRMNuevoProveedor06AV())
-                    if (dlg.ShowDialog(FindForm()) == DialogResult.OK && dlg.ProveedorCreado != null)
-                    {
-                        CargarProveedoresEn(cbo);
-                        foreach (var it in cbo.Items)
-                            if (it is Proveedor06AV pr && pr.Cuit == dlg.ProveedorCreado.Cuit) { cbo.SelectedItem = it; break; }
-                    }
-            };
-            flpDetalle.Controls.Add(btnNuevoProv);
-
             var btnPedir = BotonDetalle(t.Obtener("pcf_pedir_cotizacion"), Tema.AplicarBotonAcento);
-            btnPedir.Click += (s, e) => PedirCotizacion(cbo.SelectedItem as Proveedor06AV);
+            btnPedir.Click += (s, e) => AbrirPedidoCotizacion();
             flpDetalle.Controls.Add(btnPedir);
         }
 
@@ -381,24 +377,83 @@ namespace IngSoftValdezAlegre.Controles
             flpDetalle.Controls.Add(TextoSecundario("✓  " + t.Obtener("pcf_hint_finalizada")));
         }
 
-        private void PedirCotizacion(Proveedor06AV prov)
+        /// <summary>
+        /// Abre la pantalla de pedido de cotización con la orden seleccionada. Reemplaza
+        /// al combo del panel lateral + el diálogo modal de precio: elegir proveedor y
+        /// fijar el precio son dos mitades de la misma decisión y ahora viven juntas,
+        /// con la orden a la vista.
+        /// </summary>
+        private void AbrirPedidoCotizacion()
         {
-            if (_ocSel == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_sel_orden")); return; }
-            if (prov == null) { MostrarError("Elegí un proveedor."); return; }
-
-            using (var dlg = new FRMCotizacion06AV())
+            if (_ocSel == null)
             {
-                if (dlg.ShowDialog(FindForm()) != DialogResult.OK) return;
+                MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_sel_orden"));
+                return;
+            }
+
+            List<Proveedor06AV> proveedores;
+            try { proveedores = _proveedoresBLL.ObtenerTodos(); }
+            catch (Exception ex) { MostrarError(ex.Message); return; }
+
+            cotizador.Cargar(_ocSel, proveedores, ProveedoresConOfertaAbierta(_ocSel));
+
+            pnlLista.Visible = false;
+            pnlForm.Visible = false;
+            pnlRecepcion.Visible = false;
+            pnlCotizacion.Visible = true;
+            pnlCotizacion.BringToFront();
+        }
+
+        /// <summary>
+        /// Proveedores que ya tienen una oferta sin resolver en esta orden: el BLL las
+        /// rechaza, así que conviene que la pantalla las muestre apagadas de entrada.
+        /// </summary>
+        private List<int> ProveedoresConOfertaAbierta(OrdenCompra06AV oc)
+        {
+            return _cotizaciones
+                .Where(c => c.NumeroCompra == oc.Id
+                            && c.Estado == EstadoCotizacion06AV.PorAprobar
+                            && c.Proveedor != null)
+                .Select(c => c.Proveedor.Id)
+                .Distinct()
+                .ToList();
+        }
+
+        private void AltaProveedorDesdeCotizador()
+        {
+            using (var dlg = new FRMNuevoProveedor06AV())
+            {
+                if (dlg.ShowDialog(FindForm()) != DialogResult.OK || dlg.ProveedorCreado == null) return;
                 try
                 {
-                    var cot = _bll.RegistrarCotizacion(_ocSel.Id, prov.Id, dlg.Costo, dlg.Condiciones);
-                    ConfirmacionForm.MostrarInfo(
-                        $"Cotización #{cot.Numero} enviada a {prov.Nombre} (${dlg.Costo:0.00}).",
-                        "Compras", ConfirmacionForm.TipoConfirmacion.Info, FindForm());
-                    CargarOrdenes();
+                    var proveedores = _proveedoresBLL.ObtenerTodos();
+                    var creado = proveedores.FirstOrDefault(p => p.Cuit == dlg.ProveedorCreado.Cuit);
+                    cotizador.RecargarProveedores(proveedores, creado != null ? creado.Id : (int?)null);
                 }
                 catch (Exception ex) { MostrarError(ex.Message); }
             }
+        }
+
+        private void RegistrarCotizacion(CotizacionArmada06AV armada)
+        {
+            if (_ocSel == null || armada == null || armada.Proveedor == null) return;
+
+            try
+            {
+                var cot = _bll.RegistrarCotizacion(_ocSel.Id, armada.Proveedor.Id,
+                                                   armada.Costo, armada.Condiciones);
+                ConfirmacionForm.MostrarInfo(
+                    GestorIdioma06AV.Instancia.Obtener("pcf_cotp_ok", cot.Numero,
+                                                       armada.Proveedor.Nombre, armada.Costo.ToString("C0")),
+                    GestorIdioma06AV.Instancia.Obtener("pcf_compras_titulo"),
+                    ConfirmacionForm.TipoConfirmacion.Info, FindForm());
+
+                int numero = _ocSel.NumeroCompra;
+                MostrarLista();
+                CargarOrdenes();
+                SeleccionarOrden(numero);
+            }
+            catch (Exception ex) { MostrarError(ex.Message); }
         }
 
         private void AprobarDesaprobar(PedidoCotizacion06AV cot, bool aprobar)
@@ -436,6 +491,7 @@ namespace IngSoftValdezAlegre.Controles
 
             pnlLista.Visible = false;
             pnlForm.Visible = false;
+            pnlCotizacion.Visible = false;
             pnlRecepcion.Visible = true;
             pnlRecepcion.BringToFront();
         }
@@ -478,12 +534,6 @@ namespace IngSoftValdezAlegre.Controles
                 CargarOrdenes();
                 SeleccionarOrden(oc.NumeroCompra);
             }
-            catch (Exception ex) { MostrarError(ex.Message); }
-        }
-
-        private void CargarProveedoresEn(ComboBox cbo)
-        {
-            try { cbo.DataSource = _proveedoresBLL.ObtenerTodos(); }
             catch (Exception ex) { MostrarError(ex.Message); }
         }
 
@@ -546,13 +596,14 @@ namespace IngSoftValdezAlegre.Controles
             Tema.AplicarBotonSecundario(btnActualizar);
             Tema.AplicarBotonPrimario(btnNueva);
             asistente.AplicarTema();
+            cotizador.AplicarTema();
             Tema.AplicarSubtitulo(lblDetTitulo);
 
             pnlDetalle.BackColor = Tema.FondoPanel;
             flpDetalle.BackColor = Tema.FondoPanel;
             lblDetTitulo.BackColor = Tema.FondoPanel;
             lblDetEstado.BackColor = Tema.FondoPanel;
-            foreach (var p in new[] { pnlLista, pnlForm, pnlRecepcion }) p.BackColor = Tema.FondoApp;
+            foreach (var p in new[] { pnlLista, pnlForm, pnlCotizacion, pnlRecepcion }) p.BackColor = Tema.FondoApp;
             recepcion.AplicarTema();
 
             ActualizarDetalle();
@@ -565,6 +616,7 @@ namespace IngSoftValdezAlegre.Controles
             btnActualizar.Text = t.Obtener("pcf_actualizar");
             btnNueva.Text = "＋ " + t.Obtener("pcf_nueva_oc");
             asistente.AplicarIdioma();
+            cotizador.AplicarIdioma();
             recepcion.AplicarIdioma();
 
             if (grOC.DataSource != null) CargarOrdenes();

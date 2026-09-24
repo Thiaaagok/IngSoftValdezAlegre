@@ -81,21 +81,44 @@
     <Compile Include="UI\Pintura06AV.cs" />
     <Compile Include="UI\Iconos06AV.cs" />
     <Compile Include="UI\RielEnsamblajeControl06AV.cs" />
-    <Compile Include="UI\TarjetaOrden06AV.cs" />
-    <Compile Include="UI\TableroEstacionesControl06AV.cs" />
-    <Compile Include="UI\MedidorReposicion06AV.cs" />
+    <Compile Include="UI\TarjetaOrden06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\TableroEstacionesControl06AV.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\MedidorReposicion06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="UI\TarjetaFaltante06AV.cs" />
-    <Compile Include="UI\PasosWizard06AV.cs" />
-    <Compile Include="UI\SelectorCantidad06AV.cs" />
-    <Compile Include="UI\TarjetaCotizacion06AV.cs" />
+    <Compile Include="UI\PasosWizard06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\SelectorCantidad06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\TarjetaCotizacion06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="UI\ChasisPcControl06AV.cs" />
-    <Compile Include="UI\ItemChequeo06AV.cs" />
+    <Compile Include="UI\ItemChequeo06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="UI\FichaDatos06AV.cs" />
+    <Compile Include="UI\PedidoCotizacionControl06AV.cs" />
     <Compile Include="UI\RecepcionControl06AV.cs" />
-    <Compile Include="UI\FilaRecepcion06AV.cs" />
-    <Compile Include="UI\TarjetaOpcion06AV.cs" />
-    <Compile Include="UI\TarjetaComponente06AV.cs" />
-    <Compile Include="UI\AsistenteCompraControl06AV.cs" />
+    <Compile Include="UI\FilaRecepcion06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\TarjetaOpcion06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\TarjetaComponente06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\AsistenteCompraControl06AV.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="Controles\AbmBaseControl06AV.cs" />
     <Compile Include="Controles\ClientesControl.cs" />
     <Compile Include="Controles\ComponentesControl.cs" />

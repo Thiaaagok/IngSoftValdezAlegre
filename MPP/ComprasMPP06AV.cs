@@ -1,10 +1,11 @@
-using BE;
+﻿using BE;
 using DAL;
 using SER;
 using SER.Generador;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 
 namespace MPP
 {
@@ -98,7 +99,16 @@ namespace MPP
         public List<FacturaCompra06AV> ObtenerFacturasPorOrden(string idOrdenCompra)
         {
             var lista = new List<FacturaCompra06AV>();
-            foreach (DataRow row in _dal.ObtenerFacturasPorOrden(idOrdenCompra).Rows)
+
+            // Base sin el script 34 aplicado: los SP de lectura de recepciones todavía
+            // no existen. Eso no es un error de datos — significa que nunca se recibió
+            // nada contra ninguna orden — así que se responde "sin recepciones" en vez
+            // de tumbar la pantalla de recepción entera.
+            DataTable tabla;
+            try { tabla = _dal.ObtenerFacturasPorOrden(idOrdenCompra); }
+            catch (SqlException ex) when (EsProcedimientoInexistente(ex)) { return lista; }
+
+            foreach (DataRow row in tabla.Rows)
             {
                 string numero = row["NumeroFactura"].ToString();
                 var f = new FacturaCompra06AV
@@ -116,10 +126,18 @@ namespace MPP
             return lista;
         }
 
+        /// <summary>SQL 2812: "Could not find stored procedure" — falta correr un script.</summary>
+        private static bool EsProcedimientoInexistente(SqlException ex) => ex != null && ex.Number == 2812;
+
         private List<DetalleComponente06AV> ObtenerDetalleFactura(string numeroFactura)
         {
             var lista = new List<DetalleComponente06AV>();
-            foreach (DataRow r in _dal.ObtenerFacturaCompraDetalle(numeroFactura).Rows)
+
+            DataTable tabla;
+            try { tabla = _dal.ObtenerFacturaCompraDetalle(numeroFactura); }
+            catch (SqlException ex) when (EsProcedimientoInexistente(ex)) { return lista; }
+
+            foreach (DataRow r in tabla.Rows)
                 lista.Add(new DetalleComponente06AV
                 {
                     Componente = MapearComponente(r),
