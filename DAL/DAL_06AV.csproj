@@ -49,6 +49,7 @@
     <Compile Include="ProveedoresDAL06AV.cs" />
     <Compile Include="LineasEnsamblajeDAL06AV.cs" />
     <Compile Include="VentasDAL06AV.cs" />
+    <Compile Include="ReportesDAL06AV.cs" />
     <Compile Include="ProduccionDAL06AV.cs" />
     <Compile Include="ComprasDAL06AV.cs" />
     <Compile Include="FamiliaDAL06AV.cs" />

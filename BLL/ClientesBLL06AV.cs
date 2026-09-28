@@ -84,6 +84,7 @@ namespace BLL
             if (string.IsNullOrWhiteSpace(dni))
                 throw new ValidacionException06AV("Dni", "El DNI es obligatorio.");
 
+            // No controla el largo: un DNI de más de 20 dígitos llega a la base y falla ahí.
             foreach (char c in dni.Trim())
                 if (!char.IsDigit(c))
                     throw new ValidacionException06AV("Dni", "El DNI debe contener solo números.");

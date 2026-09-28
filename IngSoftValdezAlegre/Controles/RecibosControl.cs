@@ -13,7 +13,7 @@ namespace IngSoftValdezAlegre.Controles
 {
     /// <summary>
     /// Recibos de seña emitidos (RFN1). Cada recibo documenta el pago de seña sobre una
-    /// computadora registrada, con su monto abonado y saldo pendiente (valores snapshot).
+    /// computadora registrada, con el monto abonado y el saldo que quedó después de la seña.
     /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class RecibosControl : UserControl, IIdiomaAplicable06AV

@@ -1,4 +1,5 @@
 using BE;
+using BLL.Armado;
 using IngSoftValdezAlegre.Common;
 using IngSoftValdezAlegre.UI;
 using SER;
@@ -11,14 +12,7 @@ using System.Windows.Forms;
 namespace IngSoftValdezAlegre
 {
     /// <summary>
-    /// ARMÁ TU PC — configurador de equipos a medida.
-    ///
-    /// Antes: un ListBox con una línea de texto por componente y un cuadro vacío
-    /// llamado "Tu PC" que no decía nada hasta que elegías algo. El vendedor no veía
-    /// cuántas piezas faltaban, ni podía comparar dos opciones sin leer dos renglones
-    /// separados por puntos.
-    ///
-    /// Ahora la pantalla tiene dos mitades con roles distintos:
+    /// ARMÁ TU PC — configurador de equipos a medida. La pantalla tiene dos mitades:
     ///   · IZQUIERDA, el CHASIS: las bahías del equipo están todas a la vista desde el
     ///     arranque, vacías y punteadas. Se van llenando a medida que elegís, y se puede
     ///     volver a cualquier bahía con un clic. El total acompaña abajo.
@@ -31,22 +25,11 @@ namespace IngSoftValdezAlegre
     [System.ComponentModel.DesignerCategory("Code")]
     public class FRMArmarPc06AV : Form
     {
-        private static readonly TipoComponente06AV[] OrdenTipos =
-        {
-            TipoComponente06AV.Procesador, TipoComponente06AV.PlacaMadre,
-            TipoComponente06AV.MemoriaRAM, TipoComponente06AV.Disco,
-            TipoComponente06AV.PlacaDeVideo, TipoComponente06AV.Fuente,
-            TipoComponente06AV.Gabinete, TipoComponente06AV.Refrigeracion,
-            TipoComponente06AV.Otro
-        };
-
-        // Opcionales: la PC funciona sin ellos. El resto es obligatorio.
-        private static readonly TipoComponente06AV[] Salteables =
-        {
-            TipoComponente06AV.PlacaDeVideo, TipoComponente06AV.Refrigeracion, TipoComponente06AV.Otro
-        };
-
-        private static bool EsSalteable(TipoComponente06AV t) => Array.IndexOf(Salteables, t) >= 0;
+        // El orden de los pasos y qué bahías se pueden saltear NO se definen en la
+        // pantalla: son la receta del Director del patrón Builder
+        // (BLL.Armado.ArmadorComputadora06AV). Si la receta cambia, el configurador
+        // cambia solo, y nunca puede quedar desalineado con lo que la BLL acepta.
+        private static bool EsSalteable(TipoComponente06AV t) => !ArmadorComputadora06AV.EsObligatorio(t);
 
         private readonly List<Componente06AV> _todos;
         private readonly List<TipoComponente06AV> _pasos;
@@ -68,7 +51,12 @@ namespace IngSoftValdezAlegre
                               IEnumerable<Componente06AV> preseleccion = null)
         {
             _todos = (componentes ?? Enumerable.Empty<Componente06AV>()).ToList();
-            _pasos = OrdenTipos.Where(t => _todos.Any(c => c.Tipo == t)).ToList();
+            // Las bahías obligatorias aparecen siempre, aunque el catálogo no tenga
+            // opciones (el paso lo avisa); las opcionales, sólo si hay algo para elegir.
+            _pasos = ArmadorComputadora06AV.Pasos
+                .Where(p => p.Obligatorio || _todos.Any(c => c.Tipo == p.Tipo))
+                .Select(p => p.Tipo)
+                .ToList();
             if (preseleccion != null)
                 foreach (Componente06AV c in preseleccion)
                     if (c != null) _elegidos[c.Tipo] = c;

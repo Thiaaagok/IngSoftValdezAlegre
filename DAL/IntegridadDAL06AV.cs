@@ -32,6 +32,7 @@ namespace DAL
             "OrdenesCompra",
             "OrdenCompraDetalle",
             "PedidosCotizacion",
+            "PedidoCotizacionDetalle",
             "ModelosEstandar",
             "ModeloEstandarComponentes"
         };

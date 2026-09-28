@@ -19,7 +19,8 @@ namespace MPP
         // ── Computadora ──────────────────────────────────────────
         public void GuardarComputadora(Computadora06AV pc)
         {
-            pc.Id = _dal.AgregarComputadora(pc.Nombre, (int)pc.TipoConfiguracion, pc.PrecioTotal);
+            int? idModelo = pc.ModeloOrigen != null && pc.ModeloOrigen.Id > 0 ? pc.ModeloOrigen.Id : (int?)null;
+            pc.Id = _dal.AgregarComputadora(pc.Nombre, (int)pc.TipoConfiguracion, pc.PrecioTotal, idModelo);
 
             // La lista de componentes puede traer repetidos (2 módulos de RAM, 2 discos…):
             // se guarda una fila por código con su cantidad.
@@ -37,10 +38,13 @@ namespace MPP
             {
                 Id = Convert.ToInt32(r["Id"]),
                 Nombre = r["Nombre"] == DBNull.Value ? "" : r["Nombre"].ToString(),
-                TipoConfiguracion = (TipoConfiguracion06AV)Convert.ToInt32(r["TipoConfiguracion"])
+                TipoConfiguracion = (TipoConfiguracion06AV)Convert.ToInt32(r["TipoConfiguracion"]),
+                ModeloOrigen = MapearModeloOrigen(r),
+                PrecioPactado = MapearPrecioPactado(r)
             };
 
-            // Se expande la cantidad para que PrecioTotal siga siendo la suma de la lista.
+            // Una pieza por unidad, como la arma el builder: Requerimientos cuenta bien la
+            // cantidad y, si no hay precio pactado, la suma sigue dando el total.
             foreach (DataRow rc in _dal.ObtenerComponentesDeComputadora(id).Rows)
             {
                 int cantidad = rc.Table.Columns.Contains("Cantidad") && rc["Cantidad"] != DBNull.Value
@@ -50,6 +54,37 @@ namespace MPP
             }
 
             return pc;
+        }
+
+        /// <summary>
+        /// Precio grabado al vender. Una fila sin precio (0 o NULL) no tiene precio
+        /// pactado y el total vuelve a salir de la suma de los componentes.
+        /// </summary>
+        private static decimal? MapearPrecioPactado(DataRow r)
+        {
+            if (!r.Table.Columns.Contains("PrecioTotal") || r["PrecioTotal"] == DBNull.Value) return null;
+            decimal precio = Convert.ToDecimal(r["PrecioTotal"]);
+            return precio > 0m ? precio : (decimal?)null;
+        }
+
+        /// <summary>
+        /// Referencia liviana al modelo del catálogo (Id, Nombre, Descripción), o null
+        /// si el equipo es a medida. Tolera bases sin la columna IdModeloOrigen
+        /// (script 35 sin correr): en ese caso el equipo simplemente no tiene modelo.
+        /// </summary>
+        private static ModeloEstandar06AV MapearModeloOrigen(DataRow r)
+        {
+            DataColumnCollection cols = r.Table.Columns;
+            if (!cols.Contains("IdModeloOrigen") || r["IdModeloOrigen"] == DBNull.Value) return null;
+
+            return new ModeloEstandar06AV
+            {
+                Id = Convert.ToInt32(r["IdModeloOrigen"]),
+                Nombre = cols.Contains("ModeloNombre") && r["ModeloNombre"] != DBNull.Value
+                    ? r["ModeloNombre"].ToString() : "",
+                Descripcion = cols.Contains("ModeloDescripcion") && r["ModeloDescripcion"] != DBNull.Value
+                    ? r["ModeloDescripcion"].ToString() : ""
+            };
         }
 
         // ── Venta ────────────────────────────────────────────────

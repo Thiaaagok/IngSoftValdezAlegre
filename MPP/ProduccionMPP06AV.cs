@@ -71,6 +71,8 @@ namespace MPP
         public void Cerrar(int numero, string numeroSerie) => _dal.CerrarOrden(numero, numeroSerie);
 
         // ── Helpers de mapeo ─────────────────────────────────────
+        // Cada orden trae su venta completa y su línea con consultas propias: listar N
+        // órdenes hace varias consultas por orden.
         private OrdenProduccion06AV MapearOrden(DataRow row)
         {
             int numeroVenta = Convert.ToInt32(row["NumeroVenta"]);

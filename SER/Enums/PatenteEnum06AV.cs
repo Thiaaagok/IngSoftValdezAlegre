@@ -40,7 +40,13 @@ namespace SER
         AprobarCotizacion,
 
         // Mesa de cotizaciones: acceso al módulo de comparación de ofertas.
-        GestionarCotizaciones
+        GestionarCotizaciones,
+
+        // Reporte RF1 (ventas y producción).
+        VerReporteVentas,
+
+        // A03: serializar y des-serializar objetos.
+        Serializar
     }
 }
 

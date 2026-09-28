@@ -11,7 +11,7 @@
 --
 --  La venta RESERVA (CU01) y el cierre de la orden de producción CONSUME
 --  la reserva descontando el stock físico (CU06, componentes efectivamente
---  utilizados). Anular la venta o volver atrás la orden LIBERA la reserva.
+--  utilizados). Anular la venta LIBERA la reserva.
 --
 --  BAJA LÓGICA (bitácora de cambios):
 --    Bit_Lo_Bo = 0 → componente vigente;  Bit_Lo_Bo = 1 → dado de baja.
@@ -172,7 +172,7 @@ BEGIN
 END
 GO
 
--- Devuelve unidades reservadas al stock libre (venta anulada, orden vuelta atrás).
+-- Devuelve unidades reservadas al stock libre (venta anulada o compensación de una venta que no se grabó).
 CREATE OR ALTER PROCEDURE sp_Componentes_LiberarReserva
     @Codigo   NVARCHAR(50),
     @Cantidad INT

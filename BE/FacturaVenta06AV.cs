@@ -3,9 +3,9 @@ using System;
 namespace BE
 {
     /// <summary>
-    /// Factura de venta: documenta la entrega de la computadora al cliente (CU07).
-    /// Total es un SNAPSHOT (se congela al emitir; no se recalcula aunque cambien los
-    /// precios de los componentes). Los pagos NO se duplican acá: se navegan desde
+    /// Factura de venta de la entrega (CU07). Ninguna capa la usa: la factura en PDF
+    /// se arma con la venta y su pago de saldo final (ComprobantePcFactory06AV), y el
+    /// número FAC-… lo genera sp_Pagos_Agregar. Los pagos se navegan desde
     /// <see cref="Venta06AV.Pagos"/>.
     /// </summary>
     public class FacturaVenta06AV

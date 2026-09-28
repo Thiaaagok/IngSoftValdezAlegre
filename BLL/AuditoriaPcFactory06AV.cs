@@ -19,6 +19,8 @@ namespace BLL
 
         private static void Registrar(Action<BitacoraBLL06AV> accion)
         {
+            // El DV se recalcula por el cambio que la BLL acaba de grabar (la bitácora no es
+            // tabla protegida). Los errores se ignoran: la operación ya quedó hecha.
             try { new IntegridadBLL06AV().RecalcularSeguro(); } catch { }
             try { accion(new BitacoraBLL06AV()); } catch { }
         }

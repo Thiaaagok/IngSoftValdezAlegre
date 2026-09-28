@@ -64,6 +64,7 @@
     <Compile Include="IntentoLogin06AV.cs" />
     <Compile Include="Patente06AV.cs" />
     <Compile Include="Rol06AV.cs" />
+    <Compile Include="Serializacion\SerializadorXmlSER06AV.cs" />
     <Compile Include="Usuario06AV.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UsuarioSesion06AV.cs" />

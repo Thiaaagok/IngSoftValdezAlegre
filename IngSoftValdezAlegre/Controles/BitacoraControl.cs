@@ -37,6 +37,7 @@ namespace IngSoftValdezAlegre.Controles
                 { ModuloBitacora.Ventas,         new[] { CategoriaBitacora.Alta, CategoriaBitacora.Modificacion, CategoriaBitacora.Baja } },
                 { ModuloBitacora.Compras,        new[] { CategoriaBitacora.Alta, CategoriaBitacora.Modificacion, CategoriaBitacora.Baja } },
                 { ModuloBitacora.Reportes,       new[] { CategoriaBitacora.Error, CategoriaBitacora.ErrorCritico } },
+                { ModuloBitacora.Serializacion,  new[] { CategoriaBitacora.Serializacion, CategoriaBitacora.Deserializacion, CategoriaBitacora.Error } },
             };
 
         public BitacoraControl()

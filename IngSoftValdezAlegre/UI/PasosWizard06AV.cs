@@ -34,6 +34,12 @@ namespace IngSoftValdezAlegre.UI
             Invalidate();
         }
 
+        /// <summary>
+        /// Número que muestra el primer paso. Sirve para repartir una numeración entre dos
+        /// cabeceras: la serialización usa 1 a 4 en una y 5 a 8 en la otra.
+        /// </summary>
+        public int PrimerNumero { get; set; } = 1;
+
         public int Actual
         {
             get { return _actual; }
@@ -107,7 +113,7 @@ namespace IngSoftValdezAlegre.UI
                 else
                 {
                     using (var p = new Pen(tinta, 1.6f)) g.DrawEllipse(p, num);
-                    Pintura06AV.TextoCentrado(g, (i + 1).ToString(), Tema.FuenteMini, tinta, num);
+                    Pintura06AV.TextoCentrado(g, (PrimerNumero + i).ToString(), Tema.FuenteMini, tinta, num);
                 }
 
                 var rTexto = new Rectangle(num.Right + 8, caja.Y, caja.Right - num.Right - 14, caja.Height);

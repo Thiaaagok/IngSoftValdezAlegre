@@ -133,7 +133,7 @@ namespace DAL
             });
         }
 
-        /// <summary>Devuelve unidades reservadas al stock libre (venta anulada, orden vuelta atrás).</summary>
+        /// <summary>Devuelve unidades reservadas al stock libre (venta anulada o compensación de una venta que no se grabó).</summary>
         public void LiberarReserva(string codigo, int cantidad)
         {
             EjecutarSPNonQuery("sp_Componentes_LiberarReserva", new Dictionary<string, object>

@@ -60,6 +60,9 @@
     <Compile Include="FacturaCompra06AV.cs" />
     <Compile Include="ModeloEstandar06AV.cs" />
     <Compile Include="PedidoCotizacion06AV.cs" />
+    <Compile Include="PaqueteSerializado06AV.cs" />
+    <Compile Include="ReporteVentas06AV.cs" />
+    <Compile Include="VerificacionSerializacion06AV.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

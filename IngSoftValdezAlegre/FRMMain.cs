@@ -60,6 +60,7 @@ namespace IngSoftValdezAlegre
                 Item("titulo_patentes", "\uE8D7", PatenteEnum06AV.GestionarPatentes, false, () => new Controles.PatentesControl()),
                 Item("bitacora", "\uE9D5", null, true, () => new Controles.BitacoraControl()),
                 ItemAccion("backup_menu", "\uE777", null, true, () => { using (var f = new FRMGestionBackup()) f.ShowDialog(this); }),
+                Item("menu_serializacion", "\uE74E", PatenteEnum06AV.Serializar, false, () => new Controles.SerializacionControl06AV()),
             });
 
             AgregarGrupo("menu_grp_maestro", "\uE8F1", new List<ItemMenu>
@@ -91,6 +92,11 @@ namespace IngSoftValdezAlegre
             {
                 Item("pcf_menu_produccion", "\uE713", PatenteEnum06AV.GestionarProduccion, false, () => new Controles.ProduccionControl()),
                 Item("pcf_menu_lineas", "\uE9F5", PatenteEnum06AV.GestionarLineasEnsamblaje, false, () => new Controles.LineasEnsamblajeControl()),
+            });
+
+            AgregarGrupo("menu_grp_reportes", "\uE9D2", new List<ItemMenu>
+            {
+                Item("menu_rep_ventas", "\uE9D2", PatenteEnum06AV.VerReporteVentas, false, () => new Controles.ReporteVentasControl()),
             });
 
             AgregarGrupo("menu_grp_ayuda", "\uE897", new List<ItemMenu>

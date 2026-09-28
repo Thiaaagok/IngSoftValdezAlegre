@@ -19,8 +19,27 @@ namespace BE
         public EstadoCotizacion06AV Estado { get; set; } = EstadoCotizacion06AV.PorAprobar;
         public Proveedor06AV Proveedor { get; set; }
 
-        /// <summary>Costo total ofrecido por el proveedor (RFN2).</summary>
+        /// <summary>
+        /// Costo total ofrecido: la suma de los subtotales de <see cref="ComponentesPedidos"/>
+        /// cuando la cotización tiene precio por ítem.
+        /// </summary>
         public decimal Costo { get; set; }
+
+        /// <summary>
+        /// Todas las líneas tienen precio unitario. Las cotizaciones cargadas antes del
+        /// precio por ítem solo tienen el total y dan false.
+        /// </summary>
+        public bool TienePreciosPorItem =>
+            ComponentesPedidos != null && ComponentesPedidos.Count > 0 &&
+            ComponentesPedidos.TrueForAll(d => d.PrecioUnitario > 0);
+
+        /// <summary>Precio unitario cotizado para un componente, o 0 si no está en la cotización.</summary>
+        public decimal PrecioDe(string codigoComponente)
+        {
+            DetalleComponente06AV d = ComponentesPedidos?.Find(x =>
+                x.Componente != null && string.Equals(x.Componente.Codigo, codigoComponente, StringComparison.OrdinalIgnoreCase));
+            return d?.PrecioUnitario ?? 0m;
+        }
         public string Condiciones { get; set; }
 
         /// <summary>Gerente de compras que aprobó o desaprobó (null hasta que se resuelve).</summary>

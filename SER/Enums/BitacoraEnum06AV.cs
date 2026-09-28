@@ -16,6 +16,9 @@ namespace SER
         Modificacion = 11,
         Baja = 12,
 
+        Serializacion = 20,
+        Deserializacion = 21,
+
         Error = 90,
         ErrorCritico = 99
     }
@@ -46,6 +49,7 @@ namespace SER
         Produccion = 28,
 
         Reportes = 31,
+        Serializacion = 32,
     }
 
 

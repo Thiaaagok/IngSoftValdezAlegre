@@ -1,4 +1,5 @@
 using BE;
+using BLL.Armado;
 using BLL.Excepciones;
 using MPP;
 using SER;
@@ -80,6 +81,48 @@ namespace BLL
         }
 
         // ══════════════════════════════════════════════════════════
+        //  CU01 · Armar la computadora (patrón Builder)
+        // ══════════════════════════════════════════════════════════
+        /// <summary>
+        /// Arma la computadora que se va a vender. Acá VentasBLL cumple el rol de
+        /// CLIENTE del patrón Builder: elige el ConcreteBuilder según el tipo de
+        /// configuración, le pasa las piezas al Director para que las coloque en el
+        /// orden de la receta, y le pide el producto terminado al builder.
+        ///
+        ///   Estándar     → ComputadoraEstandarBuilder06AV, con las piezas del modelo.
+        ///   Configurable → ComputadoraConfigurableBuilder06AV, con las piezas que
+        ///                  eligió el cliente en "Armá tu PC".
+        ///
+        /// Si el equipo no se puede armar (falta una pieza obligatoria, hay dos
+        /// procesadores, un componente está dado de baja) lanza
+        /// <see cref="ValidacionException06AV"/> y no se llega a registrar la venta.
+        /// </summary>
+        public Computadora06AV ArmarComputadora(TipoConfiguracion06AV tipo,
+                                                ModeloEstandar06AV modelo,
+                                                IEnumerable<Componente06AV> piezasElegidas)
+        {
+            IComputadoraBuilder06AV builder;
+            if (tipo == TipoConfiguracion06AV.Estandar)
+            {
+                if (modelo == null)
+                    throw new ValidacionException06AV("modelo", "Elegí un modelo estándar.");
+                builder = new ComputadoraEstandarBuilder06AV(modelo);
+            }
+            else
+            {
+                builder = new ComputadoraConfigurableBuilder06AV();
+            }
+
+            var armador = new ArmadorComputadora06AV(builder);
+            if (tipo == TipoConfiguracion06AV.Estandar)
+                armador.ArmarDesdeModelo(modelo);
+            else
+                armador.Armar(piezasElegidas);
+
+            return builder.ObtenerComputadora();
+        }
+
+        // ══════════════════════════════════════════════════════════
         //  CU01 · Registrar venta
         // ══════════════════════════════════════════════════════════
         /// <summary>
@@ -93,6 +136,14 @@ namespace BLL
                 throw new ValidacionException06AV("cliente", "Debe indicarse un cliente válido.");
             if (computadora == null || computadora.Componentes == null || computadora.Componentes.Count == 0)
                 throw new ValidacionException06AV("computadora", "La computadora debe tener al menos un componente.");
+
+            // Defensa en profundidad: aunque la PC venga de ArmarComputadora, se vuelve
+            // a verificar contra la receta del Director que esté completa.
+            List<TipoComponente06AV> faltantes = ArmadorComputadora06AV.Faltantes(computadora.Componentes);
+            if (faltantes.Count > 0)
+                throw new ValidacionException06AV("computadora",
+                    "La computadora está incompleta. Falta: " +
+                    string.Join(", ", faltantes.Select(ComputadoraBuilderBase06AV.NombreBahia)) + ".");
             if (fechaEntregaEstimada.Date < DateTime.Today)
                 throw new ValidacionException06AV("FechaEntregaEstimada", "La fecha estimada de entrega no puede ser anterior a hoy.");
 
@@ -109,7 +160,9 @@ namespace BLL
                         $"Componente sin stock: '{comp.Descripcion}' (libre {comp.StockLibre}, requerido {r.Value}).");
             }
 
-            // Reserva atómica por componente, con compensación si alguna falla.
+            // El control de arriba da el mensaje claro; ante dos ventas simultáneas, la
+            // garantía es sp_Componentes_ReservarStock, que solo reserva si hay stock libre.
+            // Si una reserva falla se liberan las anteriores.
             var reservados = new List<KeyValuePair<string, int>>();
             try
             {
@@ -188,6 +241,7 @@ namespace BLL
         /// <summary>
         /// Anula una venta que todavía no pasó a producción y libera los componentes
         /// reservados. No se permite si ya existe una orden de producción asociada.
+        /// Si la venta tenía seña, el pago queda registrado: acá no se devuelve.
         /// </summary>
         public void AnularVenta(int numeroVenta)
         {

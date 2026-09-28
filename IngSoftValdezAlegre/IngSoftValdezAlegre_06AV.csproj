@@ -116,6 +116,7 @@
     <Compile Include="UI\TarjetaComponente06AV.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="UI\AsistenteBase06AV.cs" />
     <Compile Include="UI\AsistenteCompraControl06AV.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -133,6 +134,8 @@
     <Compile Include="Controles\CotizacionesControl.cs" />
     <Compile Include="Controles\ConsultarStockControl.cs" />
     <Compile Include="Controles\FacturasControl.cs" />
+    <Compile Include="Controles\ReporteVentasControl.cs" />
+    <Compile Include="Controles\SerializacionControl06AV.cs" />
     <Compile Include="Controles\ModelosEstandarControl.cs" />
     <Compile Include="Controles\AbmBaseControl06AV.Designer.cs">
       <DependentUpon>AbmBaseControl06AV.cs</DependentUpon>

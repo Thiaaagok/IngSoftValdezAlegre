@@ -1,4 +1,5 @@
 using BE;
+using BLL.Armado;
 using BLL.Excepciones;
 using MPP;
 using SER;
@@ -56,6 +57,14 @@ namespace BLL
                 throw new ValidacionException06AV("Nombre", "El nombre del modelo es obligatorio.");
             if (modelo.Componentes == null || modelo.Componentes.Count == 0)
                 throw new ValidacionException06AV("Componentes", "El modelo debe tener al menos un componente.");
+
+            // Un modelo del catálogo es válido si se puede armar: se lo hace pasar por
+            // el mismo Director y el mismo builder que se usan al venderlo. Si le falta
+            // una pieza obligatoria, o tiene dos procesadores, el builder lo rechaza
+            // acá, al darlo de alta, y no recién cuando alguien intenta venderlo.
+            var builder = new ComputadoraEstandarBuilder06AV(modelo);
+            new ArmadorComputadora06AV(builder).ArmarDesdeModelo(modelo);
+            builder.ObtenerComputadora();
         }
     }
 }

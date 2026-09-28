@@ -19,6 +19,10 @@ namespace BE
 
         /// <summary>Porcentaje de seña </summary>
         public const decimal PorcentajeSena = 0.50m;
+        /// <summary>
+        /// Math.Round redondea al par en el medio centavo: un total de $100,01 da una
+        /// seña de $50,00 y no de $50,01.
+        /// </summary>
         public decimal MontoSenaRequerido => Math.Round(PrecioTotal * PorcentajeSena, 2);
         public Pago06AV Sena => Pagos?.FirstOrDefault(p => p.Tipo == TipoPago06AV.Sena);
         public bool TieneSena => Sena != null;

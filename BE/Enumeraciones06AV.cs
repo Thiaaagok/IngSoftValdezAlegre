@@ -81,4 +81,25 @@ namespace BE
         Finalizada,
         RecibidaParcial
     }
+
+    /// <summary>
+    /// Clases que se pueden serializar (A03): solo la venta, con todo lo que contiene.
+    /// El nombre es también el elemento XML de cada objeto dentro del archivo.
+    /// </summary>
+    public enum ClaseSerializable06AV
+    {
+        Venta
+    }
+
+    /// <summary>
+    /// Resultado de comparar un objeto serializado. FaltaEnArchivo sale al verificar
+    /// la serialización (paso 4) y NoExisteEnBase al verificar la des-serialización (paso 8).
+    /// </summary>
+    public enum EstadoVerificacion06AV
+    {
+        Coincide,
+        Difiere,
+        NoExisteEnBase,
+        FaltaEnArchivo
+    }
 }

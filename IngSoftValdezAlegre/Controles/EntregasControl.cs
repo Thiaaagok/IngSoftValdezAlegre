@@ -17,7 +17,7 @@ namespace IngSoftValdezAlegre.Controles
     ///
     /// Es la bandeja de salida de la fábrica: recibe las órdenes de producción que
     /// ya quedaron "Finalizadas" (control de calidad aprobado y N° de serie asignado)
-    /// y permite buscarlas por N° de orden o DNI del cliente, cobrar el saldo
+    /// y permite buscarlas por N° de orden, DNI, apellido o N° de serie, cobrar el saldo
     /// pendiente, emitir la factura y cerrar el circuito.
     ///
     /// Acá NO se opera la orden de producción: solo se recibe terminada y se entrega.
@@ -142,11 +142,9 @@ namespace IngSoftValdezAlegre.Controles
         }
 
         /// <summary>
-        /// REGISTRAR ENTREGA — el cierre del circuito de venta: se cobra el saldo y se
-        /// entrega el equipo. Los datos del cliente, el equipo y el número de serie
-        /// dejaron de ser un párrafo de tres renglones con puntos medios y pasaron a una
-        /// ficha con un dato por casillero; el saldo a cobrar —lo único que cambia de
-        /// manos— es el número grande de esa ficha, y la forma de pago son tarjetas.
+        /// REGISTRAR ENTREGA — cierre del circuito de venta: se cobra el saldo y se
+        /// entrega el equipo. Cliente, equipo y N° de serie van en una ficha con el saldo
+        /// a cobrar como dato destacado; la forma de pago se elige en tarjetas.
         /// </summary>
         private void ConstruirFormCobro()
         {

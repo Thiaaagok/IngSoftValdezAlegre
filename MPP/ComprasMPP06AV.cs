@@ -6,6 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Globalization;
+using System.Linq;
+using System.Xml.Linq;
 
 namespace MPP
 {
@@ -57,10 +60,57 @@ namespace MPP
             _dal.CambiarEstadoOrdenCompra(id, (int)estado);
 
         // ── Cotización ───────────────────────────────────────────
+        /// <summary>
+        /// Graba la cotización con una línea por componente y su precio unitario. El total
+        /// (Costo) lo calcula el procedimiento con los mismos subtotales.
+        /// </summary>
         public void AgregarCotizacion(PedidoCotizacion06AV cot)
         {
             if (string.IsNullOrEmpty(cot.Numero)) cot.Numero = _gen.Generar("CO");
-            _dal.AgregarCotizacion(cot.Numero, cot.NumeroCompra, cot.Proveedor.Id, cot.Costo, cot.Condiciones);
+
+            // Cultura invariante: SQL Server lee el precio con punto decimal.
+            var xml = new XElement("detalle",
+                cot.ComponentesPedidos.Select(d => new XElement("d",
+                    new XAttribute("c", d.Componente.Codigo),
+                    new XAttribute("q", d.Cantidad.ToString(CultureInfo.InvariantCulture)),
+                    new XAttribute("p", d.PrecioUnitario.ToString("0.00", CultureInfo.InvariantCulture)))));
+
+            try
+            {
+                _dal.AgregarCotizacionConDetalle(cot.Numero, cot.NumeroCompra, cot.Proveedor.Id,
+                                                 cot.Condiciones, xml.ToString(SaveOptions.DisableFormatting));
+            }
+            catch (SqlException ex) when (ex.Number == SpInexistente)
+            {
+                throw new InvalidOperationException(
+                    "Falta el script 38_cotizacion_precio_por_item.sql en la base: sin él no se pueden grabar precios por ítem.", ex);
+            }
+        }
+
+        // Error 2812 de SQL Server: el procedimiento no existe (script 38 sin correr).
+        private const int SpInexistente = 2812;
+
+        /// <summary>
+        /// Líneas de la cotización con su precio. Una cotización anterior al precio por
+        /// ítem (o una base sin el script 38) no tiene líneas: se usan las de la orden,
+        /// sin precio, y el total sigue siendo el Costo grabado.
+        /// </summary>
+        private List<DetalleComponente06AV> ObtenerLineasCotizacion(string numero, string idOrdenCompra)
+        {
+            var lista = new List<DetalleComponente06AV>();
+            try
+            {
+                foreach (DataRow r in _dal.ObtenerDetalleCotizacion(numero).Rows)
+                    lista.Add(new DetalleComponente06AV
+                    {
+                        Cantidad = Convert.ToInt32(r["Cantidad"]),
+                        PrecioUnitario = Convert.ToDecimal(r["PrecioCotizado"]),
+                        Componente = MapearComponente(r)
+                    });
+            }
+            catch (SqlException ex) when (ex.Number == SpInexistente) { lista.Clear(); }
+
+            return lista.Count > 0 ? lista : ObtenerDetalle(idOrdenCompra);
         }
 
         public List<PedidoCotizacion06AV> ObtenerCotizaciones()
@@ -177,7 +227,7 @@ namespace MPP
                 Estado = (EstadoCotizacion06AV)Convert.ToInt32(row["Estado"]),
                 Costo = row["Costo"] == DBNull.Value ? 0m : Convert.ToDecimal(row["Costo"]),
                 Condiciones = row["Condiciones"] == DBNull.Value ? "" : row["Condiciones"].ToString(),
-                ComponentesPedidos = ObtenerDetalle(idOc)
+                ComponentesPedidos = ObtenerLineasCotizacion(row["Numero"].ToString(), idOc)
             };
             if (row["DniGerenteAprobador"] != DBNull.Value)
                 cot.GerenteAprobador = _usuarios.ObtenerPorDni(row["DniGerenteAprobador"].ToString());

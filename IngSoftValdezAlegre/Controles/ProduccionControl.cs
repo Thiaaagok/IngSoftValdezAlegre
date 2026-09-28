@@ -20,7 +20,8 @@ namespace IngSoftValdezAlegre.Controles
     ///        Iniciar ensamblaje            → acción "Iniciar ensamblaje"
     ///   CU06 Cerrar orden de producción    → acción "Cerrar orden" (checklist + N° serie)
     ///
-    /// La entrega al cliente y el cobro del saldo (CU07) se hacen desde Ventas.
+    /// La entrega al cliente y el cobro del saldo (CU07) se hacen desde "Entrega de
+    /// computadoras" (<see cref="EntregasControl"/>).
     /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class ProduccionControl : UserControl, IIdiomaAplicable06AV
@@ -183,10 +184,8 @@ namespace IngSoftValdezAlegre.Controles
         }
 
         /// <summary>
-        /// CU04 — Nueva orden de producción. Un combo con una línea de texto larga y un
-        /// bloque gris debajo obligaban a abrir el desplegable para comparar ventas.
-        /// Ahora cada venta señada lista para producir es una tarjeta con su cliente, su
-        /// equipo y su total, y la ficha de abajo muestra la venta elegida en detalle.
+        /// CU04 — Nueva orden de producción. Cada venta señada sin orden es una tarjeta
+        /// con su cliente, su equipo y su total; la ficha de abajo muestra la elegida.
         /// </summary>
         private void ConstruirFormOrden()
         {
@@ -291,10 +290,9 @@ namespace IngSoftValdezAlegre.Controles
         }
 
         /// <summary>
-        /// CU05 — Asignar línea. Tres campos sueltos sobre un fondo blanco no decían
-        /// qué se estaba decidiendo. Ahora la elección principal (a qué línea va el
-        /// equipo) se hace sobre tarjetas que muestran todas las líneas con su estado,
-        /// y la fecha y el responsable quedan debajo como datos de acompañamiento.
+        /// CU05 — Asignar línea. La línea se elige en tarjetas (solo las disponibles; la
+        /// primera queda elegida) y la fecha de inicio y el responsable van debajo. Si no
+        /// hay líneas libres el formulario no se abre.
         /// </summary>
         private void ConstruirFormPlan()
         {
@@ -389,11 +387,9 @@ namespace IngSoftValdezAlegre.Controles
         }
 
         /// <summary>
-        /// CU06 — Cerrar orden. El control de calidad es la decisión que define si el
-        /// equipo sale o vuelve al banco, así que la checklist dejó de ser cuatro
-        /// casillas de 13 px dentro de una tabla: son cuatro filas grandes, cada una
-        /// con qué se verifica, que se tiñen de verde al marcarse. Debajo, un veredicto
-        /// en vivo dice qué va a pasar al confirmar, ANTES de confirmar.
+        /// CU06 — Cerrar orden. Los cuatro ítems del control de calidad son filas grandes
+        /// que se marcan en verde, y un veredicto en vivo anticipa si al confirmar la
+        /// orden se finaliza o pasa a En revisión.
         /// </summary>
         private void ConstruirFormCierre()
         {

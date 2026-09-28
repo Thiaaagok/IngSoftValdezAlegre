@@ -441,7 +441,7 @@ namespace IngSoftValdezAlegre.Controles
             try
             {
                 var cot = _bll.RegistrarCotizacion(_ocSel.Id, armada.Proveedor.Id,
-                                                   armada.Costo, armada.Condiciones);
+                                                   armada.Precios, armada.Condiciones);
                 ConfirmacionForm.MostrarInfo(
                     GestorIdioma06AV.Instancia.Obtener("pcf_cotp_ok", cot.Numero,
                                                        armada.Proveedor.Nombre, armada.Costo.ToString("C0")),

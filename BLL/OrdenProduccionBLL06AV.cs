@@ -101,6 +101,7 @@ namespace BLL
             if (string.IsNullOrWhiteSpace(responsable))
                 throw new ValidacionException06AV("responsable", "El responsable técnico es obligatorio.");
 
+            // TODO(verificar): no se valida fechaInicio; ¿debe ser >= hoy y <= la fecha de entrega de la orden?
             var linea = _lineasMpp.ObtenerPorId(idLinea);
             if (linea == null)
                 throw new NoEncontradoException06AV($"No existe la línea #{idLinea}.");
@@ -193,9 +194,8 @@ namespace BLL
                     "No se pudo cerrar la orden (se restituyó el stock). Detalle: " + ex.Message, ex);
             }
 
-            // La línea se ocupa al planificar y se libera acá: el equipo terminado sale
-            // del puesto. Sin esto las líneas quedaban tomadas para siempre y, con todas
-            // ocupadas, no se podía planificar ninguna orden nueva.
+            // La línea se ocupa al planificar y se libera acá, cuando el equipo terminado
+            // sale del puesto; si no, con todas ocupadas no se podría planificar otra orden.
             LiberarLinea(orden);
 
             AuditoriaPcFactory06AV.Modificacion(
@@ -289,7 +289,10 @@ namespace BLL
         private static string GenerarNumeroSerie(OrdenProduccion06AV orden) =>
             $"SN-{DateTime.Now:yyyy}-{orden.NumeroOrden:00000}";
 
-        /// <summary>Compensación: devuelve el stock físico y la reserva de lo ya consumido.</summary>
+        /// <summary>
+        /// Compensación: devuelve el stock físico y la reserva de lo ya consumido. El físico
+        /// vuelve por Modificar, así que deja una versión en la bitácora de componentes.
+        /// </summary>
         private void RevertirConsumo(IEnumerable<KeyValuePair<string, int>> consumidos)
         {
             foreach (var c in consumidos)

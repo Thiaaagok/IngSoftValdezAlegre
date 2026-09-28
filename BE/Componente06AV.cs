@@ -1,8 +1,8 @@
 namespace BE
 {
     /// <summary>
-    /// Componente de ensamblaje. Absorbe el antiguo Insumo06AV: todo componente es
-    /// además un insumo que se compra y tiene stock (mismo concepto, una sola clase).
+    /// Componente de ensamblaje. Es también el insumo que se compra en el RFN2: no hay
+    /// una clase de insumo aparte.
     ///
     /// El stock se lleva en dos niveles:
     ///   Stock          → unidades físicas en depósito.

@@ -6,8 +6,9 @@ namespace BE
     /// Recibo de seña (RFN1 - CU03). Se emite cuando el cliente abona la seña sobre una
     /// venta ya registrada, antes de que exista la orden de producción.
     ///
-    /// MontoAbonado y SaldoPendiente son SNAPSHOTS del momento de emitir (valor
-    /// histórico). El cliente y la computadora se navegan por <see cref="Venta"/>.
+    /// No se persiste: lo arma VentasBLL06AV.ObtenerRecibos a partir del pago de seña.
+    /// SaldoPendiente es el total pactado menos la seña, es decir, el saldo tal como
+    /// quedó al cobrarla. El cliente y la computadora se navegan por <see cref="Venta"/>.
     /// </summary>
     public class Recibo06AV
     {

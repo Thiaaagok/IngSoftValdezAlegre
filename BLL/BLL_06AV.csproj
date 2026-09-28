@@ -42,6 +42,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Armado\IComputadoraBuilder06AV.cs" />
+    <Compile Include="Armado\ComputadoraBuilderBase06AV.cs" />
+    <Compile Include="Armado\ComputadoraEstandarBuilder06AV.cs" />
+    <Compile Include="Armado\ComputadoraConfigurableBuilder06AV.cs" />
+    <Compile Include="Armado\ArmadorComputadora06AV.cs" />
     <Compile Include="AuditoriaPcFactory06AV.cs" />
     <Compile Include="BitacoraBLL06AV.cs" />
     <Compile Include="FamiliasBLL06AV.cs" />
@@ -50,6 +55,8 @@
     <Compile Include="ProveedoresBLL06AV.cs" />
     <Compile Include="LineasEnsamblajeBLL06AV.cs" />
     <Compile Include="VentasBLL06AV.cs" />
+    <Compile Include="ReporteVentasBLL06AV.cs" />
+    <Compile Include="SerializacionBLL06AV.cs" />
     <Compile Include="EntregasBLL06AV.cs" />
     <Compile Include="OrdenProduccionBLL06AV.cs" />
     <Compile Include="CompraInsumosBLL06AV.cs" />

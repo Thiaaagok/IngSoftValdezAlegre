@@ -84,6 +84,9 @@ namespace DAL
 
         #region Helpers
 
+        // Close no está en un finally: si el comando lanza, la conexión queda abierta
+        // hasta que la libere el GC.
+
         private DataTable EjecutarSP(string nombreSP, Dictionary<string, object> parametros)
         {
             SqlConnection conn = Conexion.Instancia.ObtenerConexion();

@@ -148,21 +148,10 @@ namespace IngSoftValdezAlegre.Controles
         }
 
         /// <summary>
-        /// NUEVA VENTA — armado del pedido a la izquierda, ticket a la derecha.
-        ///
-        /// El formulario anterior era una tabla de etiqueta+control donde todo pesaba
-        /// lo mismo: el combo de tipo, el de modelo y la lista de ocho componentes
-        /// compartían jerarquía con la fecha de entrega, y el total aparecía perdido
-        /// al final de la lista.
-        ///
-        /// La venta tiene en realidad dos mitades distintas: DECIDIR (quién compra,
-        /// qué equipo, para cuándo) y CONFIRMAR (qué lleva y cuánto sale). Por eso la
-        /// pantalla se parte: a la izquierda los pasos de la decisión, cada uno en su
-        /// bloque; a la derecha un ticket fijo con el equipo y el total en grande, que
-        /// se actualiza con cada cambio y tiene el botón de registrar al pie.
-        ///
-        /// El tipo de configuración dejó de ser un combo: son dos tarjetas, porque la
-        /// elección cambia toda la pantalla (modelos vs. configurador) y merece verse.
+        /// NUEVA VENTA — a la izquierda lo que se decide (cliente, tipo de equipo, modelo
+        /// o armado, fecha de entrega); a la derecha un ticket fijo con el equipo, el total
+        /// y el botón de registrar, que se actualiza con cada cambio. El tipo de equipo va
+        /// en tarjetas porque cambia media pantalla (modelos o configurador).
         /// </summary>
         private void ConstruirFormVenta()
         {
@@ -370,10 +359,9 @@ namespace IngSoftValdezAlegre.Controles
         }
 
         /// <summary>
-        /// REGISTRAR SEÑA — el monto es fijo (50% del total) y no se discute: lo único
-        /// que decide el cajero es CÓMO cobra. Por eso el importe pasó a ser el número
-        /// grande de una ficha de contexto, junto con quién compra y qué lleva, y la
-        /// forma de pago dejó de ser un combo para ser tres tarjetas visibles.
+        /// REGISTRAR SEÑA — el monto es fijo (50% del total); el cajero solo elige cómo
+        /// cobra. Por eso el importe es el dato destacado de la ficha y las tres formas de
+        /// pago se muestran como tarjetas.
         /// </summary>
         private void ConstruirFormPago()
         {
@@ -972,8 +960,6 @@ namespace IngSoftValdezAlegre.Controles
         /// <summary>
         /// El tipo elegido decide qué mitad de la pantalla tiene sentido: con Estándar
         /// se muestran los modelos y se esconde el configurador; con Configurable, al revés.
-        /// Mostrar las dos cosas a la vez era lo que hacía el formulario viejo, con el
-        /// combo de modelo grisado pero igual presente.
         /// </summary>
         private void ActualizarModeloSegunTipo()
         {
@@ -1054,17 +1040,11 @@ namespace IngSoftValdezAlegre.Controles
             if (_componentesElegidos == null || _componentesElegidos.Count == 0)
             { MostrarError("Elegí al menos un componente (botón “Armá tu PC”) o un modelo estándar."); return; }
 
-            var pc = new Computadora06AV
-            {
-                TipoConfiguracion = _tipoElegido,
-                Nombre = _tipoElegido == TipoConfiguracion06AV.Estandar && _modeloElegido != null
-                    ? _modeloElegido.Nombre
-                    : _tipoElegido.ToString()
-            };
-            foreach (var c in _componentesElegidos) pc.Componentes.Add(c);
-
             try
             {
+                // La PC la arma la BLL con el patrón Builder: la pantalla sólo dice qué
+                // se eligió, y el builder decide si con eso se puede armar un equipo.
+                Computadora06AV pc = _ventasBLL.ArmarComputadora(_tipoElegido, _modeloElegido, _componentesElegidos);
                 var venta = _ventasBLL.RegistrarVenta(cliente, pc, dtpEntrega.Value);
                 MostrarGrilla();
                 CargarVentas();

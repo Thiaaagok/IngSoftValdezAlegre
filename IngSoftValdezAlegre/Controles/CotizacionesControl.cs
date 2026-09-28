@@ -55,11 +55,11 @@ namespace IngSoftValdezAlegre.Controles
         private Label lblOrdenTit, lblOrdenDet, lblOfertasTit, lblMesaVacia;
         private FlowLayoutPanel flpOfertas;
 
-        // Alta de oferta
-        private Label lblNuevaTit, lblProveedor, lblCosto, lblCondiciones;
-        private ComboBox cboProveedor;
-        private TextBox txtCosto, txtCondiciones;
-        private Button btnNuevoProveedor, btnRegistrar;
+        // Alta de oferta: abre el asistente de cotización (precio por producto).
+        private Label lblNuevaTit, lblNuevaAyuda;
+        private Button btnRegistrar;
+        private Panel pnlCotizador;
+        private PedidoCotizacionControl06AV cotizador;
 
         public CotizacionesControl()
         {
@@ -130,31 +130,28 @@ namespace IngSoftValdezAlegre.Controles
             pnlCabOrden.Controls.Add(lblOrdenDet);
             pnlCabOrden.Controls.Add(lblOrdenTit);
 
-            // ── Formulario de nueva oferta ───────────────────────
-            lblNuevaTit = new Label { AutoSize = true, Location = new Point(14, 10) };
-            lblProveedor = new Label { AutoSize = true, Location = new Point(16, 42) };
-            lblCosto = new Label { AutoSize = true, Location = new Point(330, 42) };
-            lblCondiciones = new Label { AutoSize = true, Location = new Point(470, 42) };
+            // ── Sumar oferta: el precio se carga producto por producto en el asistente ──
+            lblNuevaTit = new Label { AutoSize = true, Margin = new Padding(0, 8, 0, 0) };
+            lblNuevaAyuda = new Label { AutoSize = true, Margin = new Padding(0, 4, 0, 8) };
+            btnRegistrar = NuevoBoton(260);
+            btnRegistrar.Margin = new Padding(0, 0, 0, 4);
+            btnRegistrar.Click += (s, e) => AbrirCotizador();
 
-            cboProveedor = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 240, Location = new Point(16, 62) };
-            txtCosto = new TextBox { Width = 120, Location = new Point(330, 62), Text = "0" };
-            txtCondiciones = new TextBox { Width = 260, Location = new Point(470, 62) };
-
-            btnNuevoProveedor = NuevoBoton(150);
-            btnNuevoProveedor.Location = new Point(264, 62);
-            btnNuevoProveedor.Width = 56;
-            btnNuevoProveedor.Click += (s, e) => NuevoProveedor();
-
-            btnRegistrar = NuevoBoton(190);
-            btnRegistrar.Location = new Point(744, 61);
-            btnRegistrar.Click += (s, e) => RegistrarOferta();
-
-            pnlNueva = new Panel { Dock = DockStyle.Bottom, Height = 112 };
-            pnlNueva.Controls.AddRange(new Control[]
+            // Crece con el texto: con la escala de Windows al 125% un alto fijo cortaba el botón.
+            var flpNueva = new FlowLayoutPanel
             {
-                lblNuevaTit, lblProveedor, cboProveedor, btnNuevoProveedor,
-                lblCosto, txtCosto, lblCondiciones, txtCondiciones, btnRegistrar
-            });
+                Dock = DockStyle.Bottom, FlowDirection = FlowDirection.TopDown, WrapContents = false,
+                AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(14, 4, 14, 8)
+            };
+            flpNueva.Controls.AddRange(new Control[] { lblNuevaTit, lblNuevaAyuda, btnRegistrar });
+            pnlNueva = flpNueva;
+
+            cotizador = new PedidoCotizacionControl06AV { Dock = DockStyle.Fill };
+            cotizador.Cancelado += (s, e) => MostrarMesa();
+            cotizador.Confirmado += (s, c) => RegistrarOferta(c);
+            cotizador.NuevoProveedor += (s, e) => NuevoProveedor();
+            pnlCotizador = new Panel { Dock = DockStyle.Fill, Visible = false };
+            pnlCotizador.Controls.Add(cotizador);
 
             // ── Ofertas ──────────────────────────────────────────
             lblOfertasTit = new Label { Dock = DockStyle.Top, Height = 26, AutoSize = false, Padding = new Padding(14, 4, 0, 0) };
@@ -178,6 +175,7 @@ namespace IngSoftValdezAlegre.Controles
             Controls.Add(pnlMesa);
             Controls.Add(pnlLista);
             Controls.Add(barraSup);
+            Controls.Add(pnlCotizador);
         }
 
         private static Button NuevoBoton(int ancho) => new Button
@@ -199,20 +197,7 @@ namespace IngSoftValdezAlegre.Controles
             {
                 _ordenes = _bll.ObtenerOrdenesCompra() ?? new List<OrdenCompra06AV>();
                 _cotizaciones = _bll.ObtenerCotizaciones() ?? new List<PedidoCotizacion06AV>();
-                CargarProveedores();
                 RefrescarLista();
-            }
-            catch (Exception ex) { MostrarError(ex.Message); }
-        }
-
-        private void CargarProveedores()
-        {
-            try
-            {
-                object anterior = cboProveedor.SelectedItem;
-                cboProveedor.DataSource = null;
-                cboProveedor.DataSource = _proveedoresBLL.ObtenerTodos();
-                if (anterior != null) cboProveedor.SelectedItem = anterior;
             }
             catch (Exception ex) { MostrarError(ex.Message); }
         }
@@ -449,37 +434,47 @@ namespace IngSoftValdezAlegre.Controles
             catch (Exception ex) { MostrarError(ex.Message); }
         }
 
-        private void RegistrarOferta()
+        /// <summary>
+        /// Abre el asistente de cotización sobre la orden elegida: proveedor, precio
+        /// unitario de cada producto y confirmación. La mesa queda detrás.
+        /// </summary>
+        private void AbrirCotizador()
+        {
+            if (_sel == null) return;
+            List<Proveedor06AV> proveedores;
+            try { proveedores = _proveedoresBLL.ObtenerTodos(); }
+            catch (Exception ex) { MostrarError(ex.Message); return; }
+
+            // Un proveedor con oferta abierta en esta orden se ve apagado: no puede ofertar dos veces.
+            var conOferta = OfertasDe(_sel)
+                .Where(c => c.Proveedor != null && c.Estado == EstadoCotizacion06AV.PorAprobar)
+                .Select(c => c.Proveedor.Id).Distinct().ToList();
+
+            cotizador.Cargar(_sel, proveedores, conOferta);
+            pnlMesa.Visible = pnlLista.Visible = false;
+            foreach (Control c in Controls) if (c.Dock == DockStyle.Top && c != pnlCotizador) c.Visible = false;
+            pnlCotizador.Visible = true;
+            pnlCotizador.BringToFront();
+        }
+
+        private void MostrarMesa()
+        {
+            pnlCotizador.Visible = false;
+            foreach (Control c in Controls) c.Visible = c != pnlCotizador;
+            pnlMesa.BringToFront();
+        }
+
+        private void RegistrarOferta(CotizacionArmada06AV armada)
         {
             var t = GestorIdioma06AV.Instancia;
-            if (_sel == null) return;
-
-            if (!(cboProveedor.SelectedItem is Proveedor06AV proveedor))
-            {
-                MostrarError(t.Obtener("pcf_cot_falta_proveedor"));
-                return;
-            }
-            if (!decimal.TryParse(txtCosto.Text.Trim(), out decimal costo) || costo < 0)
-            {
-                MostrarError(t.Obtener("pcf_cot_costo_invalido"));
-                return;
-            }
-
-            // Un mismo proveedor no cotiza dos veces la misma orden mientras su oferta siga abierta.
-            bool repetido = OfertasDe(_sel).Any(c => c.Proveedor != null &&
-                                                     c.Proveedor.Id == proveedor.Id &&
-                                                     c.Estado == EstadoCotizacion06AV.PorAprobar);
-            if (repetido)
-            {
-                MostrarError(t.Obtener("pcf_cot_repetido", proveedor.Nombre));
-                return;
-            }
-
+            if (_sel == null || armada?.Proveedor == null) return;
             try
             {
-                _bll.RegistrarCotizacion(_sel.Id, proveedor.Id, costo, txtCondiciones.Text.Trim());
-                txtCosto.Text = "0";
-                txtCondiciones.Text = string.Empty;
+                var cot = _bll.RegistrarCotizacion(_sel.Id, armada.Proveedor.Id, armada.Precios, armada.Condiciones);
+                ConfirmacionForm.MostrarInfo(
+                    t.Obtener("pcf_cotp_ok", cot.Numero, armada.Proveedor.Nombre, cot.Costo.ToString("C2")),
+                    t.Obtener("pcf_menu_cotizaciones"), ConfirmacionForm.TipoConfirmacion.Info, FindForm());
+                MostrarMesa();
                 Cargar();
             }
             catch (Exception ex) { MostrarError(ex.Message); }
@@ -490,11 +485,14 @@ namespace IngSoftValdezAlegre.Controles
             using (var f = new FRMNuevoProveedor06AV())
             {
                 if (f.ShowDialog(FindForm()) != DialogResult.OK) return;
-                CargarProveedores();
-                if (f.ProveedorCreado != null)
-                    foreach (object o in cboProveedor.Items)
-                        if (o is Proveedor06AV p && p.Id == f.ProveedorCreado.Id)
-                        { cboProveedor.SelectedItem = o; break; }
+                try
+                {
+                    var proveedores = _proveedoresBLL.ObtenerTodos();
+                    var creado = f.ProveedorCreado == null ? null
+                        : proveedores.FirstOrDefault(p => p.Id == f.ProveedorCreado.Id || p.Cuit == f.ProveedorCreado.Cuit);
+                    cotizador.RecargarProveedores(proveedores, creado?.Id);
+                }
+                catch (Exception ex) { MostrarError(ex.Message); }
             }
         }
 
@@ -509,12 +507,8 @@ namespace IngSoftValdezAlegre.Controles
 
             Tema.AplicarTitulo(lblTitulo);
             Tema.AplicarBotonSecundario(btnActualizar);
-            Tema.AplicarBotonSecundario(btnNuevoProveedor);
             Tema.AplicarBotonPrimario(btnRegistrar);
             Tema.AplicarEntrada(cboFiltro);
-            Tema.AplicarEntrada(cboProveedor);
-            Tema.AplicarEntrada(txtCosto);
-            Tema.AplicarEntrada(txtCondiciones);
 
             foreach (Control c in new Control[] { pnlLista, flpOrdenes, pnlMesa, flpOfertas, pnlCabOrden })
                 c.BackColor = Tema.FondoApp;
@@ -542,12 +536,11 @@ namespace IngSoftValdezAlegre.Controles
                 l.BackColor = Tema.FondoApp;
             }
 
-            foreach (Label l in new[] { lblProveedor, lblCosto, lblCondiciones })
-            {
-                l.Font = Tema.FuenteMini;
-                l.ForeColor = Tema.TextoSuave;
-                l.BackColor = Tema.FondoPanel;
-            }
+            lblNuevaAyuda.Font = Tema.FuenteRegular;
+            lblNuevaAyuda.ForeColor = Tema.TextoSuave;
+            lblNuevaAyuda.BackColor = Tema.FondoPanel;
+            foreach (Control c in pnlNueva.Controls) c.BackColor = Tema.FondoPanel;
+            cotizador.AplicarTema();
 
             AplicarTemaMesa();
             Invalidate(true);
@@ -565,13 +558,9 @@ namespace IngSoftValdezAlegre.Controles
 
             lblTitulo.Text = t.Obtener("pcf_menu_cotizaciones");
             btnActualizar.Text = t.Obtener("pcf_actualizar");
-            btnRegistrar.Text = t.Obtener("pcf_cot_registrar");
-            btnNuevoProveedor.Text = "+";
-
+            btnRegistrar.Text = "＋  " + t.Obtener("pcf_cot_pedir");
             lblNuevaTit.Text = t.Obtener("pcf_cot_nueva");
-            lblProveedor.Text = t.Obtener("pcf_proveedor");
-            lblCosto.Text = t.Obtener("pcf_costo");
-            lblCondiciones.Text = t.Obtener("pcf_condiciones");
+            lblNuevaAyuda.Text = t.Obtener("pcf_cot_nueva_ayuda");
 
             int filtro = cboFiltro.SelectedIndex;
             cboFiltro.Items.Clear();
@@ -593,8 +582,6 @@ namespace IngSoftValdezAlegre.Controles
         {
             base.OnResize(e);
             if (flpOrdenes != null) AjustarAnchoTarjetas();
-            if (btnRegistrar != null && pnlNueva != null)
-                btnRegistrar.Left = Math.Max(txtCondiciones.Right + 16, pnlNueva.ClientSize.Width - 210);
         }
 
         private void MostrarError(string mensaje) => ConfirmacionForm.MostrarInfo(

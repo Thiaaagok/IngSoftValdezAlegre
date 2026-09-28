@@ -162,6 +162,22 @@
       <Link>Scripts\34_recepcion_parcial.sql</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\SQL\35_computadora_modelo_origen.sql">
+      <Link>Scripts\35_computadora_modelo_origen.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SQL\36_reporte_ventas_produccion.sql">
+      <Link>Scripts\36_reporte_ventas_produccion.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SQL\37_serializacion.sql">
+      <Link>Scripts\37_serializacion.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SQL\38_cotizacion_precio_por_item.sql">
+      <Link>Scripts\38_cotizacion_precio_por_item.sql</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -65,6 +65,28 @@ namespace DAL
             });
         }
 
+        /// <summary>
+        /// Cotización con precio por ítem. El detalle va como XML
+        /// (&lt;d c="código" q="cantidad" p="precio"/&gt;) para que cabecera y líneas se graben
+        /// en una sola transacción dentro del procedimiento.
+        /// </summary>
+        public void AgregarCotizacionConDetalle(string numero, string idOrdenCompra, int idProveedor,
+                                               string condiciones, string detalleXml)
+        {
+            EjecutarSPNonQuery("sp_Cotizacion_AgregarConDetalle", new Dictionary<string, object>
+            {
+                { "@Numero", numero },
+                { "@IdOrdenCompra", idOrdenCompra },
+                { "@IdProveedor", idProveedor },
+                { "@Condiciones", (object)condiciones ?? "" },
+                { "@Detalle", detalleXml }
+            });
+        }
+
+        /// <summary>Líneas de una cotización con el precio unitario ofrecido (PrecioCotizado).</summary>
+        public DataTable ObtenerDetalleCotizacion(string numero) =>
+            EjecutarSP("sp_Cotizacion_ObtenerDetalle", new Dictionary<string, object> { { "@Numero", numero } });
+
         public DataTable ObtenerCotizaciones() => EjecutarSP("sp_Cotizacion_ObtenerTodas", null);
 
         public DataTable ObtenerCotizacionesPorOrden(string idOrdenCompra) =>

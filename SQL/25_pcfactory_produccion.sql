@@ -116,6 +116,8 @@ GO
 -- ============================================================
 --  SPs · Computadora
 -- ============================================================
+-- Nota: 35_computadora_modelo_origen.sql redefine este SP y sp_Computadoras_ObtenerPorId
+-- (agrega @IdModeloOrigen). Si corrés este script suelto, corré el 35 después.
 CREATE OR ALTER PROCEDURE sp_Computadoras_Agregar
     @Nombre NVARCHAR(150), @TipoConfiguracion INT, @PrecioTotal DECIMAL(12,2)
 AS

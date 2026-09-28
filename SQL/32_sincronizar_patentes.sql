@@ -53,7 +53,12 @@ BEGIN TRY
         ('GestionarModelosEstandar',  'Gestionar modelos estándar'),
         -- Acciones sensibles del circuito de compras (RFN2)
         ('RegistrarOrdenCompra',      'Registrar una orden de compra'),
-        ('AprobarCotizacion',         'Aprobar o desaprobar una cotización');
+        ('AprobarCotizacion',         'Aprobar o desaprobar una cotización'),
+        -- Mesa de cotizaciones y reportes
+        ('GestionarCotizaciones',     'Gestionar la mesa de cotizaciones'),
+        ('VerReporteVentas',          'Ver el reporte de ventas y producción'),
+        -- A03 Serialización
+        ('Serializar',                'Serializar y des-serializar objetos');
 
     -- ── 1. Alta de las patentes que falten ───────────────────
     INSERT INTO Patentes (Id, Descripcion)

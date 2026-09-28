@@ -122,24 +122,38 @@ namespace BLL
             return oc;
         }
 
+        /// <summary>Tope de precio unitario: el de DECIMAL(18,2) con margen para el subtotal.</summary>
+        public const decimal PrecioUnitarioMaximo = 99999999.99m;
+
         // ── Paso 3: registrar cotización a un proveedor ──────────
+        /// <summary>
+        /// Registra la oferta de un proveedor con el precio unitario de cada componente de la
+        /// orden. Las cantidades salen de la orden, no de lo que mande la pantalla, y el
+        /// total es la suma de precio × cantidad de cada línea.
+        /// </summary>
         public PedidoCotizacion06AV RegistrarCotizacion(string idOrdenCompra, int idProveedor,
-                                                        decimal costo, string condiciones)
+                                                        IList<DetalleComponente06AV> precios, string condiciones)
         {
             var oc = BuscarOrden(idOrdenCompra);
             var proveedor = _proveedores.ObtenerPorId(idProveedor);
             if (proveedor == null)
                 throw new NoEncontradoException06AV($"No existe el proveedor #{idProveedor}.");
-            if (costo < 0)
-                throw new ValidacionException06AV("costo", "El costo de la cotización no puede ser negativo.");
+            if (oc.Estado != EstadoOrdenCompra06AV.Pendiente)
+                throw new ValidacionException06AV("estado", $"La orden #{oc.NumeroCompra} ya está adjudicada: no recibe más ofertas.");
+            // Mientras su oferta siga abierta, un proveedor no cotiza dos veces la misma orden.
+            if (_mpp.ObtenerCotizacionesPorOrden(oc.Id).Any(c => c.Proveedor?.Id == idProveedor &&
+                                                                 c.Estado == EstadoCotizacion06AV.PorAprobar))
+                throw new ValidacionException06AV("proveedor", $"{proveedor.Nombre} ya tiene una oferta abierta para esta orden.");
+
+            List<DetalleComponente06AV> lineas = ArmarLineasCotizacion(oc, precios);
 
             var cot = new PedidoCotizacion06AV
             {
                 NumeroCompra = oc.Id,
-                ComponentesPedidos = oc.ComponentesFaltantes,
+                ComponentesPedidos = lineas,
                 Proveedor = proveedor,
                 Estado = EstadoCotizacion06AV.PorAprobar,
-                Costo = costo,
+                Costo = lineas.Sum(d => d.Subtotal),
                 Condiciones = condiciones
             };
 
@@ -306,13 +320,7 @@ namespace BLL
 
             bool completa = faltanteFinal.Count == 0;
 
-            // El costo cotizado cubre la orden entera: se prorratea por unidades recibidas
-            // para que la suma de las recepciones parciales dé el total adjudicado.
-            int unidadesOrden = oc.ComponentesFaltantes.Sum(d => d.Cantidad);
-            int unidadesRecibidas = recibidos.Sum(d => d.Cantidad);
-            decimal total = cotAprobada.Costo > 0 && unidadesOrden > 0
-                ? Math.Round(cotAprobada.Costo * unidadesRecibidas / unidadesOrden, 2)
-                : recibidos.Sum(d => d.Componente.PrecioUnitario * d.Cantidad);
+            decimal total = CalcularTotalRecepcion(cotAprobada, oc, recibidos);
 
             string detalleFaltante = completa
                 ? string.Empty
@@ -353,7 +361,7 @@ namespace BLL
             }
 
             AuditoriaPcFactory06AV.Alta(
-                $"Recepción {factura.NumeroFactura} (OC #{oc.NumeroCompra}, {unidadesRecibidas} u." +
+                $"Recepción {factura.NumeroFactura} (OC #{oc.NumeroCompra}, {recibidos.Sum(d => d.Cantidad)} u." +
                 (completa ? ", completa)" : ", parcial)"),
                 ModuloBitacora.Compras);
 
@@ -372,6 +380,72 @@ namespace BLL
             if (oc == null)
                 throw new NoEncontradoException06AV($"No existe la orden de compra '{idONumero}'.");
             return oc;
+        }
+
+        /// <summary>
+        /// Arma las líneas de la cotización: una por componente de la orden, con la cantidad
+        /// de la orden y el precio que cargó el operador.
+        /// </summary>
+        /// <exception cref="ValidacionException06AV">
+        /// Falta un precio, sobra un componente, hay uno repetido o un precio no es válido.
+        /// </exception>
+        public static List<DetalleComponente06AV> ArmarLineasCotizacion(OrdenCompra06AV oc, IList<DetalleComponente06AV> precios)
+        {
+            if (precios == null || precios.Count == 0)
+                throw new ValidacionException06AV("precios", "Cargá el precio unitario de cada componente de la orden.");
+
+            var porCodigo = new Dictionary<string, DetalleComponente06AV>(StringComparer.OrdinalIgnoreCase);
+            foreach (DetalleComponente06AV p in precios)
+            {
+                string codigo = p?.Componente?.Codigo;
+                if (string.IsNullOrWhiteSpace(codigo))
+                    throw new ValidacionException06AV("precios", "Hay un precio sin componente.");
+                if (porCodigo.ContainsKey(codigo))
+                    throw new ValidacionException06AV("precios", $"El componente '{codigo}' tiene dos precios.");
+                if (!oc.ComponentesFaltantes.Any(d => string.Equals(d.Componente?.Codigo, codigo, StringComparison.OrdinalIgnoreCase)))
+                    throw new ValidacionException06AV("precios", $"El componente '{codigo}' no está en la orden #{oc.NumeroCompra}.");
+                porCodigo[codigo] = p;
+            }
+
+            var lineas = new List<DetalleComponente06AV>();
+            foreach (DetalleComponente06AV item in oc.ComponentesFaltantes)
+            {
+                string nombre = item.Componente?.Descripcion ?? item.Componente?.Codigo;
+                if (!porCodigo.TryGetValue(item.Componente.Codigo, out DetalleComponente06AV precio))
+                    throw new ValidacionException06AV("precios", $"Falta el precio unitario de '{nombre}'.");
+                if (precio.PrecioUnitario <= 0)
+                    throw new ValidacionException06AV("precios", $"El precio unitario de '{nombre}' tiene que ser mayor a cero.");
+                if (precio.PrecioUnitario > PrecioUnitarioMaximo)
+                    throw new ValidacionException06AV("precios", $"El precio unitario de '{nombre}' es demasiado alto.");
+                if (decimal.Round(precio.PrecioUnitario, 2) != precio.PrecioUnitario)
+                    throw new ValidacionException06AV("precios", $"El precio unitario de '{nombre}' admite hasta 2 decimales.");
+
+                lineas.Add(new DetalleComponente06AV
+                {
+                    Componente = item.Componente,
+                    Cantidad = item.Cantidad,
+                    PrecioUnitario = precio.PrecioUnitario
+                });
+            }
+            return lineas;
+        }
+
+        /// <summary>
+        /// Importe de una recepción. Con precio por ítem es lo recibido por el precio
+        /// cotizado de cada componente. Las cotizaciones anteriores solo tienen el total:
+        /// ahí se prorratea por unidades, para que las recepciones parciales sumen el total.
+        /// </summary>
+        public static decimal CalcularTotalRecepcion(PedidoCotizacion06AV cotizacion, OrdenCompra06AV oc,
+                                                     IList<DetalleComponente06AV> recibidos)
+        {
+            if (cotizacion.TienePreciosPorItem)
+                return recibidos.Sum(d => Math.Round(cotizacion.PrecioDe(d.Componente.Codigo) * d.Cantidad, 2));
+
+            int unidadesOrden = oc.ComponentesFaltantes.Sum(d => d.Cantidad);
+            int unidadesRecibidas = recibidos.Sum(d => d.Cantidad);
+            return cotizacion.Costo > 0 && unidadesOrden > 0
+                ? Math.Round(cotizacion.Costo * unidadesRecibidas / unidadesOrden, 2)
+                : recibidos.Sum(d => d.Componente.PrecioUnitario * d.Cantidad);
         }
 
         private PedidoCotizacion06AV BuscarCotizacion(string numero)

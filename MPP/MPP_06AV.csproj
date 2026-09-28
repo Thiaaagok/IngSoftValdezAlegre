@@ -48,6 +48,7 @@
     <Compile Include="ProveedoresMPP06AV.cs" />
     <Compile Include="LineasEnsamblajeMPP06AV.cs" />
     <Compile Include="VentasMPP06AV.cs" />
+    <Compile Include="ReportesMPP06AV.cs" />
     <Compile Include="ProduccionMPP06AV.cs" />
     <Compile Include="ComprasMPP06AV.cs" />
     <Compile Include="IntegridadMPP06AV.cs" />

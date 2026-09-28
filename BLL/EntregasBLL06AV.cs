@@ -97,6 +97,8 @@ namespace BLL
             if (venta.Estado == EstadoVenta06AV.Anulada)
                 throw new ValidacionException06AV("estado", "La venta asociada está anulada.");
 
+            // Sale del precio pactado al vender (Computadora06AV.PrecioPactado), no de los
+            // precios actuales de los componentes.
             decimal saldo = venta.SaldoPendiente;
             Pago06AV pago = null;
             try
@@ -108,6 +110,8 @@ namespace BLL
                 _produccionMpp.CambiarEstado(orden.NumeroOrden, EstadoOrdenProduccion06AV.Entregada);
                 _ventasMpp.CambiarEstado(venta.NumeroVenta, EstadoVenta06AV.Entregada);
 
+                // La línea ya se libera al cerrar la orden (CU06); esto cubre una orden
+                // Finalizada que haya quedado con la línea tomada.
                 if (orden.LineaEnsamblaje != null && !orden.LineaEnsamblaje.Disponible)
                 {
                     orden.LineaEnsamblaje.Disponible = true;

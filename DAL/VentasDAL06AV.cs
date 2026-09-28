@@ -13,13 +13,15 @@ namespace DAL
     public class VentasDAL06AV
     {
         // ── Computadora solicitada ───────────────────────────────
-        public int AgregarComputadora(string nombre, int tipoConfiguracion, decimal precioTotal)
+        /// <param name="idModeloOrigen">Modelo estándar del que sale el equipo; null si es a medida.</param>
+        public int AgregarComputadora(string nombre, int tipoConfiguracion, decimal precioTotal, int? idModeloOrigen)
         {
             object id = EjecutarSPEscalar("sp_Computadoras_Agregar", new Dictionary<string, object>
             {
                 { "@Nombre", (object)nombre ?? "" },
                 { "@TipoConfiguracion", tipoConfiguracion },
-                { "@PrecioTotal", precioTotal }
+                { "@PrecioTotal", precioTotal },
+                { "@IdModeloOrigen", idModeloOrigen.HasValue ? (object)idModeloOrigen.Value : DBNull.Value }
             });
             return id == null || id == DBNull.Value ? 0 : Convert.ToInt32(id);
         }
@@ -91,6 +93,9 @@ namespace DAL
         public DataTable ObtenerPagos() => EjecutarSP("sp_Pagos_ObtenerTodos", null);
 
         #region Helpers
+
+        // Close no está en un finally: si el comando lanza, la conexión queda abierta
+        // hasta que la libere el GC.
 
         private DataTable EjecutarSP(string nombreSP, Dictionary<string, object> parametros)
         {
