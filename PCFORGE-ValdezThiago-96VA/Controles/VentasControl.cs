@@ -58,6 +58,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
         private TextBox txtReferencia;
         private Button btnConfirmarPago, btnVolverPago;
         private Venta06AV _ventaPago;
+        private DatosTarjetaControl06AV _datosTarjeta;
 
         public VentasControl()
         {
@@ -375,12 +376,14 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             flpFormaPago = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top, Height = 84,
+                AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,   // 4 formas de pago: si no entran, baja de renglón
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = true, Padding = new Padding(0, 2, 0, 2)
             };
 
             cboFormaPago = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 240, Visible = false };
             txtReferencia = new TextBox { Width = 320 };
+            _datosTarjeta = new DatosTarjetaControl06AV { Visible = false, Margin = new Padding(0, 4, 0, 4) };
 
             btnConfirmarPago = NuevoBoton(210);
             btnVolverPago = NuevoBoton(120);
@@ -393,6 +396,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
 
             var cont = new Panel { Dock = DockStyle.Fill, Padding = new Padding(18, 6, 18, 8), AutoScroll = true };
             cont.Controls.Add(tabla);
+            cont.Controls.Add(_datosTarjeta);
             cont.Controls.Add(flpFormaPago);
             cont.Controls.Add(lblFormaPago);
             cont.Controls.Add(fichaPago);
@@ -423,7 +427,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
                     Valor = item,
                     Titulo = item.ToString(),
                     Icono = IconoPcf06AV.Caja,
-                    Width = 210,
+                    Width = 190,
                     Height = 58,
                     Seleccionada = ReferenceEquals(item, cboFormaPago.SelectedItem)
                 };
@@ -440,6 +444,19 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             cboFormaPago.SelectedItem = item;
             foreach (Control c in flpFormaPago.Controls)
                 if (c is TarjetaOpcion06AV t) t.Seleccionada = ReferenceEquals(t.Valor, item);
+            ActualizarDatosTarjeta();
+        }
+
+        private static bool EsTarjeta(FormaPago06AV forma) =>
+            forma == FormaPago06AV.Tarjeta || forma == FormaPago06AV.TarjetaDebito;
+
+        // Con crédito o débito aparece la carga (simulada) de los datos de la tarjeta.
+        private void ActualizarDatosTarjeta()
+        {
+            if (_datosTarjeta == null) return;
+            var forma = (cboFormaPago.SelectedItem as FormaPagoVm)?.Valor ?? FormaPago06AV.Efectivo;
+            _datosTarjeta.Credito = forma == FormaPago06AV.Tarjeta;
+            _datosTarjeta.Visible = EsTarjeta(forma);
         }
 
         private static Label TituloSeccion(int alto) => new Label
@@ -576,6 +593,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
                     if (hijo is Panel && hijo != pnlDetalle) hijo.BackColor = Tema.FondoApp;
             }
 
+            _datosTarjeta?.AplicarTema();
             ActualizarDetalle();
         }
 
@@ -613,6 +631,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             lblFormaPago.Text = t.Obtener("pcf_sena_forma");
             lblReferencia.Text = t.Obtener("pcf_referencia") + ":";
             btnVolverPago.Text = t.Obtener("volver");
+            _datosTarjeta?.AplicarIdioma();
             CargarFormasPago();
 
             if (grilla.DataSource != null) CargarVentas();
@@ -641,11 +660,13 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             {
                 new FormaPagoVm { Valor = FormaPago06AV.Efectivo,      Texto = t.Obtener("pcf_fp_efectivo") },
                 new FormaPagoVm { Valor = FormaPago06AV.Transferencia, Texto = t.Obtener("pcf_fp_transferencia") },
-                new FormaPagoVm { Valor = FormaPago06AV.Tarjeta,       Texto = t.Obtener("pcf_fp_tarjeta") }
+                new FormaPagoVm { Valor = FormaPago06AV.Tarjeta,       Texto = t.Obtener("pcf_fp_tarjeta") },
+                new FormaPagoVm { Valor = FormaPago06AV.TarjetaDebito, Texto = t.Obtener("pcf_fp_tarjeta_debito") }
             };
             if (actual != null)
                 foreach (FormaPagoVm vm in cboFormaPago.Items)
                     if (vm.Valor == actual.Valor) { cboFormaPago.SelectedItem = vm; break; }
+            ActualizarDatosTarjeta();
         }
 
         private void CargarVentas()
@@ -933,6 +954,8 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             txtReferencia.Clear();
             if (cboFormaPago.Items.Count > 0) cboFormaPago.SelectedIndex = 0;
             ArmarTarjetasFormaPago();
+            _datosTarjeta.Limpiar();
+            ActualizarDatosTarjeta();
 
             pnlGrilla.Visible = false;
             pnlFormVenta.Visible = false;
@@ -1110,9 +1133,20 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             var forma = (cboFormaPago.SelectedItem as FormaPagoVm)?.Valor ?? FormaPago06AV.Efectivo;
             string referencia = txtReferencia.Text.Trim();
 
+            // Pago con tarjeta: carga y autorización SIMULADAS. Los datos de la tarjeta
+            // no se pasan a la BLL ni se guardan; se limpian apenas termina el cobro.
+            string autorizacion = null;
+            if (EsTarjeta(forma))
+            {
+                if (!_datosTarjeta.Validar(out string errorTarjeta)) { MostrarError(errorTarjeta); return; }
+                autorizacion = _datosTarjeta.SimularAutorizacion(FindForm(), _ventaPago.MontoSenaRequerido);
+                if (autorizacion == null) return;
+            }
+
             try
             {
                 var pago = _ventasBLL.RegistrarSena(_ventaPago.NumeroVenta, forma, referencia);
+                _datosTarjeta.Limpiar();
                 var actualizada = _ventasBLL.ObtenerPorNumero(_ventaPago.NumeroVenta) ?? _ventaPago;
                 MostrarGrilla();
                 CargarVentas();
@@ -1121,6 +1155,9 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
                 string recibo = ComprobantePcFactory06AV.GenerarReciboSena(actualizada, pago);
                 ComprobantePcFactory06AV.PreguntarEImprimir(recibo, esFactura: false, owner: FindForm(),
                     encabezado: $"Seña registrada: ${pago.Monto:0.00} ({pago.NumeroRecibo}).\n" +
+                                (autorizacion != null
+                                    ? GestorIdioma06AV.Instancia.Obtener("pcf_tj_aprobada", autorizacion) + "\n"
+                                    : "") +
                                 "La venta queda lista para que el gerente genere la orden de producción.");
             }
             catch (Exception ex) { MostrarError(ex.Message); }

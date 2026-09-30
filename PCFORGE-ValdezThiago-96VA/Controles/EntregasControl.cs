@@ -47,6 +47,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
         private FlowLayoutPanel flpFormaPago;
         private ComboBox cboFormaPago;
         private TextBox txtReferencia;
+        private DatosTarjetaControl06AV _datosTarjeta;
         private Button btnConfirmar, btnVolver;
 
         public EntregasControl()
@@ -148,12 +149,14 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             flpFormaPago = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top, Height = 84,
+                AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,   // 4 formas de pago: si no entran, baja de renglón
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = true, Padding = new Padding(0, 2, 0, 2)
             };
 
             cboFormaPago = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 240, Visible = false };
             txtReferencia = new TextBox { Width = 320 };
+            _datosTarjeta = new DatosTarjetaControl06AV { Visible = false, Margin = new Padding(0, 4, 0, 4) };
 
             btnConfirmar = NuevoBoton(230);
             btnVolver = NuevoBoton(120);
@@ -166,6 +169,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
 
             var cont = new Panel { Dock = DockStyle.Fill, Padding = new Padding(18, 6, 18, 8), AutoScroll = true };
             cont.Controls.Add(tabla);
+            cont.Controls.Add(_datosTarjeta);
             cont.Controls.Add(flpFormaPago);
             cont.Controls.Add(lblFormaPago);
             cont.Controls.Add(fichaCobro);
@@ -205,7 +209,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
                     Valor = item,
                     Titulo = item.ToString(),
                     Icono = IconoPcf06AV.Caja,
-                    Width = 210,
+                    Width = 190,
                     Height = 58,
                     Seleccionada = ReferenceEquals(item, cboFormaPago.SelectedItem)
                 };
@@ -222,6 +226,19 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             cboFormaPago.SelectedItem = item;
             foreach (Control c in flpFormaPago.Controls)
                 if (c is TarjetaOpcion06AV t) t.Seleccionada = ReferenceEquals(t.Valor, item);
+            ActualizarDatosTarjeta();
+        }
+
+        private static bool EsTarjeta(FormaPago06AV forma) =>
+            forma == FormaPago06AV.Tarjeta || forma == FormaPago06AV.TarjetaDebito;
+
+        // Con crédito o débito aparece la carga (simulada) de los datos de la tarjeta.
+        private void ActualizarDatosTarjeta()
+        {
+            if (_datosTarjeta == null) return;
+            var forma = (cboFormaPago.SelectedItem as FormaPagoVm)?.Valor ?? FormaPago06AV.Efectivo;
+            _datosTarjeta.Credito = forma == FormaPago06AV.Tarjeta;
+            _datosTarjeta.Visible = EsTarjeta(forma);
         }
 
         private static Button NuevoBoton(int width = 110) =>
@@ -308,6 +325,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
                         hijo.BackColor = Tema.FondoApp;
             }
 
+            _datosTarjeta?.AplicarTema();
             ActualizarDetalle();
         }
 
@@ -325,6 +343,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             btnVolver.Text = t.Obtener("volver");
 
             CargarVistas();
+            _datosTarjeta?.AplicarIdioma();
             CargarFormasPago();
 
             if (grilla.DataSource != null) Cargar();
@@ -356,11 +375,13 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             {
                 new FormaPagoVm { Valor = FormaPago06AV.Efectivo,      Texto = t.Obtener("pcf_fp_efectivo") },
                 new FormaPagoVm { Valor = FormaPago06AV.Transferencia, Texto = t.Obtener("pcf_fp_transferencia") },
-                new FormaPagoVm { Valor = FormaPago06AV.Tarjeta,       Texto = t.Obtener("pcf_fp_tarjeta") }
+                new FormaPagoVm { Valor = FormaPago06AV.Tarjeta,       Texto = t.Obtener("pcf_fp_tarjeta") },
+                new FormaPagoVm { Valor = FormaPago06AV.TarjetaDebito, Texto = t.Obtener("pcf_fp_tarjeta_debito") }
             };
             if (actual != null)
                 foreach (FormaPagoVm vm in cboFormaPago.Items)
                     if (vm.Valor == actual.Valor) { cboFormaPago.SelectedItem = vm; break; }
+            ActualizarDatosTarjeta();
         }
 
         private void Cargar()
@@ -595,6 +616,8 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             txtReferencia.Clear();
             if (cboFormaPago.Items.Count > 0) cboFormaPago.SelectedIndex = 0;
             ArmarTarjetasFormaPago();
+            _datosTarjeta.Limpiar();
+            ActualizarDatosTarjeta();
 
             pnlGrilla.Visible = false;
             pnlFormCobro.Visible = true;
@@ -606,9 +629,20 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             if (_ordenCobro == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
             var forma = (cboFormaPago.SelectedItem as FormaPagoVm)?.Valor ?? FormaPago06AV.Efectivo;
 
+            // Pago con tarjeta: carga y autorización SIMULADAS. Los datos de la tarjeta
+            // no se pasan a la BLL ni se guardan; se limpian apenas termina el cobro.
+            string autorizacion = null;
+            if (EsTarjeta(forma))
+            {
+                if (!_datosTarjeta.Validar(out string errorTarjeta)) { MostrarError(errorTarjeta); return; }
+                autorizacion = _datosTarjeta.SimularAutorizacion(FindForm(), _ordenCobro.SaldoPendiente);
+                if (autorizacion == null) return;
+            }
+
             try
             {
                 _entregasBLL.RegistrarEntrega(_ordenCobro.NumeroOrden, forma, txtReferencia.Text.Trim());
+                _datosTarjeta.Limpiar();
 
                 var actualizada = _entregasBLL.ObtenerOrden(_ordenCobro.NumeroOrden) ?? _ordenCobro;
                 MostrarGrilla();
@@ -616,7 +650,10 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
 
                 string factura = ComprobantePcFactory06AV.GenerarFactura(actualizada.Venta, actualizada);
                 ComprobantePcFactory06AV.PreguntarEImprimir(factura, esFactura: true, owner: FindForm(),
-                    encabezado: $"Entrega registrada. La orden #{actualizada.NumeroOrden} queda cerrada.");
+                    encabezado: $"Entrega registrada. La orden #{actualizada.NumeroOrden} queda cerrada." +
+                                (autorizacion != null
+                                    ? "\n" + GestorIdioma06AV.Instancia.Obtener("pcf_tj_aprobada", autorizacion)
+                                    : ""));
             }
             catch (Exception ex) { MostrarError(ex.Message); }
         }

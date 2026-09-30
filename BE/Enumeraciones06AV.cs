@@ -48,7 +48,8 @@ namespace BE
     {
         Efectivo,
         Transferencia,
-        Tarjeta
+        Tarjeta,        // tarjeta de crédito (valor 2, ya persistido en Pagos)
+        TarjetaDebito   // se agrega al final para no alterar los valores guardados
     }
 
     public enum EstadoCotizacion06AV

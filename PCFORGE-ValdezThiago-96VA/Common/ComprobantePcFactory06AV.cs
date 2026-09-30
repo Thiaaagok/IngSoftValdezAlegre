@@ -82,6 +82,7 @@ namespace PCFORGE_ValdezThiago_96VA.Common
             {
                 case FormaPago06AV.Transferencia: return t.Obtener("pcf_fp_transferencia");
                 case FormaPago06AV.Tarjeta: return t.Obtener("pcf_fp_tarjeta");
+                case FormaPago06AV.TarjetaDebito: return t.Obtener("pcf_fp_tarjeta_debito");
                 default: return t.Obtener("pcf_fp_efectivo");
             }
         }
