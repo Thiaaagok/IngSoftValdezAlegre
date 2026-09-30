@@ -37,13 +37,17 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
         private Label lblFormVentaTit, lblCliente, lblTipo, lblModelo, lblComp, lblEntrega;
         private Label lblResumenTit, lblResumenVacio, lblTotalRotulo, lblTotalValor, lblVentaAyuda;
         private ResumenPcControl06AV _resumen;
-        private ComboBox cboCliente;
+        private TextBox txtDniCliente;
+        private Label lblClienteInfo;
+        private Cliente06AV _clienteElegido;
+        private string _dniNoEncontrado;
+        private readonly ToolTip _tips = new ToolTip();
         private FlowLayoutPanel flpTipo, flpModelos;
         private Panel pnlTicket, pnlArmar;
         private TipoConfiguracion06AV _tipoElegido = TipoConfiguracion06AV.Estandar;
         private ModeloEstandar06AV _modeloElegido;
         private List<ModeloEstandar06AV> _modelos = new List<ModeloEstandar06AV>();
-        private Button btnNuevoCliente, btnArmar, btnRegistrar, btnVolverVenta;
+        private Button btnBuscarCliente, btnNuevoCliente, btnArmar, btnRegistrar, btnVolverVenta;
         private DateTimePicker dtpEntrega;
 
         private Label lblFormPagoTit, lblPagoDetalle, lblMonto, lblFormaPago, lblReferencia;
@@ -140,9 +144,41 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             lblEntrega = new Label();
             _resumen = new ResumenPcControl06AV();
 
-            cboCliente = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 340 };
+            // CU "Registrar venta" paso 2 / alternativo 2.1: el recepcionista busca al cliente
+            // por DNI; si no está registrado lo da de alta (CU "Registrar cliente") con el botón ＋.
+            txtDniCliente = new TextBox { Width = 220, MaxLength = 20, Margin = new Padding(0, 2, 0, 0) };
+            txtDniCliente.KeyPress += (s, e) =>
+            {
+                if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar)) e.Handled = true;
+            };
+            txtDniCliente.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode != Keys.Enter) return;
+                e.SuppressKeyPress = true;
+                BuscarClientePorDni();
+            };
+            txtDniCliente.TextChanged += (s, e) =>
+            {
+                // Si se edita el DNI, se descarta el cliente (o el aviso) de la búsqueda anterior.
+                string dni = txtDniCliente.Text.Trim();
+                bool cambio = (_clienteElegido != null && dni != _clienteElegido.Dni) ||
+                              (_dniNoEncontrado != null && dni != _dniNoEncontrado);
+                if (!cambio) return;
+                _dniNoEncontrado = null;
+                MostrarClienteElegido(null);
+            };
+
+            btnBuscarCliente = new Button { Width = 110, Height = 28, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Margin = new Padding(8, 0, 0, 0) };
+            btnBuscarCliente.Click += (s, e) => BuscarClientePorDni();
+
             btnNuevoCliente = new Button { Width = 44, Height = 28, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Margin = new Padding(8, 0, 0, 0) };
             btnNuevoCliente.Click += (s, e) => AbrirNuevoCliente();
+
+            lblClienteInfo = new Label
+            {
+                Dock = DockStyle.Top, Height = 30, AutoSize = false,
+                TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(2, 0, 0, 4)
+            };
 
             var pnlCliente = new FlowLayoutPanel
             {
@@ -150,7 +186,8 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false, Margin = new Padding(0)
             };
-            pnlCliente.Controls.Add(cboCliente);
+            pnlCliente.Controls.Add(txtDniCliente);
+            pnlCliente.Controls.Add(btnBuscarCliente);
             pnlCliente.Controls.Add(btnNuevoCliente);
 
             flpTipo = new FlowLayoutPanel
@@ -190,6 +227,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             cont.Controls.Add(lblModelo);
             cont.Controls.Add(flpTipo);
             cont.Controls.Add(lblTipo);
+            cont.Controls.Add(lblClienteInfo);
             cont.Controls.Add(pnlCliente);
             cont.Controls.Add(lblCliente);
 
@@ -467,6 +505,8 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             Tema.AplicarBotonSecundario(btnRefrescar);
             Tema.AplicarBotonAcento(btnArmar);
             Tema.AplicarBotonSecundario(btnNuevoCliente);
+            Tema.AplicarBotonPrimario(btnBuscarCliente);
+            Tema.AplicarEntrada(txtDniCliente);
             Tema.AplicarBotonPrimario(btnRegistrar);
             Tema.AplicarBotonSecundario(btnVolverVenta);
             Tema.AplicarBotonPrimario(btnConfirmarPago);
@@ -525,6 +565,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
                 lblVentaAyuda.BackColor = Tema.FondoApp;
                 foreach (Control c in new Control[] { flpTipo, flpModelos, pnlArmar })
                     c.BackColor = Tema.FondoApp;
+                PintarInfoCliente();
                 ActualizarResumenComp();
             }
 
@@ -552,6 +593,10 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             lblResumenVacio.Text = t.Obtener("pcf_venta_ticket_vacio");
             lblTotalRotulo.Text = t.Obtener("pcf_armar_total");
             btnNuevoCliente.Text = "＋";
+            btnBuscarCliente.Text = t.Obtener("buscar");
+            _tips.SetToolTip(btnNuevoCliente, t.Obtener("pcf_nuevo_cliente"));
+            _tips.SetToolTip(btnBuscarCliente, t.Obtener("pcf_venta_cliente_hint"));
+            PintarInfoCliente();
             lblTipo.Text = t.Obtener("pcf_venta_paso_tipo");
             lblModelo.Text = t.Obtener("pcf_venta_paso_modelo");
             ArmarTarjetasTipo();
@@ -579,7 +624,6 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             try
             {
                 _cargandoCombos = true;
-                cboCliente.DataSource = _clientesBLL.ObtenerTodos();
                 _modelos = _modelosBLL.ObtenerTodos() ?? new List<ModeloEstandar06AV>();
                 ArmarTarjetasModelo();
             }
@@ -846,12 +890,16 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             ArmarTarjetasModelo();
             _componentesElegidos = new List<Componente06AV>();
             dtpEntrega.Value = DateTime.Today.AddDays(15);
+            _dniNoEncontrado = null;
+            txtDniCliente.Clear();
+            MostrarClienteElegido(null);
             ActualizarModeloSegunTipo();
             ActualizarResumenComp();
             pnlGrilla.Visible = false;
             pnlFormPago.Visible = false;
             pnlFormVenta.Visible = true;
             pnlFormVenta.BringToFront();
+            txtDniCliente.Focus();
         }
 
         private void AbrirFormPago()
@@ -948,22 +996,95 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             else Tema.AplicarBotonDeshabilitado(btnRegistrar);
         }
 
+        private void BuscarClientePorDni()
+        {
+            var t = GestorIdioma06AV.Instancia;
+            string dni = txtDniCliente.Text.Trim();
+            if (dni.Length == 0)
+            {
+                MostrarError(t.Obtener("pcf_venta_cliente_sin_dni"));
+                txtDniCliente.Focus();
+                return;
+            }
+
+            Cliente06AV cliente;
+            try { cliente = _clientesBLL.ObtenerPorDni(dni); }
+            catch (Exception ex) { MostrarError(ex.Message); return; }
+
+            if (cliente != null)
+            {
+                _dniNoEncontrado = null;
+                MostrarClienteElegido(cliente);
+                return;
+            }
+
+            // Escenario alternativo 2.1: el cliente no está registrado en el sistema.
+            _dniNoEncontrado = dni;
+            MostrarClienteElegido(null);
+
+            bool registrar = ConfirmacionForm.Mostrar(
+                t.Obtener("pcf_venta_cliente_no_encontrado", dni),
+                t.Obtener("pcf_nuevo_cliente"),
+                ConfirmacionForm.TipoConfirmacion.Pregunta,
+                t.Obtener("pcf_registrar_cliente"), t.Obtener("cancelar"),
+                FindForm());
+            if (registrar) AbrirNuevoCliente();
+        }
+
         private void AbrirNuevoCliente()
         {
-            using (var dlg = new FRMNuevoCliente06AV())
+            using (var dlg = new FRMNuevoCliente06AV(txtDniCliente.Text.Trim()))
             {
                 if (dlg.ShowDialog(FindForm()) != DialogResult.OK || dlg.ClienteCreado == null) return;
-                CargarCombos();
-                foreach (var item in cboCliente.Items)
-                    if (item is Cliente06AV c && c.Dni == dlg.ClienteCreado.Dni)
-                    { cboCliente.SelectedItem = item; break; }
+                _dniNoEncontrado = null;
+                txtDniCliente.Text = dlg.ClienteCreado.Dni;
+                MostrarClienteElegido(dlg.ClienteCreado);
+            }
+        }
+
+        private void MostrarClienteElegido(Cliente06AV cliente)
+        {
+            _clienteElegido = cliente;
+            PintarInfoCliente();
+        }
+
+        private void PintarInfoCliente()
+        {
+            if (lblClienteInfo == null) return;
+            var t = GestorIdioma06AV.Instancia;
+
+            lblClienteInfo.BackColor = Tema.FondoApp;
+            if (_clienteElegido != null)
+            {
+                var c = _clienteElegido;
+                string extra = string.IsNullOrWhiteSpace(c.Telefono) ? "" : "   ·   " + c.Telefono;
+                lblClienteInfo.Text = "✔  " + c.NombreCompleto + "   ·   " + t.Obtener("dni") + " " + c.Dni + extra;
+                lblClienteInfo.ForeColor = Tema.Exito;
+                lblClienteInfo.Font = Tema.FuenteBold;
+            }
+            else if (!string.IsNullOrEmpty(_dniNoEncontrado))
+            {
+                lblClienteInfo.Text = "✖  " + t.Obtener("pcf_venta_cliente_no_existe", _dniNoEncontrado);
+                lblClienteInfo.ForeColor = Tema.Peligro;
+                lblClienteInfo.Font = Tema.FuenteBold;
+            }
+            else
+            {
+                lblClienteInfo.Text = t.Obtener("pcf_venta_cliente_hint");
+                lblClienteInfo.ForeColor = Tema.TextoSuave;
+                lblClienteInfo.Font = Tema.FuenteRegular;
             }
         }
 
         private void RegistrarVenta()
         {
-            var cliente = cboCliente.SelectedItem as Cliente06AV;
-            if (cliente == null) { MostrarError("Elegí un cliente."); return; }
+            var cliente = _clienteElegido;
+            if (cliente == null)
+            {
+                MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_venta_cliente_requerido"));
+                txtDniCliente.Focus();
+                return;
+            }
             if (_componentesElegidos == null || _componentesElegidos.Count == 0)
             { MostrarError("Elegí al menos un componente (botón “Armá tu PC”) o un modelo estándar."); return; }
 
