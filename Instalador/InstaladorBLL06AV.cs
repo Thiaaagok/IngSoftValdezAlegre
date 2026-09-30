@@ -24,7 +24,7 @@ namespace Instalador
 
         public ResultadoInstalacion06AV Instalar(Action<string> log)
         {
-            log?.Invoke("=== INSTALACIÓN DEL SISTEMA IngSoftValdezAlegre ===");
+            log?.Invoke("=== INSTALACIÓN DEL SISTEMA PCFORGE-ValdezThiago-96VA ===");
 
             _mpp.PrepararBaseDatos(log);
 

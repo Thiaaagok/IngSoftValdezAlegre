@@ -67,7 +67,7 @@ namespace Instalador
                 AllocConsole();
 
             Console.OutputEncoding = System.Text.Encoding.UTF8;
-            Console.Title = "Instalador - IngSoftValdezAlegre";
+            Console.Title = "Instalador - PCFORGE-ValdezThiago-96VA";
 
             try
             {
@@ -82,7 +82,7 @@ namespace Instalador
                 bool silent = TieneFlag(args, "--silent");
 
                 Console.WriteLine("======================================================");
-                Console.WriteLine("  INSTALADOR - Sistema IngSoftValdezAlegre");
+                Console.WriteLine("  INSTALADOR - Sistema PCFORGE-ValdezThiago-96VA");
                 Console.WriteLine("======================================================");
                 Console.WriteLine($"  Servidor : {opciones.Servidor}");
                 Console.WriteLine($"  Base     : {opciones.BaseDatos}{(esTest ? " (modo prueba)" : "")}");
@@ -200,7 +200,7 @@ namespace Instalador
 
         private static void MostrarAyuda()
         {
-            Console.WriteLine("Instalador del sistema IngSoftValdezAlegre");
+            Console.WriteLine("Instalador del sistema PCFORGE-ValdezThiago-96VA");
             Console.WriteLine();
             Console.WriteLine("  (sin parámetros)    Abre el asistente gráfico de instalación.");
             Console.WriteLine("  --servidor <inst>   Instancia de SQL Server (por defecto '.').");

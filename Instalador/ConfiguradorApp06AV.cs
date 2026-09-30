@@ -7,7 +7,7 @@ namespace Instalador
 {
     public static class ConfiguradorApp06AV
     {
-        public const string NombreExeApp = "IngSoftValdezAlegre.exe";
+        public const string NombreExeApp = "PCFORGE-ValdezThiago-96VA.exe";
 
         public const string ArchivoConexion = "conexion.config";
 
@@ -37,7 +37,7 @@ namespace Instalador
                 for (int i = 0; i < 6 && dir != null; i++)
                 {
                     foreach (string cfg in new[] { "Debug", "Release" })
-                        Agregar(Path.Combine(dir.FullName, "IngSoftValdezAlegre", "bin", cfg, NombreExeApp));
+                        Agregar(Path.Combine(dir.FullName, "PCFORGE-ValdezThiago-96VA", "bin", cfg, NombreExeApp));
                     dir = dir.Parent;
                 }
             }
@@ -117,7 +117,7 @@ namespace Instalador
         }
 
         public static string CrearAccesoDirectoEscritorio(
-            string exePath, string nombreAcceso = "IngSoftValdezAlegre")
+            string exePath, string nombreAcceso = "PCFORGE-ValdezThiago-96VA")
         {
             try
             {
@@ -141,7 +141,7 @@ namespace Instalador
 
                 Set("TargetPath", exePath);
                 Set("WorkingDirectory", Path.GetDirectoryName(exePath));
-                Set("Description", "Sistema IngSoftValdezAlegre");
+                Set("Description", "Sistema PCFORGE-ValdezThiago-96VA");
                 Set("IconLocation", exePath + ", 0");
 
                 tipoAcceso.InvokeMember("Save", BindingFlags.InvokeMethod, null, acceso, null);

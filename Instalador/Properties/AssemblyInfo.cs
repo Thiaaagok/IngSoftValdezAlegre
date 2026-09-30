@@ -2,10 +2,10 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("Instalador")]
-[assembly: AssemblyDescription("Programa de instalación y preparación de la base de datos del sistema IngSoftValdezAlegre.")]
+[assembly: AssemblyDescription("Programa de instalación y preparación de la base de datos del sistema PCFORGE-ValdezThiago-96VA.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("06AV")]
-[assembly: AssemblyProduct("IngSoftValdezAlegre")]
+[assembly: AssemblyProduct("PCFORGE-ValdezThiago-96VA")]
 [assembly: AssemblyCopyright("Copyright © 06AV 2026")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

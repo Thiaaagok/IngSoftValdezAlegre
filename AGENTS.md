@@ -7,14 +7,14 @@
 ## Build
 
 ```cmd
-msbuild IngSoftValdezAlegre.sln /p:Configuration=Release
+msbuild PCFORGE-ValdezThiago-96VA.sln /p:Configuration=Release
 ```
 
 - `msbuild` and `nuget` are **not on PATH**. MSBuild lives at `C:\Program Files\Microsoft Visual Studio\<ver>\Community\MSBuild\Current\Bin\MSBuild.exe` (locate with `vswhere`); `nuget` must be run via its own install or Visual Studio's "Restore Packages".
 - The `.sln` maps every project's `Debug|Any CPU` → `Release|Any CPU`. Always pass `Configuration=Release`.
 - NuGet is legacy `packages.config`, one dependency: `ReaLTaiizor` 3.8.1.8 (WinForms theming, UI project only).
 - **All 7 csproj files are legacy (non-SDK) with explicit `<Compile Include="...">` lists.** A new `.cs` file does not compile until you add it to the owning csproj. Verified dead code proves this: `BLL\RolNegocio06AV.cs`, `SER\Usuario.cs`, `SER\UsuarioSesion.cs`, `SER\Exportar\*.cs` exist on disk but are not listed in their csproj and never build. New `.sql` files must be added as `<Content Include="..\SQL\...">` to `Instalador\Instalador.csproj` (6 of 36 SQL files are currently not shipped, incl. all three `99_*` aggregators).
-- Entry point: `IngSoftValdezAlegre\Program.cs` → `FRMLogin`. It only calls `EnableVisualStyles`, `SetCompatibleTextRenderingDefault`, `Application.Run(new FRMLogin())`. **There is no global exception handler anywhere in the repo.**
+- Entry point: `PCFORGE-ValdezThiago-96VA\Program.cs` → `FRMLogin`. It only calls `EnableVisualStyles`, `SetCompatibleTextRenderingDefault`, `Application.Run(new FRMLogin())`. **There is no global exception handler anywhere in the repo.**
 - If a build fails with `MSB3021`/`MSB3027` "archivo bloqueado", the app is still running and holding the DLLs — close it. Use `msbuild /t:Compile` to verify compilation without the copy step.
 
 ## Layering
@@ -47,7 +47,7 @@ Source files are **UTF-8, some with BOM, with inconsistent line endings per file
 
 - `BLL\UsuariosBLL06AV.cs` declares `namespace SER`, not `BLL`. Access it with `using SER;`.
 - `BLL\Excepciones\ExcepcionesUsuario.cs` declares `namespace SER.Excepciones`. Two unrelated exception families exist: `BLL.Excepciones.PcFactoryException06AV` (`PCF_*` codes) for the PC Factory domain, and `SER.Excepciones.UsuarioException` (`USR_*`) for users/sessions.
-- `IngSoftValdezAlegre\FRMCambiarContrasenia.cs` sits in the root folder but declares `namespace IngSoftValdezAlegre.Controles`.
+- `PCFORGE-ValdezThiago-96VA\FRMCambiarContrasenia.cs` sits in the root folder but declares `namespace PCFORGE_ValdezThiago_96VA.Controles`.
 
 ## Permissions and the DV (Dígito Verificador)
 
@@ -81,7 +81,7 @@ There is no `try/finally`. Audit is a plain call on the success path *after* the
 
 ## Installer
 
-`Instalador` is a `WinExe` that attaches a console via P/Invoke for its scriptable mode. The trigger flag is **`--consola`** (not `--console`). Also accepts `--test`, `--silent`, `--help`, `--servidor`, `--bd`, `--usuario`, `--password`, `--scripts`. It runs every `*.sql` in the folder in filename order with no prefix filtering, writes `conexion.config` next to each discovered exe, and patches the `IngSoft` entry in the exe.config as backup. `IngSoftValdezAlegre_Setup.iss` is a separate manual Inno Setup step and is not part of the msbuild build.
+`Instalador` is a `WinExe` that attaches a console via P/Invoke for its scriptable mode. The trigger flag is **`--consola`** (not `--console`). Also accepts `--test`, `--silent`, `--help`, `--servidor`, `--bd`, `--usuario`, `--password`, `--scripts`. It runs every `*.sql` in the folder in filename order with no prefix filtering, writes `conexion.config` next to each discovered exe, and patches the `IngSoft` entry in the exe.config as backup. `PCFORGE-ValdezThiago-96VA_Setup.iss` is a separate manual Inno Setup step and is not part of the msbuild build.
 
 ## Code comments
 

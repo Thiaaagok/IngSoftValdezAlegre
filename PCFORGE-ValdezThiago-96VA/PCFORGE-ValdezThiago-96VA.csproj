@@ -1,0 +1,336 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{2F1AEE91-F459-4DC7-9288-4C72E02E14CA}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>PCFORGE_ValdezThiago_96VA</RootNamespace>
+    <AssemblyName>PCFORGE-ValdezThiago-96VA</AssemblyName>
+    <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.VisualBasic" />
+    <Reference Include="ReaLTaiizor, Version=3.8.1.8, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ReaLTaiizor.3.8.1.8\lib\net481\ReaLTaiizor.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Design" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Common\PdfSimple06AV.cs" />
+    <Compile Include="Common\ComprobantePcFactory06AV.cs" />
+    <Compile Include="Common\ComprobantePdf06AV.cs" />
+    <Compile Include="Common\PdfLienzo06AV.cs" />
+    <Compile Include="Common\ReporteVentasPdf06AV.cs" />
+    <Compile Include="Common\ConfirmacionForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Common\ConfirmacionForm.Designer.cs">
+      <DependentUpon>ConfirmacionForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\BitacoraControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\BitacoraControl.Designer.cs">
+      <DependentUpon>BitacoraControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\FamiliasControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\FamiliasControl.Designer.cs">
+      <DependentUpon>FamiliasControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\RolesControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\RolesControl.Designer.cs">
+      <DependentUpon>RolesControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Pintura06AV.cs" />
+    <Compile Include="UI\Iconos06AV.cs" />
+    <Compile Include="UI\RielEnsamblajeControl06AV.cs" />
+    <Compile Include="UI\TarjetaOrden06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\TableroEstacionesControl06AV.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\MedidorReposicion06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\TarjetaFaltante06AV.cs" />
+    <Compile Include="UI\PasosWizard06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\SelectorCantidad06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\TarjetaCotizacion06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\ChasisPcControl06AV.cs" />
+    <Compile Include="UI\ItemChequeo06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\FichaDatos06AV.cs" />
+    <Compile Include="UI\PedidoCotizacionControl06AV.cs" />
+    <Compile Include="UI\RecepcionControl06AV.cs" />
+    <Compile Include="UI\FilaRecepcion06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\TarjetaOpcion06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\TarjetaComponente06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\AsistenteBase06AV.cs" />
+    <Compile Include="UI\AsistenteCompraControl06AV.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\AbmBaseControl06AV.cs" />
+    <Compile Include="Controles\ClientesControl.cs" />
+    <Compile Include="Controles\ComponentesControl.cs" />
+    <Compile Include="Controles\BitacoraComponentesControl.cs" />
+    <Compile Include="Controles\ProveedoresControl.cs" />
+    <Compile Include="Controles\LineasEnsamblajeControl.cs" />
+    <Compile Include="Controles\VentasControl.cs" />
+    <Compile Include="Controles\EntregasControl.cs" />
+    <Compile Include="Controles\RecibosControl.cs" />
+    <Compile Include="Controles\ProduccionControl.cs" />
+    <Compile Include="Controles\ComprasControl.cs" />
+    <Compile Include="Controles\CotizacionesControl.cs" />
+    <Compile Include="Controles\ConsultarStockControl.cs" />
+    <Compile Include="Controles\FacturasControl.cs" />
+    <Compile Include="Controles\ReporteVentasControl.cs" />
+    <Compile Include="Controles\SerializacionControl06AV.cs" />
+    <Compile Include="Controles\ModelosEstandarControl.cs" />
+    <Compile Include="Controles\AbmBaseControl06AV.Designer.cs">
+      <DependentUpon>AbmBaseControl06AV.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\ClientesControl.Designer.cs">
+      <DependentUpon>ClientesControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\ComponentesControl.Designer.cs">
+      <DependentUpon>ComponentesControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\ProveedoresControl.Designer.cs">
+      <DependentUpon>ProveedoresControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\LineasEnsamblajeControl.Designer.cs">
+      <DependentUpon>LineasEnsamblajeControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\ModelosEstandarControl.Designer.cs">
+      <DependentUpon>ModelosEstandarControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\ProduccionControl.Designer.cs">
+      <DependentUpon>ProduccionControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\ComprasControl.Designer.cs">
+      <DependentUpon>ComprasControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\PatentesControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\PatentesControl.Designer.cs">
+      <DependentUpon>PatentesControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controles\UsuariosControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controles\UsuariosControl.Designer.cs">
+      <DependentUpon>UsuariosControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FRMLogin.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FRMLogin.Designer.cs">
+      <DependentUpon>FRMLogin.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FRMMain.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FRMMain.Designer.cs">
+      <DependentUpon>FRMMain.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FRMReparacionDV.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FRMReparacionDV.Designer.cs">
+      <DependentUpon>FRMReparacionDV.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FRMGestionBackup.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FRMNuevoProveedor06AV.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FRMNuevoCliente06AV.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FRMCotizacion06AV.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FRMArmarPc06AV.cs" />
+    <Compile Include="FRMGestionBackup.Designer.cs">
+      <DependentUpon>FRMGestionBackup.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Tema.cs" />
+    <Compile Include="FRMCambiarContrasenia.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FRMCambiarContrasenia.Designer.cs">
+      <DependentUpon>FRMCambiarContrasenia.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Common\ConfirmacionForm.resx">
+      <DependentUpon>ConfirmacionForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\BitacoraControl.resx">
+      <DependentUpon>BitacoraControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\FamiliasControl.resx">
+      <DependentUpon>FamiliasControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\AbmBaseControl06AV.resx">
+      <DependentUpon>AbmBaseControl06AV.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\ClientesControl.resx">
+      <DependentUpon>ClientesControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\ComponentesControl.resx">
+      <DependentUpon>ComponentesControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\ProveedoresControl.resx">
+      <DependentUpon>ProveedoresControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\LineasEnsamblajeControl.resx">
+      <DependentUpon>LineasEnsamblajeControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\ModelosEstandarControl.resx">
+      <DependentUpon>ModelosEstandarControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\ProduccionControl.resx">
+      <DependentUpon>ProduccionControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\ComprasControl.resx">
+      <DependentUpon>ComprasControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\PatentesControl.resx">
+      <DependentUpon>PatentesControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\RolesControl.resx">
+      <DependentUpon>RolesControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FRMCambiarContrasenia.resx">
+      <DependentUpon>FRMCambiarContrasenia.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controles\UsuariosControl.resx">
+      <DependentUpon>UsuariosControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FRMLogin.resx">
+      <DependentUpon>FRMLogin.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FRMMain.resx">
+      <DependentUpon>FRMMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FRMReparacionDV.resx">
+      <DependentUpon>FRMReparacionDV.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\Idiomas\en.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Idiomas\es.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Idiomas\pt.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="Resources\login-logo1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\login-logo.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\login-logo %281%29.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BE\BE_06AV.csproj">
+      <Project>{b2d14455-f2ec-4381-b7fe-a9e5496f593c}</Project>
+      <Name>BE_06AV</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\BLL\BLL_06AV.csproj">
+      <Project>{5d65dcd4-a37f-4a64-90ad-0d146d9c9ce7}</Project>
+      <Name>BLL_06AV</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SER\SER_06AV.csproj">
+      <Project>{82b0c5f6-0e96-4e40-acc9-7847e8196eeb}</Project>
+      <Name>SER_06AV</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\pcforge-logo.jpg" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
