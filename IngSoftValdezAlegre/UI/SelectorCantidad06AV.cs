@@ -4,25 +4,12 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>
-    /// Selector de cantidad dibujado a mano: [ − ][ 17 ][ + ].
-    ///
-    /// Reemplaza al NumericUpDown nativo, que rompe la estética de la tarjeta
-    /// (borde cuadrado gris, flechitas de 8 px imposibles de acertar con el mouse
-    /// y sin forma de teñirlo con el tema).
-    ///
-    /// Conserva todo lo que hacía el control nativo:
-    ///   · clic en − / + (y auto-repetición si se mantiene apretado),
-    ///   · rueda del mouse sobre el control,
-    ///   · flechas ↑ ↓ y Re Pág / Av Pág (de a 10) con el foco puesto,
-    ///   · tipeo directo de dígitos y Backspace para corregir.
-    /// </summary>
     internal class SelectorCantidad06AV : Control
     {
         private int _valor = 1;
         private int _minimo = 1;
         private int _maximo = 9999;
-        private int _hot;              // 0 = ninguno, -1 = menos, 1 = mas
+        private int _hot;
         private int _presionado;
         private readonly Timer _repeticion;
         private int _pasoRepeticion;
@@ -39,7 +26,7 @@ namespace IngSoftValdezAlegre.UI
             _repeticion = new Timer { Interval = 380 };
             _repeticion.Tick += (s, e) =>
             {
-                _repeticion.Interval = 70;      // arranca lento y acelera
+                _repeticion.Interval = 70;
                 Valor += _pasoRepeticion;
             };
         }
@@ -158,7 +145,7 @@ namespace IngSoftValdezAlegre.UI
                 case Keys.Home: Valor = _minimo; e.Handled = true; break;
                 case Keys.End: Valor = _maximo; e.Handled = true; break;
                 case Keys.Back:
-                    Valor = _valor / 10;         // borra el último dígito
+                    Valor = _valor / 10;
                     e.Handled = true;
                     break;
             }
@@ -169,7 +156,6 @@ namespace IngSoftValdezAlegre.UI
             base.OnKeyPress(e);
             if (!char.IsDigit(e.KeyChar)) return;
 
-            // Tipeo directo: se va componiendo el número dígito a dígito.
             long compuesto = (long)_valor * 10 + (e.KeyChar - '0');
             Valor = (int)Math.Min(_maximo, compuesto);
             e.Handled = true;

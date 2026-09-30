@@ -25,7 +25,6 @@ namespace IngSoftValdezAlegre.Controles
 
             AplicarIdioma();
 
-            // Observer: suscribirse al cambio de idioma
             GestorIdioma06AV.Instancia.IdiomaChanged += AplicarIdioma;
             FormClosed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
 

@@ -4,19 +4,18 @@ using System.Drawing.Drawing2D;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>Íconos del dominio PC Factory.</summary>
     internal enum IconoPcf06AV
     {
         Ninguno,
-        Bandeja,        // orden pendiente / entrada de trabajo
-        Calendario,     // planificada
-        Destornillador, // en ensamblaje
-        Escudo,         // control de calidad / finalizada
-        Camion,         // entregada
-        Alerta,         // en revisión / faltante crítico
-        Caja,           // insumo / componente
-        Carrito,        // compra
-        Chip,           // componente electrónico
+        Bandeja,
+        Calendario,
+        Destornillador,
+        Escudo,
+        Camion,
+        Alerta,
+        Caja,
+        Carrito,
+        Chip,
         Check,
         Reloj,
         Flecha,
@@ -24,17 +23,8 @@ namespace IngSoftValdezAlegre.UI
         Lupa
     }
 
-    /// <summary>
-    /// Íconos dibujados con GraphicsPath sobre una grilla virtual de 24x24.
-    ///
-    /// Por qué vectorial y no PNG/SVG: la app corre en monitores de taller con DPI
-    /// distintos y el instalador no debería arrastrar assets. Un path escala perfecto,
-    /// se tiñe con el color del tema (claro/oscuro) sin generar variantes, y no suma
-    /// ni una dependencia al proyecto.
-    /// </summary>
     internal static class Iconos06AV
     {
-        /// <summary>Dibuja el ícono centrado y escalado dentro de la caja indicada.</summary>
         public static void Dibujar(Graphics g, IconoPcf06AV icono, RectangleF caja, Color color, float grosor = 1.9f)
         {
             if (icono == IconoPcf06AV.Ninguno || caja.Width <= 0 || caja.Height <= 0) return;
@@ -66,7 +56,6 @@ namespace IngSoftValdezAlegre.UI
             switch (icono)
             {
                 case IconoPcf06AV.Bandeja:
-                    // Bandeja de entrada: caja con tapa abierta.
                     g.DrawLines(p, new[]
                     {
                         new PointF(3, 14), new PointF(6, 5), new PointF(18, 5), new PointF(21, 14)
@@ -84,7 +73,6 @@ namespace IngSoftValdezAlegre.UI
                     break;
 
                 case IconoPcf06AV.Destornillador:
-                    // Destornillador en diagonal: la acción física del ensamblaje.
                     g.DrawLine(p, 4, 20, 12, 12);
                     g.DrawLines(p, new[]
                     {

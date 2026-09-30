@@ -5,14 +5,8 @@ using System.Data.SqlClient;
 
 namespace DAL
 {
-    /// <summary>
-    /// Acceso a datos de la ORDEN DE PRODUCCIÓN (RFN1 - CU04 a CU07).
-    /// La orden apunta a una venta ya señada; los datos comerciales
-    /// (cliente, computadora, pagos) se leen desde <see cref="VentasDAL06AV"/>.
-    /// </summary>
     public class ProduccionDAL06AV
     {
-        // ── Alta (CU04) ──────────────────────────────────────────
         public int AgregarOrden(int numeroVenta, DateTime fechaEntregaEstimada)
         {
             object num = EjecutarSPEscalar("sp_OP_Agregar", new Dictionary<string, object>
@@ -23,20 +17,17 @@ namespace DAL
             return num == null || num == DBNull.Value ? 0 : Convert.ToInt32(num);
         }
 
-        // ── Lectura ──────────────────────────────────────────────
         public DataTable ObtenerOrdenes() => EjecutarSP("sp_OP_ObtenerTodas", null);
 
         public DataTable ObtenerOrdenPorNumero(int numero) =>
             EjecutarSP("sp_OP_ObtenerPorNumero", new Dictionary<string, object> { { "@NumeroOrden", numero } });
 
-        /// <summary>CU07: órdenes en un estado dado (Finalizadas / Entregadas).</summary>
         public DataTable ObtenerOrdenesPorEstado(int estado) =>
             EjecutarSP("sp_OP_ObtenerPorEstado", new Dictionary<string, object> { { "@Estado", estado } });
 
         public DataTable ObtenerOrdenPorVenta(int numeroVenta) =>
             EjecutarSP("sp_OP_ObtenerPorVenta", new Dictionary<string, object> { { "@NumeroVenta", numeroVenta } });
 
-        // ── Planificación (CU05) ─────────────────────────────────
         public void PlanificarOrden(int numero, int idLinea, DateTime fechaInicio, string responsable)
         {
             EjecutarSPNonQuery("sp_OP_Planificar", new Dictionary<string, object>
@@ -57,7 +48,6 @@ namespace DAL
             });
         }
 
-        // ── Cierre de producción (CU06) ──────────────────────────
         public void RegistrarControlCalidad(int numero, bool encendido, bool conexiones,
                                             bool sistemaOperativo, bool drivers,
                                             string observaciones, string responsable)
@@ -83,9 +73,6 @@ namespace DAL
         }
 
         #region Helpers
-
-        // Close no está en un finally: si el comando lanza, la conexión queda abierta
-        // hasta que la libere el GC.
 
         private DataTable EjecutarSP(string nombreSP, Dictionary<string, object> parametros)
         {

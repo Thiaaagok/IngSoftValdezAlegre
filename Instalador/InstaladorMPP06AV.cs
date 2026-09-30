@@ -5,10 +5,6 @@ using System.Linq;
 
 namespace Instalador
 {
-    /// <summary>
-    /// Orquesta la preparación de la base de datos: verifica la conexión, crea la
-    /// base y ejecuta en orden todos los scripts .sql de la carpeta indicada.
-    /// </summary>
     public class InstaladorMPP06AV
     {
         private readonly OpcionesInstalacion06AV _opciones;
@@ -20,7 +16,6 @@ namespace Instalador
             _dal = new InstaladorDAL06AV(opciones);
         }
 
-        /// <summary>Verifica la conexión al servidor y crea la base si no existe.</summary>
         public void PrepararBaseDatos(Action<string> log)
         {
             log?.Invoke($"Verificando conexión al servidor '{_opciones.Servidor}'...");
@@ -39,10 +34,6 @@ namespace Instalador
             }
         }
 
-        /// <summary>
-        /// Ejecuta todos los scripts .sql de la carpeta, ordenados por nombre de archivo
-        /// (por eso se numeran 00_, 01_, ...). Devuelve la cantidad de scripts ejecutados.
-        /// </summary>
         public int EjecutarScripts(Action<string> log)
         {
             string carpeta = _opciones.CarpetaScripts;

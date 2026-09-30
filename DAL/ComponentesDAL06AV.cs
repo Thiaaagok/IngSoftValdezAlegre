@@ -5,7 +5,6 @@ using System.Data.SqlClient;
 
 namespace DAL
 {
-    /// <summary>Acceso a datos de Componentes (PC Factory).</summary>
     public class ComponentesDAL06AV
     {
         public DataTable ObtenerTodos()
@@ -21,7 +20,6 @@ namespace DAL
             });
         }
 
-        /// <summary>RFN2: componentes que llegaron al mínimo y hay que reponer.</summary>
         public DataTable ObtenerBajoStock()
         {
             return EjecutarSP("sp_Componentes_ObtenerBajoStock", null);
@@ -41,7 +39,6 @@ namespace DAL
                 codigo, descripcion, tipo, marca, modelo, precioUnitario, stock, stockMinimo));
         }
 
-        /// <summary>RFN2: suma al stock lo efectivamente recibido del proveedor.</summary>
         public void SumarStock(string codigo, int cantidad)
         {
             EjecutarSPNonQuery("sp_Componentes_SumarStock", new Dictionary<string, object>
@@ -51,10 +48,6 @@ namespace DAL
             });
         }
 
-        /// <summary>
-        /// Baja lógica (Bit_Lo_Bo = 1). El borrado físico está prohibido por el
-        /// trigger TR_Componentes_BloquearDelete; este SP es la única baja posible.
-        /// </summary>
         public void BajaLogica(string codigo)
         {
             EjecutarSPNonQuery("sp_Componentes_BajaLogica", new Dictionary<string, object>
@@ -63,7 +56,6 @@ namespace DAL
             });
         }
 
-        /// <summary>Deshace la baja lógica sin restaurar una versión histórica.</summary>
         public void Reactivar(string codigo)
         {
             EjecutarSPNonQuery("sp_Componentes_Reactivar", new Dictionary<string, object>
@@ -72,7 +64,6 @@ namespace DAL
             });
         }
 
-        /// <summary>Se mantiene por compatibilidad: hoy delega en la baja lógica.</summary>
         public void Eliminar(string codigo)
         {
             EjecutarSPNonQuery("sp_Componentes_Eliminar", new Dictionary<string, object>
@@ -83,10 +74,6 @@ namespace DAL
 
         #region Bitácora de cambios (Componentes_C)
 
-        /// <summary>
-        /// Histórico de versiones de Componentes_C. Los filtros nulos no filtran.
-        /// La tabla la escriben solo los triggers: acá únicamente se lee.
-        /// </summary>
         public DataTable ObtenerBitacora(string codigo, string descripcion,
                                          DateTime? fechaIni, DateTime? fechaFin)
         {
@@ -99,10 +86,6 @@ namespace DAL
             });
         }
 
-        /// <summary>
-        /// Restaura como vigente una versión histórica. El SP actualiza Componentes
-        /// y es el trigger de UPDATE el que asienta la restauración en el histórico.
-        /// </summary>
         public void ActivarHistorico(int idHistorico)
         {
             EjecutarSPNonQuery("sp_ComponentesC_Activar", new Dictionary<string, object>
@@ -113,7 +96,6 @@ namespace DAL
 
         #endregion
 
-        /// <summary>Descuenta stock de un componente (al usarlo en una orden). Atómico en el SP.</summary>
         public void DescontarStock(string codigo, int cantidad)
         {
             EjecutarSPNonQuery("sp_Componentes_DescontarStock", new Dictionary<string, object>

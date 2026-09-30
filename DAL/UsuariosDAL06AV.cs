@@ -78,7 +78,7 @@ public class UsuariosDAL06AV
 
     public bool CrearUsuario(Dictionary<string, object> parametros)
     {
-        string query = @"INSERT INTO Usuarios 
+        string query = @"INSERT INTO Usuarios
         (Dni, Nombre, Apellido, Email, IdRol, Activo, Bloqueado, Login, Contrasenia, DebeCambiarContrasenia)
         VALUES
         (@dni, @nombre, @apellido, @email, @IdRol,
@@ -121,8 +121,8 @@ public class UsuariosDAL06AV
 
     public bool DesbloquearUsuario(Dictionary<string, object> parametros)
     {
-        string query = @"UPDATE Usuarios 
-                     SET Bloqueado = 0, DebeCambiarContrasenia = 1, 
+        string query = @"UPDATE Usuarios
+                     SET Bloqueado = 0, DebeCambiarContrasenia = 1,
                      Contrasenia = @contrasenia
                      WHERE Dni = @dni";
         return Ejecutar(query, parametros);
@@ -130,8 +130,8 @@ public class UsuariosDAL06AV
 
     public bool CambiarContraseña(Dictionary<string, object> parametros)
     {
-        string query = @"UPDATE Usuarios 
-                     SET Contrasenia = @nueva, DebeCambiarContrasenia = 0 
+        string query = @"UPDATE Usuarios
+                     SET Contrasenia = @nueva, DebeCambiarContrasenia = 0
                      WHERE Dni = @dni AND Contrasenia = @actual";
         return Ejecutar(query, parametros);
     }
@@ -206,13 +206,13 @@ public class UsuariosDAL06AV
     public int ObtenerIntentosFallidosRecientes(Dictionary<string, object> parametros)
     {
         string query = @"
-            SELECT COUNT(*) 
+            SELECT COUNT(*)
             FROM IntentosLogin
             WHERE UsuarioDni = @dni
               AND Exitoso = 0
               AND Fecha >= @desde
               AND Fecha > ISNULL(
-                  (SELECT MAX(Fecha) FROM IntentosLogin 
+                  (SELECT MAX(Fecha) FROM IntentosLogin
                    WHERE UsuarioDni = @dni AND Exitoso = 1),
                   '1900-01-01'
               )";

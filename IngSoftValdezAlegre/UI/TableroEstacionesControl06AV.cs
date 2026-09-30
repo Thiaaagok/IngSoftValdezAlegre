@@ -5,21 +5,8 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>
-    /// TABLERO DE ESTACIONES — vista principal de Órdenes de Producción.
-    ///
-    /// Por qué reemplaza a la grilla: una grilla ordena filas, pero el proceso real es
-    /// un flujo con trabajo acumulado en cada etapa. Con columnas por estación el
-    /// encargado ve en un segundo lo que la grilla esconde:
-    ///   · CUÁNTAS órdenes están trancadas en cada etapa (cuello de botella),
-    ///   · si la línea está cargada o vacía (barra de carga en la cabecera),
-    ///   · y el avance como desplazamiento físico de izquierda a derecha.
-    /// La grilla clásica sigue disponible en la misma pantalla para buscar y ordenar:
-    /// el tablero es para OPERAR, la grilla para CONSULTAR.
-    /// </summary>
     internal class TableroEstacionesControl06AV : UserControl
     {
-        /// <summary>Ancho mínimo de una columna para que una tarjeta siga siendo legible.</summary>
         private const int AnchoMinimoColumna = 188;
 
         private readonly Panel _viewport;
@@ -39,8 +26,6 @@ namespace IngSoftValdezAlegre.UI
             };
             _grilla.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            // Viewport con scroll: si la ventana no da para 5 columnas legibles, se
-            // desplaza en horizontal en vez de aplastar las tarjetas.
             _viewport = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
             _viewport.Controls.Add(_grilla);
             _viewport.Resize += (s, e) => AcomodarGrilla();
@@ -48,7 +33,6 @@ namespace IngSoftValdezAlegre.UI
             Controls.Add(_viewport);
         }
 
-        /// <summary>Reparte el ancho entre las columnas respetando el mínimo legible.</summary>
         private void AcomodarGrilla()
         {
             if (_columnas.Count == 0)
@@ -72,13 +56,10 @@ namespace IngSoftValdezAlegre.UI
             }
         }
 
-        /// <summary>Se dispara cuando el usuario selecciona una tarjeta.</summary>
         public event EventHandler<TarjetaOrden06AV> TarjetaElegida;
 
-        /// <summary>Se dispara al pedir la acción principal de una tarjeta.</summary>
         public event EventHandler<TarjetaOrden06AV> AccionPedida;
 
-        /// <summary>Crea las columnas del tablero (una por estación del proceso).</summary>
         public void DefinirColumnas(IList<EstacionRiel06AV> estaciones)
         {
             _grilla.SuspendLayout();
@@ -99,13 +80,11 @@ namespace IngSoftValdezAlegre.UI
             AcomodarGrilla();
         }
 
-        /// <summary>Saca todas las tarjetas sin destruir las columnas.</summary>
         public void Limpiar()
         {
             foreach (ColumnaEstacion06AV c in _columnas) c.Limpiar();
         }
 
-        /// <summary>Agrega una tarjeta a la columna indicada y engancha sus eventos.</summary>
         public void Agregar(int columna, TarjetaOrden06AV tarjeta)
         {
             if (columna < 0 || columna >= _columnas.Count || tarjeta == null) return;
@@ -114,7 +93,6 @@ namespace IngSoftValdezAlegre.UI
             _columnas[columna].Agregar(tarjeta);
         }
 
-        /// <summary>Recalcula contadores y barras de carga. Llamar al terminar de agregar.</summary>
         public void Recalcular()
         {
             int max = 0;
@@ -122,7 +100,6 @@ namespace IngSoftValdezAlegre.UI
             foreach (ColumnaEstacion06AV c in _columnas) c.ActualizarCabecera(max);
         }
 
-        /// <summary>Marca como seleccionada la tarjeta cuya Etiqueta coincide.</summary>
         public void SeleccionarPorEtiqueta(Func<object, bool> coincide)
         {
             if (coincide == null) return;
@@ -131,7 +108,6 @@ namespace IngSoftValdezAlegre.UI
                     if (coincide(t.Etiqueta)) { SeleccionarInterno(t, true); return; }
         }
 
-        /// <summary>Tarjeta actualmente seleccionada (o null).</summary>
         public TarjetaOrden06AV Seleccionada { get; private set; }
 
         private void SeleccionarInterno(TarjetaOrden06AV tarjeta, bool avisar)
@@ -155,7 +131,6 @@ namespace IngSoftValdezAlegre.UI
             foreach (ColumnaEstacion06AV c in _columnas) c.AplicarTema();
         }
 
-        /// <summary>Cambia los títulos de las columnas sin recrearlas (cambio de idioma).</summary>
         public void RenombrarColumnas(IList<EstacionRiel06AV> estaciones)
         {
             if (estaciones == null) return;
@@ -164,7 +139,6 @@ namespace IngSoftValdezAlegre.UI
         }
     }
 
-    /// <summary>Una columna del tablero: cabecera pintada + pila de tarjetas con scroll.</summary>
     internal class ColumnaEstacion06AV : Panel
     {
         private readonly CabeceraColumna06AV _cabecera;
@@ -187,8 +161,6 @@ namespace IngSoftValdezAlegre.UI
                 Padding = new Padding(0, 6, 0, 6)
             };
 
-            // Dock.Top, NO Fill: dos controles Fill en el mismo panel hacen que el
-            // primero en resolverse se coma todo el espacio y el segundo quede en cero.
             _vacio = new Label
             {
                 Dock = DockStyle.Top,
@@ -226,10 +198,6 @@ namespace IngSoftValdezAlegre.UI
 
         public void Agregar(TarjetaOrden06AV tarjeta)
         {
-            // NADA de Anchor acá: dentro de un FlowLayoutPanel, un Anchor con Right
-            // hace que el hijo se ajuste a la celda del flow y puede terminar con
-            // ancho cero — la tarjeta se agrega, cuenta en Controls.Count, y no se ve.
-            // El ancho se fija a mano acá y en OnResize.
             tarjeta.Width = AnchoTarjeta();
             _pila.Controls.Add(tarjeta);
         }
@@ -263,7 +231,6 @@ namespace IngSoftValdezAlegre.UI
         }
     }
 
-    /// <summary>Cabecera de columna: ícono de la estación, nombre, contador y barra de carga.</summary>
     internal class CabeceraColumna06AV : Control
     {
         private readonly EstacionRiel06AV _estacion;
@@ -274,8 +241,6 @@ namespace IngSoftValdezAlegre.UI
         {
             _estacion = estacion ?? new EstacionRiel06AV();
             SetStyle(Pintura06AV.EstilosDibujo, true);
-            // El fondo se pinta en OnPaint; un Control puro no admite BackColor transparente.
-
         }
 
         public void Actualizar(int cantidad, int maximo)
@@ -315,7 +280,6 @@ namespace IngSoftValdezAlegre.UI
             var rTitulo = new Rectangle(xTitulo, caja.Y + 7, Math.Max(10, chip.Left - xTitulo - 8), 21);
             Pintura06AV.TextoIzquierda(g, _estacion.Titulo, Tema.FuenteBold, Tema.TextoFuerte, rTitulo);
 
-            // Barra de carga: cuánto pesa esta estación respecto de la más cargada.
             var pista = new Rectangle(caja.X + 10, caja.Bottom - 12, caja.Width - 20, 4);
             Pintura06AV.Rellenar(g, pista, 2, Tema.EsOscuro ? Tema.Acero700 : Tema.Acero200);
             if (_cantidad > 0)

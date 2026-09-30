@@ -5,19 +5,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>
-    /// Oferta de un proveedor dentro de la mesa de cotizaciones.
-    ///
-    /// La comparación es lo único que importa en esta pantalla, así que la tarjeta
-    /// está construida para que la decisión se tome MIRANDO, no leyendo:
-    ///   · el precio total va en grande y es lo primero que se lee;
-    ///   · la barra bajo el precio es proporcional a la oferta MÁS CARA de la mesa,
-    ///     así el sobreprecio se ve como longitud antes que como número;
-    ///   · el chip dice "mejor oferta" o cuánto más cara es, en porcentaje;
-    ///   · el costo por unidad desempata cuando los totales son parecidos.
-    /// Los dos botones (adjudicar / descartar) viven en la tarjeta: la decisión y
-    /// la acción están en el mismo lugar.
-    /// </summary>
     internal class TarjetaCotizacion06AV : Control
     {
         private bool _hotAprobar, _hotDescartar;
@@ -37,19 +24,14 @@ namespace IngSoftValdezAlegre.UI
 
         public PedidoCotizacion06AV Cotizacion { get; set; }
 
-        /// <summary>Costo de la oferta más barata de la mesa (para el chip de diferencia).</summary>
         public decimal MejorCosto { get; set; }
 
-        /// <summary>Costo de la oferta más cara (define la escala de la barra).</summary>
         public decimal PeorCosto { get; set; }
 
-        /// <summary>Unidades totales pedidas en la orden, para el costo unitario.</summary>
         public int Unidades { get; set; }
 
-        /// <summary>True si esta oferta es la más barata de la mesa.</summary>
         public bool EsMejor { get; set; }
 
-        /// <summary>La orden todavía admite adjudicar (no hay ninguna aprobada).</summary>
         public bool PermiteResolver { get; set; }
 
         public string TextoMejor { get; set; } = "mejor oferta";
@@ -146,7 +128,6 @@ namespace IngSoftValdezAlegre.UI
             int x = 16;
             int ancho = caja.Right - x - 14;
 
-            // ── Proveedor ────────────────────────────────────────
             Pintura06AV.TextoIzquierda(g, c.Proveedor != null ? c.Proveedor.Nombre : "-",
                                        Tema.FuenteSubtit,
                                        descartada ? Tema.TextoSuave : Tema.TextoFuerte,
@@ -155,7 +136,6 @@ namespace IngSoftValdezAlegre.UI
                                        Tema.FuenteMini, Tema.TextoSuave,
                                        new Rectangle(x, 34, ancho, 16));
 
-            // ── Precio total ─────────────────────────────────────
             using (var fuentePrecio = new Font("Segoe UI Semibold", 20f, FontStyle.Bold))
                 Pintura06AV.TextoIzquierda(g, c.Costo.ToString("C0"), fuentePrecio,
                                            descartada ? Tema.TextoSuave : Tema.TextoFuerte,
@@ -166,7 +146,6 @@ namespace IngSoftValdezAlegre.UI
                                            Tema.FuenteMini, Tema.TextoSuave,
                                            new Rectangle(x, 90, ancho, 16));
 
-            // ── Barra comparativa ────────────────────────────────
             var pista = new Rectangle(x, 112, ancho, 8);
             Pintura06AV.Rellenar(g, pista, 4, Tema.EsOscuro ? Tema.Acero700 : Tema.Acero200);
 
@@ -179,7 +158,6 @@ namespace IngSoftValdezAlegre.UI
                                      4, colorBarra);
             }
 
-            // ── Chip de diferencia ───────────────────────────────
             string chipTexto;
             Color chipColor;
             if (EsMejor && !descartada)
@@ -203,7 +181,6 @@ namespace IngSoftValdezAlegre.UI
                                  Pintura06AV.Suave(chipColor, 34), chipColor);
             }
 
-            // ── Condiciones y fecha ──────────────────────────────
             string cond = string.IsNullOrWhiteSpace(c.Condiciones) ? TextoSinCondiciones : c.Condiciones;
             Pintura06AV.TextoIzquierda(g, cond, Tema.FuenteRegular, apagado,
                                        new Rectangle(x, 130, ancho, 18));
@@ -211,7 +188,6 @@ namespace IngSoftValdezAlegre.UI
                                        Tema.FuenteMini, Tema.TextoSuave,
                                        new Rectangle(x, 150, ancho, 16));
 
-            // ── Estado / acciones ────────────────────────────────
             if (HayBotones)
             {
                 Rectangle rA = CajaAprobar();

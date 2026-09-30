@@ -5,7 +5,6 @@ using System.Data;
 
 namespace MPP
 {
-    /// <summary>Mapea entre la entidad Cliente06AV y la capa de acceso a datos.</summary>
     public class ClientesMPP06AV
     {
         private readonly ClientesDAL06AV _dal = new ClientesDAL06AV();

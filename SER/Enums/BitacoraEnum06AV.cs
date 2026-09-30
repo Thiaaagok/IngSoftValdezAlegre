@@ -52,5 +52,4 @@ namespace SER
         Serializacion = 32,
     }
 
-
 }

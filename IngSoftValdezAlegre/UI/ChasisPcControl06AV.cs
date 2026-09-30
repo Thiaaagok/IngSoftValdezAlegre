@@ -7,7 +7,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>Una bahía del chasis: un tipo de componente y lo que hay puesto en él.</summary>
     internal class BahiaPc06AV
     {
         public TipoComponente06AV Tipo { get; set; }
@@ -17,19 +16,6 @@ namespace IngSoftValdezAlegre.UI
         public Componente06AV Puesto { get; set; }
     }
 
-    /// <summary>
-    /// CHASIS — el panel "Tu PC" del asistente de armado.
-    ///
-    /// Antes era un ListBox vacío: arrancabas sin saber cuántas piezas faltaban ni
-    /// cuáles. Acá el equipo se presenta como una lista de BAHÍAS fijas, una por tipo
-    /// de componente, visibles desde el primer segundo:
-    ///   · la bahía vacía se dibuja con borde punteado — se ve el hueco;
-    ///   · la que se está eligiendo en este momento queda resaltada;
-    ///   · al poner una pieza la bahía se llena, muestra el modelo y su precio;
-    ///   · las opcionales se marcan como tales, así nadie cree que le falta algo.
-    ///
-    /// El total vive abajo, fijo, y acompaña cada elección.
-    /// </summary>
     internal class ChasisPcControl06AV : Control
     {
         private readonly List<BahiaPc06AV> _bahias = new List<BahiaPc06AV>();
@@ -51,7 +37,6 @@ namespace IngSoftValdezAlegre.UI
         public string TextoVacio { get; set; } = "sin elegir";
         public string TextoPiezas { get; set; } = "{0} de {1} piezas";
 
-        /// <summary>Se dispara al hacer clic en una bahía ya recorrida (para volver a ella).</summary>
         public event EventHandler<int> BahiaElegida;
 
         public void DefinirBahias(IEnumerable<BahiaPc06AV> bahias)
@@ -119,7 +104,6 @@ namespace IngSoftValdezAlegre.UI
 
             for (int i = 0; i < _bahias.Count; i++) DibujarBahia(g, i);
 
-            // ── Total ────────────────────────────────────────────
             int y = 4 + _bahias.Count * AltoBahia + 6;
             var linea = new Rectangle(0, y, Math.Max(10, Width - 1), 1);
             using (var b = new SolidBrush(Tema.Borde)) g.FillRectangle(b, linea);
@@ -153,7 +137,6 @@ namespace IngSoftValdezAlegre.UI
             }
             else
             {
-                // Hueco: borde punteado, se ve que falta algo.
                 var rr = new Rectangle(caja.X, caja.Y, caja.Width - 1, caja.Height - 1);
                 using (var path = Pintura06AV.Redondeado(rr, 8))
                 using (var p = new Pen(actual ? Tema.Primario : (Tema.EsOscuro ? Tema.Acero700 : Tema.Acero300),
@@ -199,7 +182,6 @@ namespace IngSoftValdezAlegre.UI
                                          new Rectangle(caja.Right - anchoPrecio - 10, caja.Y + 14, anchoPrecio, 20));
         }
 
-        /// <summary>Alto que necesita el control para dibujar todas las bahías más el total.</summary>
         public int AltoNecesario => 4 + _bahias.Count * AltoBahia + AltoTotal + 16;
     }
 }

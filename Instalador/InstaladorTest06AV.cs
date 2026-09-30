@@ -18,10 +18,8 @@ namespace Instalador
             _base = opcionesBase ?? throw new ArgumentNullException(nameof(opcionesBase));
         }
 
-        /// <summary>Ejecuta la prueba. Devuelve true si pasó, false si falló.</summary>
         public bool Ejecutar(Action<string> log)
         {
-            // Copia de las opciones apuntando a una base de prueba.
             var opciones = new OpcionesInstalacion06AV
             {
                 Servidor = _base.Servidor,
@@ -40,13 +38,12 @@ namespace Instalador
 
             try
             {
-                // Partir de cero: si quedó de una corrida anterior, se borra.
                 dal.EliminarBaseDatos();
 
                 ResultadoInstalacion06AV r = bll.Instalar(log);
 
-                bool okTablas = r.CantidadTablas >= 10;   // se esperan ~11 tablas
-                bool okUsuario = r.CantidadUsuarios >= 1;  // el admin sembrado
+                bool okTablas = r.CantidadTablas >= 10;
+                bool okUsuario = r.CantidadUsuarios >= 1;
 
                 log?.Invoke("");
                 log?.Invoke($"[{(okTablas ? "PASA" : "FALLA")}] Tablas creadas: {r.CantidadTablas} (esperado >= 10)");

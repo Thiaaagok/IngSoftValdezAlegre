@@ -6,11 +6,9 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>Una estación del riel de ensamblaje (un estado del proceso físico).</summary>
     internal class EstacionRiel06AV
     {
         public string Titulo { get; set; }
-        /// <summary>Dato corto bajo el título: fecha, línea, responsable.</summary>
         public string Detalle { get; set; }
         public IconoPcf06AV Icono { get; set; }
 
@@ -21,21 +19,6 @@ namespace IngSoftValdezAlegre.UI
         }
     }
 
-    /// <summary>
-    /// RIEL DE ENSAMBLAJE — reemplaza la lista de estados en texto del panel de detalle.
-    ///
-    /// Metáfora: la orden de producción es una PC que avanza físicamente por una línea.
-    /// Cada estado es una ESTACIÓN del riel, no un ítem de una lista:
-    ///   · el riel se "energiza" (degradado cian → naranja) hasta la estación actual,
-    ///     así el avance se lee de un vistazo sin comparar bullets;
-    ///   · la estación actual late suavemente: indica trabajo en curso, no un estado inerte;
-    ///   · "En revisión" NO es un paso más: se dibuja como un DESVÍO que sale del riel y
-    ///     vuelve, que es exactamente lo que pasa en el taller (la máquina no avanza,
-    ///     se retrabaja). Una lista de enum no puede expresar eso y por eso confundía.
-    ///
-    /// Es un Control puro (sin hijos): se pinta entero en OnPaint, se navega con mouse
-    /// y con flechas del teclado, y cada estación es clickeable para ver su información.
-    /// </summary>
     internal class RielEnsamblajeControl06AV : Control
     {
         private readonly List<EstacionRiel06AV> _estaciones = new List<EstacionRiel06AV>();
@@ -54,10 +37,6 @@ namespace IngSoftValdezAlegre.UI
             SetStyle(ControlStyles.Selectable, true);
             TabStop = true;
             Height = 136;
-            // Sin BackColor transparente: un Control puro no lo admite (ArgumentException).
-            // El fondo se resuelve en OnPaint tomando el color del contenedor.
-
-
             _pulso = new Timer { Interval = 60 };
             _pulso.Tick += (s, e) =>
             {
@@ -69,19 +48,14 @@ namespace IngSoftValdezAlegre.UI
 
         #region API pública
 
-        /// <summary>Índice de la estación en curso (0..N-1). -1 = ninguna.</summary>
         public int IndiceActual { get; private set; } = -1;
 
-        /// <summary>True si la orden está desviada (en revisión) sobre la estación actual.</summary>
         public bool EnDesvio { get; private set; }
 
-        /// <summary>Texto del desvío, p. ej. "En revisión".</summary>
         public string TextoDesvio { get; private set; }
 
-        /// <summary>Se dispara al hacer clic (o Enter) sobre una estación.</summary>
         public event EventHandler<int> EstacionElegida;
 
-        /// <summary>Carga las estaciones del proceso. Se llama una vez por pantalla.</summary>
         public void DefinirEstaciones(IEnumerable<EstacionRiel06AV> estaciones)
         {
             _estaciones.Clear();
@@ -90,7 +64,6 @@ namespace IngSoftValdezAlegre.UI
             Invalidate();
         }
 
-        /// <summary>Actualiza el avance. <paramref name="desvio"/> dibuja la rama de retrabajo.</summary>
         public void Avanzar(int indiceActual, bool desvio = false, string textoDesvio = null)
         {
             IndiceActual = indiceActual;
@@ -101,7 +74,6 @@ namespace IngSoftValdezAlegre.UI
             Invalidate();
         }
 
-        /// <summary>Texto del detalle de una estación ya cargada (fecha, responsable, etc.).</summary>
         public void EstablecerDetalle(int indice, string detalle)
         {
             if (indice < 0 || indice >= _estaciones.Count) return;
@@ -158,7 +130,7 @@ namespace IngSoftValdezAlegre.UI
             for (int i = 0; i < _estaciones.Count; i++)
             {
                 Rectangle caja = CajaEstacion(i);
-                caja.Inflate(10, 34);   // zona sensible: incluye la etiqueta de abajo
+                caja.Inflate(10, 34);
                 if (caja.Contains(p)) return i;
             }
             return -1;
@@ -253,10 +225,8 @@ namespace IngSoftValdezAlegre.UI
             Point fin = CentroEstacion(_estaciones.Count - 1);
             var pista = new Rectangle(ini.X, ini.Y - AltoRiel / 2, Math.Max(1, fin.X - ini.X), AltoRiel);
 
-            // Pista completa (apagada)
             Pintura06AV.Rellenar(g, pista, AltoRiel / 2, Tema.EsOscuro ? Tema.Acero700 : Tema.Acero200);
 
-            // Tramo energizado hasta la estación actual
             int hasta = Math.Min(IndiceActual, _estaciones.Count - 1);
             if (hasta > 0)
             {
@@ -269,7 +239,6 @@ namespace IngSoftValdezAlegre.UI
                     g.FillPath(b, path);
             }
 
-            // Si está desviada, el tramo siguiente se marca punteado: el avance está detenido.
             if (EnDesvio && IndiceActual >= 0 && IndiceActual < _estaciones.Count - 1)
             {
                 Point a = CentroEstacion(IndiceActual);
@@ -320,10 +289,9 @@ namespace IngSoftValdezAlegre.UI
                 tinta = Tema.TextoSuave;
             }
 
-            // Latido de la estación en curso: trabajo en marcha, no estado congelado.
             if (actual)
             {
-                float amp = (float)(Math.Sin(_fase) * 0.5 + 0.5);       // 0..1
+                float amp = (float)(Math.Sin(_fase) * 0.5 + 0.5);
                 int extra = (int)(4 + amp * 7);
                 var halo = new Rectangle(caja.X - extra, caja.Y - extra,
                                          caja.Width + extra * 2, caja.Height + extra * 2);
@@ -344,8 +312,6 @@ namespace IngSoftValdezAlegre.UI
             var cajaIcono = new RectangleF(caja.X + 10, caja.Y + 10, caja.Width - 20, caja.Height - 20);
             Iconos06AV.Dibujar(g, completada ? IconoPcf06AV.Check : est.Icono, cajaIcono, tinta, 2f);
 
-            // Etiquetas bajo la estación, recortadas al ancho del control para que
-            // la primera y la última no queden cortadas contra los bordes.
             int ancho = Math.Max(70, (Width - MargenLateral * 2) / Math.Max(1, _estaciones.Count) + 24);
             ancho = Math.Min(ancho, Width);
             int xEtiqueta = Math.Max(0, Math.Min(c.X - ancho / 2, Width - ancho));

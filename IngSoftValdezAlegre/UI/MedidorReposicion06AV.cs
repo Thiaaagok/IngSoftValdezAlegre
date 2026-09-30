@@ -4,18 +4,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>
-    /// MEDIDOR DE REPOSICIÓN — barra de cobertura de stock de un componente.
-    ///
-    /// La tabla de checkboxes mostraba "Stock 4 / Mínimo 10" como dos números sueltos:
-    /// el operario tenía que restar mentalmente, fila por fila, para saber qué es urgente.
-    /// Acá el punto de reposición es una MARCA FIJA sobre la barra y el stock es el
-    /// llenado: la distancia hasta la marca ES la urgencia, y el color la confirma
-    /// (rojo por debajo de la mitad del mínimo, ámbar por debajo del mínimo, verde arriba).
-    ///
-    /// La escala llega hasta 2× el mínimo, que es el objetivo de reposición sugerido,
-    /// así todas las barras de la pantalla son comparables entre sí.
-    /// </summary>
     internal class MedidorReposicion06AV : Control
     {
         private int _stock;
@@ -26,7 +14,6 @@ namespace IngSoftValdezAlegre.UI
             SetStyle(Pintura06AV.EstilosDibujo, true);
             SetStyle(ControlStyles.SupportsTransparentBackColor, true);
             Height = 34;
-            // Transparente: vive dentro de una tarjeta pintada a mano y debe dejarla ver.
             BackColor = Color.Transparent;
         }
 
@@ -42,10 +29,8 @@ namespace IngSoftValdezAlegre.UI
             set { _minimo = Math.Max(1, value); Invalidate(); }
         }
 
-        /// <summary>Texto opcional a la derecha (p. ej. "faltan 6").</summary>
         public string TextoDerecha { get; set; }
 
-        /// <summary>0 = crítico (menos de la mitad del mínimo), 1 = bajo, 2 = cubierto.</summary>
         public int Nivel
         {
             get
@@ -77,18 +62,15 @@ namespace IngSoftValdezAlegre.UI
 
             Pintura06AV.Rellenar(g, pista, 5, Tema.EsOscuro ? Tema.Acero700 : Tema.Acero200);
 
-            // Zona de riesgo: todo lo que está por debajo del punto de reposición.
             int xMin = pista.X + (int)(pista.Width * (_minimo / (float)tope));
             var zona = new Rectangle(pista.X, pista.Y, Math.Max(1, xMin - pista.X), pista.Height);
             Pintura06AV.Rellenar(g, zona, 5, Pintura06AV.Suave(Tema.Peligro, Tema.EsOscuro ? 46 : 26));
 
-            // Llenado real
             Color color = ColorNivel();
             int ancho = (int)(pista.Width * (Math.Min(_stock, tope) / (float)tope));
             if (ancho > 0)
                 Pintura06AV.Rellenar(g, new Rectangle(pista.X, pista.Y, Math.Max(4, ancho), pista.Height), 5, color);
 
-            // Marca del punto de reposición
             using (var p = new Pen(Tema.EsOscuro ? Tema.Acero300 : Tema.Grafito900, 2f))
                 g.DrawLine(p, xMin, pista.Y - 5, xMin, pista.Bottom + 5);
 

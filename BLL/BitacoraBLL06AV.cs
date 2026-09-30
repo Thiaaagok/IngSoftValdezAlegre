@@ -70,8 +70,8 @@ namespace BLL
 
                 return resultado;
             }
-            catch (BitacoraException) 
-            { 
+            catch (BitacoraException)
+            {
                 throw;
             }
             catch (Exception ex)
@@ -87,9 +87,9 @@ namespace BLL
                 BitacoraMPP06AV MPP_Bitacora = new BitacoraMPP06AV();
                 return MPP_Bitacora.ObtenerPorCategoria(categoria.ToString());
             }
-            catch (BitacoraException) 
-            { 
-                throw; 
+            catch (BitacoraException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -104,9 +104,9 @@ namespace BLL
                 BitacoraMPP06AV MPP_Bitacora = new BitacoraMPP06AV();
                 return MPP_Bitacora.ObtenerPorCriticidad(criticidad.ToString());
             }
-            catch (BitacoraException) 
-            { 
-                throw; 
+            catch (BitacoraException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -121,9 +121,9 @@ namespace BLL
                 BitacoraMPP06AV MPP_Bitacora = new BitacoraMPP06AV();
                 return MPP_Bitacora.ObtenerPorModulo(modulo.ToString());
             }
-            catch (BitacoraException) 
-            { 
-                throw; 
+            catch (BitacoraException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -143,9 +143,9 @@ namespace BLL
                 BitacoraMPP06AV MPP_Bitacora = new BitacoraMPP06AV();
                 return MPP_Bitacora.ObtenerPorUsuario(usuarioDni);
             }
-            catch (BitacoraException) 
-            { 
-                throw; 
+            catch (BitacoraException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -161,9 +161,9 @@ namespace BLL
                 BitacoraMPP06AV MPP_Bitacora = new BitacoraMPP06AV();
                 return MPP_Bitacora.ObtenerEntreFechas(desde, hasta);
             }
-            catch (BitacoraException) 
-            { 
-                throw; 
+            catch (BitacoraException)
+            {
+                throw;
             }
             catch (Exception ex)
             {

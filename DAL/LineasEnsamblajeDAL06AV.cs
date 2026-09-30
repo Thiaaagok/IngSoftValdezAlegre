@@ -5,7 +5,6 @@ using System.Data.SqlClient;
 
 namespace DAL
 {
-    /// <summary>Acceso a datos de Líneas de Ensamblaje (PC Factory). Id autonumérico.</summary>
     public class LineasEnsamblajeDAL06AV
     {
         public DataTable ObtenerTodas()

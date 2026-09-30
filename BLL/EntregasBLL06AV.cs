@@ -26,27 +26,18 @@ namespace BLL
         private readonly VentasMPP06AV _ventasMpp = new VentasMPP06AV();
         private readonly LineasEnsamblajeMPP06AV _lineasMpp = new LineasEnsamblajeMPP06AV();
 
-        // ══════════════════════════════════════════════════════════
-        //  Lectura
-        // ══════════════════════════════════════════════════════════
-        /// <summary>Órdenes terminadas en fábrica y todavía sin retirar.</summary>
         public List<OrdenProduccion06AV> ObtenerPendientesDeEntrega()
         {
             try { return _produccionMpp.ObtenerPorEstado(EstadoOrdenProduccion06AV.Finalizada); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudieron obtener las computadoras listas para entregar.", ex); }
         }
 
-        /// <summary>Histórico de órdenes ya retiradas por el cliente.</summary>
         public List<OrdenProduccion06AV> ObtenerEntregadas()
         {
             try { return _produccionMpp.ObtenerPorEstado(EstadoOrdenProduccion06AV.Entregada); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudieron obtener las entregas realizadas.", ex); }
         }
 
-        /// <summary>
-        /// CU07 (paso 2): busca la orden por número de orden o por DNI del cliente
-        /// dentro del conjunto indicado. Devuelve la lista filtrada.
-        /// </summary>
         public List<OrdenProduccion06AV> Filtrar(IEnumerable<OrdenProduccion06AV> ordenes, string criterio)
         {
             if (ordenes == null) return new List<OrdenProduccion06AV>();
@@ -70,15 +61,6 @@ namespace BLL
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo obtener la orden.", ex); }
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  CU07 · Entregar computadora
-        // ══════════════════════════════════════════════════════════
-        /// <summary>
-        /// Registra el pago del saldo final, cierra la orden como "Entregada",
-        /// deja la venta en estado Entregada y libera la línea de ensamblaje.
-        /// Devuelve el pago generado (trae el número de factura), o null si no
-        /// quedaba saldo por cobrar.
-        /// </summary>
         public Pago06AV RegistrarEntrega(int numeroOrden, FormaPago06AV formaPago, string referencia = null)
         {
             var orden = _produccionMpp.ObtenerPorNumero(numeroOrden);
@@ -97,8 +79,6 @@ namespace BLL
             if (venta.Estado == EstadoVenta06AV.Anulada)
                 throw new ValidacionException06AV("estado", "La venta asociada está anulada.");
 
-            // Sale del precio pactado al vender (Computadora06AV.PrecioPactado), no de los
-            // precios actuales de los componentes.
             decimal saldo = venta.SaldoPendiente;
             Pago06AV pago = null;
             try
@@ -110,8 +90,6 @@ namespace BLL
                 _produccionMpp.CambiarEstado(orden.NumeroOrden, EstadoOrdenProduccion06AV.Entregada);
                 _ventasMpp.CambiarEstado(venta.NumeroVenta, EstadoVenta06AV.Entregada);
 
-                // La línea ya se libera al cerrar la orden (CU06); esto cubre una orden
-                // Finalizada que haya quedado con la línea tomada.
                 if (orden.LineaEnsamblaje != null && !orden.LineaEnsamblaje.Disponible)
                 {
                     orden.LineaEnsamblaje.Disponible = true;

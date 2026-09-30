@@ -4,15 +4,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>
-    /// Ítem de checklist de control de calidad.
-    ///
-    /// El CheckBox nativo es una casilla de 13 px con una etiqueta al lado: en una
-    /// pantalla de taller, con el equipo en la mano, es un blanco chico y su estado
-    /// se lee mal de reojo. Acá cada verificación es una fila alta y clickeable entera,
-    /// que cambia de color al marcarse — verificado en verde, pendiente en gris — y
-    /// aguanta el espacio para explicar QUÉ hay que verificar, no sólo nombrarlo.
-    /// </summary>
     internal class ItemChequeo06AV : Control
     {
         private bool _marcado;

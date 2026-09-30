@@ -36,11 +36,9 @@ namespace SER.Integridad
 
             filas.Sort((a, b) => string.CompareOrdinal(ClaveFila(a), ClaveFila(b)));
 
-            // DVH = suma de un dígito por REGISTRO (independiente del orden por ser suma).
             foreach (DataRow fila in filas)
                 dvh += Numero(_calculador.Calcular(ClaveFila(fila)));
 
-            // DVV = suma de un dígito por COLUMNA (ahora con orden de filas estable).
             foreach (DataColumn col in tabla.Columns)
             {
                 var sb = new StringBuilder();
@@ -55,8 +53,6 @@ namespace SER.Integridad
             return (valor == null || valor == DBNull.Value) ? string.Empty : valor.ToString();
         }
 
-        // Si el dígito es un hexadecimal muy largo (p. ej. SHA-256) se degrada a la
-        // suma de code-points para no desbordar el long.
         private static long Numero(string digito)
         {
             if (string.IsNullOrEmpty(digito)) return 0;

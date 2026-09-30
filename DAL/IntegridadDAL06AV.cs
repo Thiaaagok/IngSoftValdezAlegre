@@ -9,7 +9,6 @@ namespace DAL
     {
         public static readonly string[] TablasProtegidas =
         {
-            // ── Seguridad / permisos ─────────────────────────────
             "Usuarios",
             "Roles",
             "Familias",
@@ -19,7 +18,6 @@ namespace DAL
             "FamiliaPatentes",
             "FamiliaFamilias",
 
-            // ── PC Factory: datos maestros y transaccionales ─────
             "Clientes",
             "Componentes",
             "Insumos",
@@ -93,7 +91,6 @@ namespace DAL
             }
         }
 
-        /// <summary>Reescribe por completo la tabla DV dentro de una transacción.</summary>
         public void GuardarDV(IEnumerable<KeyValuePair<string, string[]>> digitosPorTabla)
         {
             AsegurarEstructura();

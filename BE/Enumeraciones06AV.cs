@@ -19,13 +19,6 @@ namespace BE
         Configurable
     }
 
-    /// <summary>
-    /// Pendiente: registrada, todavía sin seña.
-    /// Señada: seña cobrada, habilitada para generar la orden de producción.
-    /// EnProduccion: ya tiene orden de producción asociada.
-    /// Entregada: el cliente retiró el equipo y canceló el saldo.
-    /// Anulada: la venta se dio de baja antes de producirse.
-    /// </summary>
     public enum EstadoVenta06AV
     {
         Pendiente,
@@ -91,10 +84,6 @@ namespace BE
         Venta
     }
 
-    /// <summary>
-    /// Resultado de comparar un objeto serializado. FaltaEnArchivo sale al verificar
-    /// la serialización (paso 4) y NoExisteEnBase al verificar la des-serialización (paso 8).
-    /// </summary>
     public enum EstadoVerificacion06AV
     {
         Coincide,

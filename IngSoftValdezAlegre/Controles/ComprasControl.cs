@@ -33,15 +33,12 @@ namespace IngSoftValdezAlegre.Controles
         private Label lblDetTitulo, lblDetEstado;
         private FlowLayoutPanel flpDetalle;
 
-        // Vista "nueva orden": asistente de 3 pasos (ver UI/AsistenteCompraControl06AV).
         private Panel pnlForm;
         private AsistenteCompraControl06AV asistente;
 
-        // Vista "pedir cotización": proveedor + precio en una sola pantalla (RFN2 paso 3).
         private Panel pnlCotizacion;
         private PedidoCotizacionControl06AV cotizador;
 
-        // Vista "recepción": control de lo que realmente llegó (RFN2 paso 5).
         private Panel pnlRecepcion;
         private RecepcionControl06AV recepcion;
 
@@ -109,14 +106,14 @@ namespace IngSoftValdezAlegre.Controles
                 WrapContents = false, AutoScroll = true
             };
             pnlDetalle = new Panel { Dock = DockStyle.Right, Width = 380, Padding = new Padding(16, 14, 12, 12) };
-            pnlDetalle.Controls.Add(flpDetalle);   
-            pnlDetalle.Controls.Add(lblDetEstado); 
-            pnlDetalle.Controls.Add(lblDetTitulo); 
+            pnlDetalle.Controls.Add(flpDetalle);
+            pnlDetalle.Controls.Add(lblDetEstado);
+            pnlDetalle.Controls.Add(lblDetTitulo);
 
             pnlLista = new Panel { Dock = DockStyle.Fill };
-            pnlLista.Controls.Add(grOC);     
-            pnlLista.Controls.Add(pnlDetalle); 
-            pnlLista.Controls.Add(barraSup);   
+            pnlLista.Controls.Add(grOC);
+            pnlLista.Controls.Add(pnlDetalle);
+            pnlLista.Controls.Add(barraSup);
         }
 
         private void ConstruirVistaFormulario()
@@ -240,11 +237,6 @@ namespace IngSoftValdezAlegre.Controles
             texto = t.Obtener("pcf_est_pendiente"); color = Tema.Advertencia; paso = Paso.Cotizar;
         }
 
-        /// <summary>
-        /// Arma los candidatos a reposición y se los pasa al asistente.
-        /// Los componentes ya incluidos en una OC en curso viajan marcados como
-        /// bloqueados (RFN2): se muestran, pero no se pueden volver a pedir.
-        /// </summary>
         private void CargarFaltantes()
         {
             try
@@ -377,12 +369,6 @@ namespace IngSoftValdezAlegre.Controles
             flpDetalle.Controls.Add(TextoSecundario("✓  " + t.Obtener("pcf_hint_finalizada")));
         }
 
-        /// <summary>
-        /// Abre la pantalla de pedido de cotización con la orden seleccionada. Reemplaza
-        /// al combo del panel lateral + el diálogo modal de precio: elegir proveedor y
-        /// fijar el precio son dos mitades de la misma decisión y ahora viven juntas,
-        /// con la orden a la vista.
-        /// </summary>
         private void AbrirPedidoCotizacion()
         {
             if (_ocSel == null)
@@ -404,10 +390,6 @@ namespace IngSoftValdezAlegre.Controles
             pnlCotizacion.BringToFront();
         }
 
-        /// <summary>
-        /// Proveedores que ya tienen una oferta sin resolver en esta orden: el BLL las
-        /// rechaza, así que conviene que la pantalla las muestre apagadas de entrada.
-        /// </summary>
         private List<int> ProveedoresConOfertaAbierta(OrdenCompra06AV oc)
         {
             return _cotizaciones
@@ -469,10 +451,6 @@ namespace IngSoftValdezAlegre.Controles
             catch (Exception ex) { MostrarError(ex.Message); }
         }
 
-        /// <summary>
-        /// Abre el control de recepción con lo que todavía falta de la orden. Ya no se
-        /// da por sentado que llegó todo: el operador declara qué bajó del camión.
-        /// </summary>
         private void Recibir()
         {
             if (_ocSel == null) return;
@@ -557,7 +535,6 @@ namespace IngSoftValdezAlegre.Controles
                     row.Cells["Estado"].Style.Font = new Font("Segoe UI Semibold", 9f, FontStyle.Bold);
                 }
         }
-
 
         private Label Etiqueta(string texto, bool fuerte = false)
         {

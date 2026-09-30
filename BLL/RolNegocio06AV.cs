@@ -4,15 +4,6 @@ using SER;
 
 namespace BLL
 {
-    /// <summary>
-    /// Validación del rol de negocio (RFN1/RFN2) de un usuario para acciones sensibles
-    /// del circuito de compras/ventas (p. ej. solo un Repositor registra una orden de
-    /// compra, solo un Gerente de Compras aprueba una cotización).
-    ///
-    /// El rol se compara contra <see cref="Usuario06AV.RolDescripcion"/> e
-    /// <see cref="Usuario06AV.IdRol"/> por palabra clave (case-insensitive, sin espacios).
-    /// Es el ÚNICO punto a ajustar si en tu instalación los roles se llaman distinto.
-    /// </summary>
     internal static class RolNegocio06AV
     {
         public static void Exigir(Usuario06AV usuario, RolUsuario06AV rol, string accion)

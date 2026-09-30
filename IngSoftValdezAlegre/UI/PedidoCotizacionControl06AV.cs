@@ -9,7 +9,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>Lo que el operador armó en la pantalla: a quién, a qué precio cada producto y el total.</summary>
     internal class CotizacionArmada06AV : EventArgs
     {
         public CotizacionArmada06AV(Proveedor06AV proveedor, List<DetalleComponente06AV> precios, string condiciones)
@@ -21,58 +20,41 @@ namespace IngSoftValdezAlegre.UI
 
         public Proveedor06AV Proveedor { get; }
 
-        /// <summary>Una línea por componente de la orden, con su precio unitario.</summary>
         public List<DetalleComponente06AV> Precios { get; }
 
         public decimal Costo => Precios.Sum(d => d.Subtotal);
         public string Condiciones { get; }
     }
 
-    /// <summary>
-    /// PEDIR COTIZACIÓN (RFN2, paso 3) — asistente de tres pasos, como el de nueva orden:
-    ///   1. PROVEEDOR  — tarjetas con todos los proveedores; los que ya tienen una oferta
-    ///      abierta en esta orden se ven apagados.
-    ///   2. PRECIOS    — una fila por producto de la orden: el operador carga el precio
-    ///      por unidad que le pasó el proveedor y el subtotal (precio × cantidad) y el
-    ///      total se calculan solos.
-    ///   3. CONFIRMAR  — repaso de la oferta y condiciones antes de registrarla.
-    /// A la derecha queda fijo el ticket con la orden y el total que se va armando.
-    /// </summary>
     internal class PedidoCotizacionControl06AV : UserControl, IIdiomaAplicable06AV
     {
         private const int Pasos = 3;
 
-        // Cabecera y pasos
         private readonly Label _lblTitulo, _lblAyuda;
         private readonly PasosWizard06AV _pasos;
 
-        // Paso 1 — proveedor
         private readonly Panel _pagina1;
         private readonly Label _lblSinProveedores, _lblBuscar;
         private readonly TextBox _txtBuscar;
         private readonly Button _btnNuevoProveedor;
         private readonly FlowLayoutPanel _flpProveedores;
 
-        // Paso 2 — precios por producto
         private readonly Panel _pagina2;
         private readonly TableLayoutPanel _tablaPrecios;
         private readonly Label _lblTotalTabla;
         private readonly List<FilaPrecio> _filas = new List<FilaPrecio>();
         private Label _hComponente, _hCantidad, _hPrecio, _hSubtotal;
 
-        // Paso 3 — confirmar
         private readonly Panel _pagina3;
         private readonly Label _lblCondiciones, _lblResumenTit;
         private readonly TextBox _txtCondiciones;
         private readonly FlowLayoutPanel _flpResumen;
 
-        // Ticket
         private readonly Panel _pnlTicket, _pnlTotal;
         private readonly Label _lblTicketTit, _lblInsumosTit, _lblTotalRotulo, _lblTotalValor, _lblProgreso;
         private readonly FichaDatos06AV _ficha;
         private readonly FlowLayoutPanel _flpInsumos;
 
-        // Barra inferior
         private readonly Panel _barra;
         private readonly Button _btnVolver, _btnAtras, _btnSiguiente, _btnRegistrar;
 
@@ -84,7 +66,6 @@ namespace IngSoftValdezAlegre.UI
 
         public PedidoCotizacionControl06AV()
         {
-            // ── Cabecera ─────────────────────────────────────────
             _lblTitulo = new Label { AutoSize = true, Location = new Point(16, 12) };
             var cabecera = new Panel { Dock = DockStyle.Top, Height = 46 };
             cabecera.Controls.Add(_lblTitulo);
@@ -94,7 +75,6 @@ namespace IngSoftValdezAlegre.UI
 
             _lblAyuda = new Label { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(16, 2, 16, 8) };
 
-            // ── Paso 1: proveedor ────────────────────────────────
             _lblBuscar = new Label { AutoSize = true, Margin = new Padding(0, 8, 6, 0) };
             _txtBuscar = new TextBox { Width = 260, Margin = new Padding(0, 4, 0, 0) };
             _txtBuscar.TextChanged += (s, e) => RefrescarProveedores();
@@ -121,7 +101,6 @@ namespace IngSoftValdezAlegre.UI
             _pagina1.Controls.Add(_lblSinProveedores);
             _pagina1.Controls.Add(filaBusqueda);
 
-            // ── Paso 2: precios ──────────────────────────────────
             _tablaPrecios = new TableLayoutPanel
             {
                 Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
@@ -141,7 +120,6 @@ namespace IngSoftValdezAlegre.UI
             _pagina2 = new Panel { Dock = DockStyle.Fill, Visible = false, Padding = new Padding(16, 6, 16, 8) };
             _pagina2.Controls.Add(scrollPrecios);
 
-            // ── Paso 3: confirmar ────────────────────────────────
             _lblCondiciones = new Label { Dock = DockStyle.Top, AutoSize = false, Height = 24 };
             _txtCondiciones = new TextBox
             {
@@ -158,7 +136,6 @@ namespace IngSoftValdezAlegre.UI
             _pagina3.Controls.Add(_txtCondiciones);
             _pagina3.Controls.Add(_lblCondiciones);
 
-            // ── Derecha: ticket ──────────────────────────────────
             _lblTicketTit = new Label { Dock = DockStyle.Top, Height = 28, AutoSize = false };
             _ficha = new FichaDatos06AV { Dock = DockStyle.Top, Height = 150 };
             _lblInsumosTit = new Label { Dock = DockStyle.Top, Height = 30, AutoSize = false, TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(0, 6, 0, 0) };
@@ -182,7 +159,6 @@ namespace IngSoftValdezAlegre.UI
             _pnlTicket.Controls.Add(_ficha);
             _pnlTicket.Controls.Add(_lblTicketTit);
 
-            // ── Barra inferior ───────────────────────────────────
             _btnVolver = NuevoBoton(120);
             _btnAtras = NuevoBoton(120);
             _btnSiguiente = NuevoBoton(150);
@@ -226,7 +202,6 @@ namespace IngSoftValdezAlegre.UI
 
         public event EventHandler<CotizacionArmada06AV> Confirmado;
         public event EventHandler Cancelado;
-        /// <summary>El operador quiere dar de alta un proveedor que no está en la lista.</summary>
         public event EventHandler NuevoProveedor;
 
         /// <summary>
@@ -256,7 +231,6 @@ namespace IngSoftValdezAlegre.UI
             IrA(0);
         }
 
-        /// <summary>Vuelve a listar los proveedores manteniendo el elegido, tras un alta.</summary>
         public void RecargarProveedores(IEnumerable<Proveedor06AV> proveedores, int? seleccionar = null)
         {
             _proveedores.Clear();
@@ -270,10 +244,6 @@ namespace IngSoftValdezAlegre.UI
             }
             RefrescarProveedores();
         }
-
-        // ══════════════════════════════════════════════════════════
-        //  Navegación
-        // ══════════════════════════════════════════════════════════
 
         private bool PasoCompleto(int paso)
         {
@@ -291,7 +261,6 @@ namespace IngSoftValdezAlegre.UI
         private void IrA(int paso)
         {
             paso = Math.Max(0, Math.Min(Pasos - 1, paso));
-            // No se salta un paso sin completar el anterior.
             for (int i = 0; i < paso; i++)
                 if (!PasoCompleto(i)) { paso = i; break; }
             _paso = paso;
@@ -325,9 +294,6 @@ namespace IngSoftValdezAlegre.UI
             Tema.AplicarBotonAcento(_btnRegistrar);
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  Paso 1 · Proveedores
-        // ══════════════════════════════════════════════════════════
         private void RefrescarProveedores()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -391,9 +357,6 @@ namespace IngSoftValdezAlegre.UI
             ActualizarTicket();
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  Paso 2 · Precios por producto
-        // ══════════════════════════════════════════════════════════
         private void ArmarFilasPrecio()
         {
             _tablaPrecios.SuspendLayout();
@@ -446,9 +409,6 @@ namespace IngSoftValdezAlegre.UI
 
         private decimal Total => _filas.Sum(f => f.SubtotalValor);
 
-        // ══════════════════════════════════════════════════════════
-        //  Paso 3 · Confirmar
-        // ══════════════════════════════════════════════════════════
         private void ArmarResumen()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -484,9 +444,6 @@ namespace IngSoftValdezAlegre.UI
             Confirmado?.Invoke(this, new CotizacionArmada06AV(_elegido, PreciosCargados(), (_txtCondiciones.Text ?? "").Trim()));
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  Ticket
-        // ══════════════════════════════════════════════════════════
         private int UnidadesPedidas => _orden?.ComponentesFaltantes?.Sum(d => d.Cantidad) ?? 0;
 
         private void ActualizarTicket()
@@ -547,9 +504,6 @@ namespace IngSoftValdezAlegre.UI
             Width = ancho, Height = 34, Margin = new Padding(8, 0, 0, 0), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand
         };
 
-        // ══════════════════════════════════════════════════════════
-        //  Tema e idioma
-        // ══════════════════════════════════════════════════════════
         public void AplicarTema()
         {
             Tema.AplicarControl(this);
@@ -651,14 +605,10 @@ namespace IngSoftValdezAlegre.UI
         protected override void OnResize(EventArgs e)
         {
             base.OnResize(e);
-            // El ticket se angosta en pantallas chicas para dejarle lugar a la tabla de precios.
             if (_pnlTicket != null) _pnlTicket.Width = Width < 1000 ? 300 : 360;
             if (_lblAyuda != null) _lblAyuda.MaximumSize = new Size(Math.Max(200, Width - (_pnlTicket?.Width ?? 0) - 20), 0);
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  Una fila de la tabla de precios
-        // ══════════════════════════════════════════════════════════
         private sealed class FilaPrecio
         {
             public FilaPrecio(DetalleComponente06AV item)
@@ -684,7 +634,6 @@ namespace IngSoftValdezAlegre.UI
                     ThousandsSeparator = true, Increment = 1, TextAlign = HorizontalAlignment.Right,
                     Anchor = AnchorStyles.Left | AnchorStyles.Right, Margin = new Padding(6, 6, 6, 6)
                 };
-                // Se recalcula al tipear, no solo al salir del campo.
                 Entrada.ValueChanged += (s, e) => Refrescar();
                 Entrada.KeyUp += (s, e) => { LeerTexto(); };
                 Entrada.Enter += (s, e) => Entrada.Select(0, Entrada.Text.Length);
@@ -706,8 +655,6 @@ namespace IngSoftValdezAlegre.UI
 
             public void Enfocar() { Entrada.Focus(); Entrada.Select(0, Entrada.Text.Length); }
 
-            // NumericUpDown recién confirma Value al perder el foco: se lee el texto para que
-            // el subtotal y el total acompañen lo que se va escribiendo.
             private void LeerTexto()
             {
                 if (decimal.TryParse(Entrada.Text, NumberStyles.Number, CultureInfo.CurrentCulture, out decimal v) &&

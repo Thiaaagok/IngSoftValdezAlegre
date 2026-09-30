@@ -17,14 +17,12 @@ namespace BLL
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudieron obtener los componentes.", ex); }
         }
 
-        /// <summary>Componentes cuyo stock está en o por debajo del mínimo (faltantes a comprar).</summary>
         public List<Componente06AV> ObtenerBajoStock()
         {
             try { return _mpp.ObtenerBajoStock(); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo obtener el stock bajo.", ex); }
         }
 
-        /// <summary>Suma stock a un componente (al recibir una factura de compra).</summary>
         public void SumarStock(string codigo, int cantidad)
         {
             ValidarCodigo(codigo);
@@ -88,7 +86,6 @@ namespace BLL
             AuditoriaPcFactory06AV.Baja($"Componente: {codigo}", ModuloBitacora.Componentes);
         }
 
-        /// <summary>Deshace la baja lógica de un componente.</summary>
         public void Reactivar(string codigo)
         {
             ValidarCodigo(codigo);
@@ -106,9 +103,6 @@ namespace BLL
 
         #region Bitácora de cambios (Componentes_C)
 
-        /// <summary>
-        /// Histórico de versiones de los componentes. Los filtros vacíos no filtran.
-        /// </summary>
         public List<ComponenteHistorico06AV> ObtenerBitacora(string codigo, string descripcion,
                                                              DateTime? fechaIni, DateTime? fechaFin)
         {
@@ -121,10 +115,6 @@ namespace BLL
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo obtener la bitácora de componentes.", ex); }
         }
 
-        /// <summary>
-        /// Restaura como vigente una versión histórica. La app no escribe el
-        /// histórico: actualiza el componente y el trigger versiona el cambio.
-        /// </summary>
         public void ActivarHistorico(ComponenteHistorico06AV version)
         {
             if (version == null)

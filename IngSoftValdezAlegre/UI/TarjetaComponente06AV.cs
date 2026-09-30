@@ -5,18 +5,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>
-    /// Ficha de un componente en el catálogo de "Armá tu PC".
-    ///
-    /// Reemplaza a la fila de ListBox, que mostraba todo en una sola línea de texto
-    /// separada por puntos y obligaba a leer para comparar. Acá cada dato tiene su
-    /// lugar fijo: marca y modelo mandan, el precio va grande a la derecha, y la barra
-    /// bajo el precio es proporcional a la opción más cara del paso, así el salto de
-    /// precio entre alternativas se ve como longitud.
-    ///
-    /// El stock es parte de la decisión (no se puede vender lo que no hay), así que
-    /// sin unidades libres la ficha se apaga y no se puede elegir.
-    /// </summary>
     internal class TarjetaComponente06AV : Control
     {
         private bool _hot;
@@ -34,7 +22,6 @@ namespace IngSoftValdezAlegre.UI
 
         public Componente06AV Componente { get; set; }
 
-        /// <summary>Precio de la opción más cara del paso (escala de la barra).</summary>
         public decimal PrecioTope { get; set; }
 
         public IconoPcf06AV Icono { get; set; } = IconoPcf06AV.Chip;
@@ -107,7 +94,6 @@ namespace IngSoftValdezAlegre.UI
                               Seleccionada ? Tema.Primario : (Focused && hay ? Tema.Primario : Tema.Borde),
                               Seleccionada ? 2f : 1f);
 
-            // Marca de selección / ícono del tipo
             var marca = new Rectangle(14, 28, 22, 22);
             if (Seleccionada)
             {
@@ -135,14 +121,12 @@ namespace IngSoftValdezAlegre.UI
                                        hay ? Tema.TextoSuave : Tema.Acero300,
                                        new Rectangle(x, 34, ancho, 18));
 
-            // Stock
             string stock = hay ? string.Format(TextoStock, c.StockLibre) : TextoSinStock;
             Color cStock = !hay ? Tema.Peligro : (c.StockLibre <= 2 ? Tema.Advertencia : Tema.Exito);
             int anchoChip = Pintura06AV.AnchoChip(g, stock, Tema.FuenteMini, 18);
             var chip = new Rectangle(x, 54, Math.Min(anchoChip, ancho), 18);
             Pintura06AV.Chip(g, chip, stock, Tema.FuenteMini, Pintura06AV.Suave(cStock, 32), cStock);
 
-            // Precio + barra comparativa
             var rPrecio = new Rectangle(caja.Right - anchoPrecio - 12, 16, anchoPrecio, 26);
             using (var fuente = new Font("Segoe UI Semibold", 14f, FontStyle.Bold))
                 Pintura06AV.TextoDerecha(g, c.PrecioUnitario.ToString("C0"), fuente, tinta, rPrecio);

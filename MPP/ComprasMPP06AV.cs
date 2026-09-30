@@ -12,12 +12,6 @@ using System.Xml.Linq;
 
 namespace MPP
 {
-    /// <summary>
-    /// Mapeo del proceso de Compras (RFN2). Tras el refactor:
-    /// la OrdenCompra tiene Id string (PK técnica, GeneradorCodigo06AV) y NumeroCompra
-    /// de negocio (secuencia). El detalle usa DetalleComponente06AV. La Cotización
-    /// referencia la OC por su Id. Se persiste además la Factura de Compra.
-    /// </summary>
     public class ComprasMPP06AV
     {
         private readonly ComprasDAL06AV _dal = new ComprasDAL06AV();
@@ -25,7 +19,6 @@ namespace MPP
         private readonly UsuariosMPP06AV _usuarios = new UsuariosMPP06AV();
         private readonly GeneradorCodigo06AV _gen = new GeneradorCodigo06AV();
 
-        // ── Orden de compra ──────────────────────────────────────
         public void AgregarOrdenCompra(OrdenCompra06AV oc)
         {
             if (string.IsNullOrEmpty(oc.Id)) oc.Id = _gen.Generar("OC");
@@ -59,16 +52,10 @@ namespace MPP
         public void CambiarEstadoOrdenCompra(string id, EstadoOrdenCompra06AV estado) =>
             _dal.CambiarEstadoOrdenCompra(id, (int)estado);
 
-        // ── Cotización ───────────────────────────────────────────
-        /// <summary>
-        /// Graba la cotización con una línea por componente y su precio unitario. El total
-        /// (Costo) lo calcula el procedimiento con los mismos subtotales.
-        /// </summary>
         public void AgregarCotizacion(PedidoCotizacion06AV cot)
         {
             if (string.IsNullOrEmpty(cot.Numero)) cot.Numero = _gen.Generar("CO");
 
-            // Cultura invariante: SQL Server lee el precio con punto decimal.
             var xml = new XElement("detalle",
                 cot.ComponentesPedidos.Select(d => new XElement("d",
                     new XAttribute("c", d.Componente.Codigo),
@@ -132,7 +119,6 @@ namespace MPP
         public void CambiarEstadoCotizacion(string numero, EstadoCotizacion06AV estado, string dniGerenteAprobador) =>
             _dal.CambiarEstadoCotizacion(numero, (int)estado, dniGerenteAprobador);
 
-        // ── Factura de compra ────────────────────────────────────
         public void AgregarFacturaCompra(FacturaCompra06AV f)
         {
             if (string.IsNullOrEmpty(f.NumeroFactura)) f.NumeroFactura = _gen.Generar("FC");
@@ -142,10 +128,6 @@ namespace MPP
                 _dal.AgregarFacturaCompraDetalle(f.NumeroFactura, d.Componente.Codigo, d.Cantidad);
         }
 
-        /// <summary>
-        /// Recepciones ya registradas contra una orden. Se usa para saber cuánto falta
-        /// todavía cuando una orden quedó Recibida parcial.
-        /// </summary>
         public List<FacturaCompra06AV> ObtenerFacturasPorOrden(string idOrdenCompra)
         {
             var lista = new List<FacturaCompra06AV>();
@@ -176,7 +158,6 @@ namespace MPP
             return lista;
         }
 
-        /// <summary>SQL 2812: "Could not find stored procedure" — falta correr un script.</summary>
         private static bool EsProcedimientoInexistente(SqlException ex) => ex != null && ex.Number == 2812;
 
         private List<DetalleComponente06AV> ObtenerDetalleFactura(string numeroFactura)
@@ -196,7 +177,6 @@ namespace MPP
             return lista;
         }
 
-        // ── Helpers de mapeo ─────────────────────────────────────
         private OrdenCompra06AV MapearOrdenCompra(DataRow row)
         {
             string id = row["Id"].ToString();

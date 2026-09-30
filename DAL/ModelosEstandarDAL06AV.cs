@@ -5,7 +5,6 @@ using System.Data.SqlClient;
 
 namespace DAL
 {
-    /// <summary>Acceso a datos del catálogo de modelos estándar (PC Factory / RFN1).</summary>
     public class ModelosEstandarDAL06AV
     {
         public DataTable ObtenerTodos() => EjecutarSP("sp_ModeloEstandar_ObtenerTodos", null);

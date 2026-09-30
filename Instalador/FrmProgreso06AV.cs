@@ -6,11 +6,6 @@ using System.Windows.Forms;
 
 namespace Instalador
 {
-    /// <summary>
-    /// Segunda pantalla del asistente: ejecuta la instalación (creación de la base y
-    /// scripts) en segundo plano mostrando el progreso y un registro. Al terminar bien,
-    /// escribe la cadena de conexión en el config de la aplicación y ofrece abrir el sistema.
-    /// </summary>
     public class FrmProgreso06AV : Form
     {
         private static readonly Color Primario = Color.FromArgb(21, 101, 192);
@@ -27,7 +22,6 @@ namespace Instalador
 
         private string _exeApp;
 
-        /// <summary>True si la instalación terminó correctamente.</summary>
         public bool Exito { get; private set; }
 
         public FrmProgreso06AV(OpcionesInstalacion06AV opciones)
@@ -123,9 +117,6 @@ namespace Instalador
             {
                 await Task.Run(() => new InstaladorBLL06AV(_opciones).Instalar(Log));
 
-                // Dejar la app apuntando a la instancia elegida. Se escribe en TODAS las
-                // ubicaciones del ejecutable (junto al Instalador y bin\Debug|Release), para
-                // que la cadena elegida valga sin importar qué configuración se ejecute.
                 var exes = ConfiguradorApp06AV.LocalizarTodosExeApp();
                 _exeApp = exes.Count > 0 ? exes[0] : null;
                 if (_exeApp != null)
@@ -138,7 +129,6 @@ namespace Instalador
                         ? $"Configuración de la aplicación actualizada ({escritos} ubicación/es)."
                         : "Aviso: no se pudo actualizar la configuración de la aplicación.");
 
-                    // Acceso directo en el Escritorio, automático (sin intervención del usuario).
                     string lnk = ConfiguradorApp06AV.CrearAccesoDirectoEscritorio(_exeApp);
                     Log(lnk != null
                         ? "Acceso directo creado en el Escritorio."

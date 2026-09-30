@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="Common\PdfSimple06AV.cs" />
     <Compile Include="Common\ComprobantePcFactory06AV.cs" />
+    <Compile Include="Common\ReporteVentasPdf06AV.cs" />
     <Compile Include="Common\ConfirmacionForm.cs">
       <SubType>Form</SubType>
     </Compile>

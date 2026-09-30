@@ -24,9 +24,6 @@ namespace BLL
         private readonly ProduccionMPP06AV _produccionMpp = new ProduccionMPP06AV();
         private readonly ComponentesMPP06AV _componentesMpp = new ComponentesMPP06AV();
 
-        // ══════════════════════════════════════════════════════════
-        //  Lectura
-        // ══════════════════════════════════════════════════════════
         public List<Venta06AV> ObtenerTodas()
         {
             try { return _mpp.ObtenerTodas(); }
@@ -66,37 +63,18 @@ namespace BLL
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudieron obtener los recibos.", ex); }
         }
 
-        /// <summary>Orden de producción asociada a la venta, o null si todavía no se generó.</summary>
         public OrdenProduccion06AV ObtenerOrdenDeVenta(int numeroVenta)
         {
             try { return _produccionMpp.ObtenerPorVenta(numeroVenta); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo obtener la orden de la venta.", ex); }
         }
 
-        /// <summary>CU04 (paso 2): ventas con seña registrada y todavía sin orden de producción.</summary>
         public List<Venta06AV> ObtenerListasParaProduccion()
         {
             try { return _mpp.ObtenerParaProduccion(); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudieron obtener las ventas señadas.", ex); }
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  CU01 · Armar la computadora (patrón Builder)
-        // ══════════════════════════════════════════════════════════
-        /// <summary>
-        /// Arma la computadora que se va a vender. Acá VentasBLL cumple el rol de
-        /// CLIENTE del patrón Builder: elige el ConcreteBuilder según el tipo de
-        /// configuración, le pasa las piezas al Director para que las coloque en el
-        /// orden de la receta, y le pide el producto terminado al builder.
-        ///
-        ///   Estándar     → ComputadoraEstandarBuilder06AV, con las piezas del modelo.
-        ///   Configurable → ComputadoraConfigurableBuilder06AV, con las piezas que
-        ///                  eligió el cliente en "Armá tu PC".
-        ///
-        /// Si el equipo no se puede armar (falta una pieza obligatoria, hay dos
-        /// procesadores, un componente está dado de baja) lanza
-        /// <see cref="ValidacionException06AV"/> y no se llega a registrar la venta.
-        /// </summary>
         public Computadora06AV ArmarComputadora(TipoConfiguracion06AV tipo,
                                                 ModeloEstandar06AV modelo,
                                                 IEnumerable<Componente06AV> piezasElegidas)
@@ -137,8 +115,6 @@ namespace BLL
             if (computadora == null || computadora.Componentes == null || computadora.Componentes.Count == 0)
                 throw new ValidacionException06AV("computadora", "La computadora debe tener al menos un componente.");
 
-            // Defensa en profundidad: aunque la PC venga de ArmarComputadora, se vuelve
-            // a verificar contra la receta del Director que esté completa.
             List<TipoComponente06AV> faltantes = ArmadorComputadora06AV.Faltantes(computadora.Componentes);
             if (faltantes.Count > 0)
                 throw new ValidacionException06AV("computadora",
@@ -149,7 +125,6 @@ namespace BLL
 
             var requeridos = Requerimientos(computadora);
 
-            // Escenario alternativo 4.1 del CU01: componente sin stock disponible.
             foreach (var r in requeridos)
             {
                 var comp = _componentesMpp.ObtenerPorCodigo(r.Key);
@@ -199,13 +174,6 @@ namespace BLL
             return venta;
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  CU03 · Registrar seña y emitir recibo
-        // ══════════════════════════════════════════════════════════
-        /// <summary>
-        /// Registra la seña del 50% del total con su forma de pago y devuelve el pago
-        /// generado (incluye el número de recibo). Una venta admite una sola seña.
-        /// </summary>
         public Pago06AV RegistrarSena(int numeroVenta, FormaPago06AV formaPago, string referencia = null)
         {
             var venta = ObtenerVentaOExcepcion(numeroVenta);
@@ -265,10 +233,6 @@ namespace BLL
             AuditoriaPcFactory06AV.Baja($"Venta #{numeroVenta} anulada", ModuloBitacora.Ventas);
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  Helpers
-        // ══════════════════════════════════════════════════════════
-        /// <summary>Cantidad requerida de cada componente de la computadora, agrupada por código.</summary>
         internal static List<KeyValuePair<string, int>> Requerimientos(Computadora06AV pc)
         {
             if (pc == null || pc.Componentes == null) return new List<KeyValuePair<string, int>>();
@@ -278,13 +242,12 @@ namespace BLL
                      .ToList();
         }
 
-        /// <summary>Compensación best-effort: devuelve al stock libre lo que se había reservado.</summary>
         private void LiberarReservas(IEnumerable<KeyValuePair<string, int>> reservados)
         {
             foreach (var r in reservados)
             {
                 try { _componentesMpp.LiberarReserva(r.Key, r.Value); }
-                catch { /* no interrumpe el flujo */ }
+                catch {  }
             }
         }
 

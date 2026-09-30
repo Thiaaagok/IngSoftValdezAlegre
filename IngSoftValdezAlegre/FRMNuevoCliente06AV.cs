@@ -8,16 +8,10 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre
 {
-    /// <summary>
-    /// Diálogo modal para dar de alta un cliente sin salir del proceso de Venta
-    /// (CU02 "Registrar cliente", escenario alternativo 2.1 del CU01). Si el alta
-    /// sale bien, expone el cliente creado en <see cref="ClienteCreado"/> y cierra con OK.
-    /// </summary>
     public class FRMNuevoCliente06AV : Form
     {
         private readonly ClientesBLL06AV _bll = new ClientesBLL06AV();
 
-        /// <summary>Cliente recién creado (solo válido si DialogResult == OK).</summary>
         public Cliente06AV ClienteCreado { get; private set; }
 
         private Label lblDni, lblNombre, lblApellido, lblTel, lblDir;

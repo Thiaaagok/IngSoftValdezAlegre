@@ -2,15 +2,8 @@
 {
     partial class BitacoraControl
     {
-        /// <summary> 
-        /// Variable del diseñador necesaria.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary> 
-        /// Limpiar los recursos que se estén usando.
-        /// </summary>
-        /// <param name="disposing">true si los recursos administrados se deben desechar; false en caso contrario.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -22,10 +15,6 @@
 
         #region Código generado por el Diseñador de componentes
 
-        /// <summary> 
-        /// Método necesario para admitir el Diseñador. No se puede modificar
-        /// el contenido de este método con el editor de código.
-        /// </summary>
         private void InitializeComponent()
         {
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
@@ -53,9 +42,6 @@
             this.txtApellido = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.grilla)).BeginInit();
             this.SuspendLayout();
-            // 
-            // grilla
-            // 
             this.grilla.AllowUserToAddRows = false;
             this.grilla.AllowUserToDeleteRows = false;
             this.grilla.AllowUserToResizeColumns = false;
@@ -90,9 +76,6 @@
             this.grilla.TabIndex = 5;
             this.grilla.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grilla_CellContentClick);
             this.grilla.SelectionChanged += new System.EventHandler(this.grilla_SelectionChanged);
-            // 
-            // lblTitulo
-            // 
             this.lblTitulo.AutoSize = true;
             this.lblTitulo.Font = new System.Drawing.Font("Segoe UI Semibold", 16F, System.Drawing.FontStyle.Bold);
             this.lblTitulo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(33)))), ((int)(((byte)(33)))));
@@ -101,36 +84,24 @@
             this.lblTitulo.Size = new System.Drawing.Size(208, 30);
             this.lblTitulo.TabIndex = 6;
             this.lblTitulo.Text = "Bitácora de eventos";
-            // 
-            // txtNombre
-            // 
             this.txtNombre.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtNombre.Font = new System.Drawing.Font("Segoe UI", 9.5F);
             this.txtNombre.Location = new System.Drawing.Point(11, 400);
             this.txtNombre.Name = "txtNombre";
             this.txtNombre.Size = new System.Drawing.Size(116, 24);
             this.txtNombre.TabIndex = 11;
-            // 
-            // dtpFechaIni
-            // 
             this.dtpFechaIni.Font = new System.Drawing.Font("Segoe UI", 9.5F);
             this.dtpFechaIni.Format = System.Windows.Forms.DateTimePickerFormat.Short;
             this.dtpFechaIni.Location = new System.Drawing.Point(269, 400);
             this.dtpFechaIni.Name = "dtpFechaIni";
             this.dtpFechaIni.Size = new System.Drawing.Size(200, 24);
             this.dtpFechaIni.TabIndex = 12;
-            // 
-            // dtpFechaFin
-            // 
             this.dtpFechaFin.Font = new System.Drawing.Font("Segoe UI", 9.5F);
             this.dtpFechaFin.Format = System.Windows.Forms.DateTimePickerFormat.Short;
             this.dtpFechaFin.Location = new System.Drawing.Point(528, 400);
             this.dtpFechaFin.Name = "dtpFechaFin";
             this.dtpFechaFin.Size = new System.Drawing.Size(200, 24);
             this.dtpFechaFin.TabIndex = 13;
-            // 
-            // lblFiltrar
-            // 
             this.lblFiltrar.Location = new System.Drawing.Point(758, 400);
             this.lblFiltrar.Name = "lblFiltrar";
             this.lblFiltrar.Size = new System.Drawing.Size(96, 29);
@@ -138,9 +109,6 @@
             this.lblFiltrar.Text = "Filtrar";
             this.lblFiltrar.UseVisualStyleBackColor = true;
             this.lblFiltrar.Click += new System.EventHandler(this.lblFiltrar_Click);
-            // 
-            // lblLimpiar
-            // 
             this.lblLimpiar.Location = new System.Drawing.Point(758, 435);
             this.lblLimpiar.Name = "lblLimpiar";
             this.lblLimpiar.Size = new System.Drawing.Size(96, 30);
@@ -148,9 +116,6 @@
             this.lblLimpiar.Text = "Limpiar";
             this.lblLimpiar.UseVisualStyleBackColor = true;
             this.lblLimpiar.Click += new System.EventHandler(this.lblLimpiar_Click);
-            // 
-            // lblImprimirPDF
-            // 
             this.lblImprimirPDF.Location = new System.Drawing.Point(758, 471);
             this.lblImprimirPDF.Name = "lblImprimirPDF";
             this.lblImprimirPDF.Size = new System.Drawing.Size(96, 30);
@@ -158,9 +123,6 @@
             this.lblImprimirPDF.Text = "Imprimir PDF";
             this.lblImprimirPDF.UseVisualStyleBackColor = true;
             this.lblImprimirPDF.Click += new System.EventHandler(this.lblImprimirPDF_Click);
-            // 
-            // cmbEvento
-            // 
             this.cmbEvento.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbEvento.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cmbEvento.Font = new System.Drawing.Font("Segoe UI", 9.5F);
@@ -168,9 +130,6 @@
             this.cmbEvento.Name = "cmbEvento";
             this.cmbEvento.Size = new System.Drawing.Size(200, 25);
             this.cmbEvento.TabIndex = 17;
-            // 
-            // cmbCriticidad
-            // 
             this.cmbCriticidad.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbCriticidad.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cmbCriticidad.Font = new System.Drawing.Font("Segoe UI", 9.5F);
@@ -178,9 +137,6 @@
             this.cmbCriticidad.Name = "cmbCriticidad";
             this.cmbCriticidad.Size = new System.Drawing.Size(200, 25);
             this.cmbCriticidad.TabIndex = 18;
-            // 
-            // cmbModulo
-            // 
             this.cmbModulo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbModulo.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cmbModulo.Font = new System.Drawing.Font("Segoe UI", 9.5F);
@@ -188,72 +144,48 @@
             this.cmbModulo.Name = "cmbModulo";
             this.cmbModulo.Size = new System.Drawing.Size(200, 25);
             this.cmbModulo.TabIndex = 19;
-            // 
-            // lblCantidad
-            // 
             this.lblCantidad.AutoSize = true;
             this.lblCantidad.Location = new System.Drawing.Point(809, 22);
             this.lblCantidad.Name = "lblCantidad";
             this.lblCantidad.Size = new System.Drawing.Size(58, 13);
             this.lblCantidad.TabIndex = 20;
             this.lblCantidad.Text = "Eventos: 0";
-            // 
-            // lblDni
-            // 
             this.lblDni.AutoSize = true;
             this.lblDni.Location = new System.Drawing.Point(8, 384);
             this.lblDni.Name = "lblDni";
             this.lblDni.Size = new System.Drawing.Size(44, 13);
             this.lblDni.TabIndex = 21;
             this.lblDni.Text = "Nombre";
-            // 
-            // lblFechaDesde
-            // 
             this.lblFechaDesde.AutoSize = true;
             this.lblFechaDesde.Location = new System.Drawing.Point(266, 384);
             this.lblFechaDesde.Name = "lblFechaDesde";
             this.lblFechaDesde.Size = new System.Drawing.Size(71, 13);
             this.lblFechaDesde.TabIndex = 22;
             this.lblFechaDesde.Text = "Fecha Desde";
-            // 
-            // lblFechaHasta
-            // 
             this.lblFechaHasta.AutoSize = true;
             this.lblFechaHasta.Location = new System.Drawing.Point(525, 384);
             this.lblFechaHasta.Name = "lblFechaHasta";
             this.lblFechaHasta.Size = new System.Drawing.Size(68, 13);
             this.lblFechaHasta.TabIndex = 23;
             this.lblFechaHasta.Text = "Fecha Hasta";
-            // 
-            // lblCriticidad
-            // 
             this.lblCriticidad.AutoSize = true;
             this.lblCriticidad.Location = new System.Drawing.Point(525, 463);
             this.lblCriticidad.Name = "lblCriticidad";
             this.lblCriticidad.Size = new System.Drawing.Size(50, 13);
             this.lblCriticidad.TabIndex = 24;
             this.lblCriticidad.Text = "Criticidad";
-            // 
-            // lblEvento
-            // 
             this.lblEvento.AutoSize = true;
             this.lblEvento.Location = new System.Drawing.Point(266, 463);
             this.lblEvento.Name = "lblEvento";
             this.lblEvento.Size = new System.Drawing.Size(41, 13);
             this.lblEvento.TabIndex = 25;
             this.lblEvento.Text = "Evento";
-            // 
-            // lblModulo
-            // 
             this.lblModulo.AutoSize = true;
             this.lblModulo.Location = new System.Drawing.Point(8, 460);
             this.lblModulo.Name = "lblModulo";
             this.lblModulo.Size = new System.Drawing.Size(42, 13);
             this.lblModulo.TabIndex = 26;
             this.lblModulo.Text = "Modulo";
-            // 
-            // lblImprimirEXCEL
-            // 
             this.lblImprimirEXCEL.Location = new System.Drawing.Point(758, 507);
             this.lblImprimirEXCEL.Name = "lblImprimirEXCEL";
             this.lblImprimirEXCEL.Size = new System.Drawing.Size(96, 30);
@@ -261,27 +193,18 @@
             this.lblImprimirEXCEL.Text = "Imprimir EXCEL";
             this.lblImprimirEXCEL.UseVisualStyleBackColor = true;
             this.lblImprimirEXCEL.Click += new System.EventHandler(this.lblImprimirEXCEL_Click);
-            // 
-            // lblApellido
-            // 
             this.lblApellido.AutoSize = true;
             this.lblApellido.Location = new System.Drawing.Point(130, 384);
             this.lblApellido.Name = "lblApellido";
             this.lblApellido.Size = new System.Drawing.Size(44, 13);
             this.lblApellido.TabIndex = 28;
             this.lblApellido.Text = "Apellido";
-            // 
-            // txtApellido
-            // 
             this.txtApellido.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtApellido.Font = new System.Drawing.Font("Segoe UI", 9.5F);
             this.txtApellido.Location = new System.Drawing.Point(133, 400);
             this.txtApellido.Name = "txtApellido";
             this.txtApellido.Size = new System.Drawing.Size(130, 24);
             this.txtApellido.TabIndex = 29;
-            // 
-            // BitacoraControl
-            // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.txtApellido);

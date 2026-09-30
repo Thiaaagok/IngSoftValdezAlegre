@@ -80,7 +80,6 @@ namespace BLL
             RecalcularIntegridad();
         }
 
-
         private bool ContienePatenteDirecta(IEnumerable<IComponentePermiso06AV> hijos, string idPatente)
             => hijos.Any(h => h is Patente06AV p &&
                               string.Equals(p.Id, idPatente, StringComparison.OrdinalIgnoreCase));

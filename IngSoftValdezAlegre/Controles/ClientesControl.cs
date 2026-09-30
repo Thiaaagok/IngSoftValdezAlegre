@@ -60,7 +60,7 @@ namespace IngSoftValdezAlegre.Controles
             txtApellido.Text = c.Apellido;
             txtTelefono.Text = c.Telefono;
             txtDireccion.Text = c.Direccion;
-            txtDni.ReadOnly = true;  
+            txtDni.ReadOnly = true;
             return true;
         }
 

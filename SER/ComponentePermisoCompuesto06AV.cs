@@ -20,10 +20,6 @@ namespace SER
             return resultado;
         }
 
-        /// <summary>
-        /// Agrega una Patente o Familia hija.
-        /// Lanza InvalidOperationException si alguna patente del componente ya está contenida.
-        /// </summary>
         public virtual void Agregar(IComponentePermiso06AV componente)
         {
             var existentes = ObtenerPatentes();
@@ -60,7 +56,6 @@ namespace SER
             _hijos.RemoveAll(h => h.Id == componente.Id && h.GetType() == componente.GetType());
         }
 
-        /// <summary>Texto del contenedor para los mensajes de error ("este rol", "esta familia").</summary>
         protected abstract string NombreContenedor();
     }
 }

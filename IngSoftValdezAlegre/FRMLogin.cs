@@ -25,17 +25,13 @@ namespace IngSoftValdezAlegre
             AplicarTema();
             AplicarIdioma();
 
-            // Observer: suscribirse al cambio de idioma
             GestorIdioma06AV.Instancia.IdiomaChanged += AplicarIdioma;
             FormClosed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
 
-            // La ventana no tiene bordes: se permite moverla arrastrando el panel del
-            // logo o cualquier zona vacía del formulario.
             HabilitarArrastreVentana(this);
             HabilitarArrastreVentana(panel1);
         }
 
-        // ── Arrastre de la ventana sin bordes ────────────────────────
         private const int WM_NCLBUTTONDOWN = 0xA1;
         private const int HT_CAPTION = 0x2;
 
@@ -45,7 +41,6 @@ namespace IngSoftValdezAlegre
         [DllImport("user32.dll")]
         private static extern bool ReleaseCapture();
 
-        /// <summary>Arrastrar el control indicado mueve toda la ventana.</summary>
         private void HabilitarArrastreVentana(Control control)
         {
             if (control == null) return;
@@ -105,8 +100,6 @@ namespace IngSoftValdezAlegre
 
             try
             {
-                // REVISIÓN: se verifica la consistencia antes de autenticar. Si la propia
-                // verificación falla (p. ej. BD inaccesible), se continúa y el Login maneja el error.
                 var integridad = new IntegridadBLL06AV();
                 ResultadoVerificacion06AV revision = null;
                 try { revision = integridad.Verificar(); }
@@ -120,7 +113,6 @@ namespace IngSoftValdezAlegre
                 {
                     var ti = GestorIdioma06AV.Instancia;
 
-                    // Solo quien tiene la patente RepararIntegridad accede al GUI de Reparación.
                     if (new UsuariosBLL06AV().TienePatente(login, contrasenia, PatenteEnum06AV.RepararIntegridad))
                     {
                         using (var frm = new FRMReparacionDV(revision))
@@ -132,7 +124,6 @@ namespace IngSoftValdezAlegre
                         return;
                     }
 
-                    // Usuario común: se muestra el mensaje y se sale del sistema.
                     ConfirmacionForm.MostrarInfo(
                         ti.Obtener("login_inconsistencia_usuario"),
                         titulo: ti.Obtener("dv_titulo"),
@@ -146,12 +137,10 @@ namespace IngSoftValdezAlegre
                 UsuariosBLL06AV SER = new UsuariosBLL06AV();
                 Usuario06AV usuario = SER.Login(login, contrasenia);
 
-                // Después del login el idioma ya está cargado → refrescamos labels
                 AplicarIdioma();
 
                 var t = GestorIdioma06AV.Instancia;
 
-                // Si tiene que cambiar contraseña (primer login o post-desbloqueo)
                 if (usuario.DebeCambiarContrasenia)
                 {
                     ConfirmacionForm.MostrarInfo(
@@ -166,7 +155,6 @@ namespace IngSoftValdezAlegre
 
                         if (!f.ContraseniaCambiada)
                         {
-                            // No cambió → no lo dejamos entrar
                             UsuarioSesion06AV.Instancia().CerrarSesion();
                             ConfirmacionForm.MostrarInfo(
                                 t.Obtener("login_pass_obligatoria"),
@@ -176,7 +164,6 @@ namespace IngSoftValdezAlegre
                             return;
                         }
 
-                        // Cambió la contraseña → cerramos sesión y lo obligamos a loguearse de nuevo
                         UsuarioSesion06AV.Instancia().CerrarSesion();
                         ConfirmacionForm.MostrarInfo(
                             t.Obtener("login_pass_actualizada"),
@@ -206,8 +193,6 @@ namespace IngSoftValdezAlegre
             }
             catch (SesionActivaException)
             {
-                // El singleton UsuarioSesion06AV ya tiene un usuario cargado: ningún
-                // login nuevo se acepta hasta que esa sesión se cierre explícitamente.
                 var t = GestorIdioma06AV.Instancia;
                 ConfirmacionForm.MostrarInfo(
                     t.Obtener("sesion_activa_bloqueo"),
@@ -255,9 +240,6 @@ namespace IngSoftValdezAlegre
             {
                 var t = GestorIdioma06AV.Instancia;
 
-                // Mostrar la causa REAL (SqlException interna): "no se encontró la instancia",
-                // "no se puede abrir la base", "login failed", etc. Sirve para diagnosticar
-                // problemas de conexión en otras PCs sin adivinar.
                 Exception real = ex;
                 while (real.InnerException != null) real = real.InnerException;
 
@@ -269,10 +251,6 @@ namespace IngSoftValdezAlegre
             }
             catch (InvalidOperationException ex)
             {
-                // El árbol de permisos del rol es inconsistente: el Composite rechazó
-                // una patente repetida (típicamente la misma patente asignada de forma
-                // directa al rol Y heredada de una de sus familias). No es un problema
-                // de conexión, así que se informa como lo que es.
                 var t = GestorIdioma06AV.Instancia;
                 ConfirmacionForm.MostrarInfo(
                     t.Obtener("error_permisos_inconsistentes") + "\n\n" + ex.Message,
@@ -282,8 +260,6 @@ namespace IngSoftValdezAlegre
             }
             catch (Exception ex)
             {
-                // Red de seguridad: cualquier otra falla (BD inaccesible, permisos,
-                // bitácora, etc.) muestra un aviso con el detalle en vez de reventar la app.
                 var t = GestorIdioma06AV.Instancia;
                 ConfirmacionForm.MostrarInfo(
                     t.Obtener("error_conexion_tarde") + "\n\n" + ex.Message,

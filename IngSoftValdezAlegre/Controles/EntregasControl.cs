@@ -31,10 +31,8 @@ namespace IngSoftValdezAlegre.Controles
         private OrdenProduccion06AV _ordenSel;
         private OrdenProduccion06AV _ordenCobro;
 
-        // Vistas
         private Panel pnlGrilla, pnlFormCobro;
 
-        // Hub (búsqueda + lista + detalle)
         private Label lblTitulo, lblBuscar;
         private TextBox txtBuscar;
         private ComboBox cboVista;
@@ -44,7 +42,6 @@ namespace IngSoftValdezAlegre.Controles
         private Label lblDetTitulo, lblDetEstado;
         private FlowLayoutPanel flpDetalle;
 
-        // Formulario de cobro del saldo final
         private Label lblFormCobroTit, lblCobroDetalle, lblMonto, lblMontoValor, lblFormaPago, lblReferencia;
         private FichaDatos06AV fichaCobro;
         private FlowLayoutPanel flpFormaPago;
@@ -65,9 +62,6 @@ namespace IngSoftValdezAlegre.Controles
             Cargar();
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Construcción
-        // ══════════════════════════════════════════════════════════════
         private void ConstruirUI()
         {
             ConstruirHub();
@@ -109,7 +103,6 @@ namespace IngSoftValdezAlegre.Controles
             barraSup.Controls.Add(lblTitulo);
             barraSup.Controls.Add(flpAcciones);
 
-            // Barra de búsqueda (CU07 paso 2: N° de orden o DNI del cliente)
             lblBuscar = new Label { AutoSize = true, Margin = new Padding(0, 8, 8, 0) };
             txtBuscar = new TextBox { Width = 320, Margin = new Padding(0, 4, 0, 0) };
             txtBuscar.TextChanged += (s, e) => AplicarFiltro();
@@ -141,11 +134,6 @@ namespace IngSoftValdezAlegre.Controles
             pnlGrilla.Controls.Add(barraSup);
         }
 
-        /// <summary>
-        /// REGISTRAR ENTREGA — cierre del circuito de venta: se cobra el saldo y se
-        /// entrega el equipo. Cliente, equipo y N° de serie van en una ficha con el saldo
-        /// a cobrar como dato destacado; la forma de pago se elige en tarjetas.
-        /// </summary>
         private void ConstruirFormCobro()
         {
             lblFormCobroTit = new Label { AutoSize = true, Location = new Point(16, 14) };
@@ -195,7 +183,6 @@ namespace IngSoftValdezAlegre.Controles
             pnlFormCobro.Controls.Add(barraBot);
         }
 
-        /// <summary>Título de bloque con alto holgado, para que la fuente no se corte.</summary>
         private static Label TituloSeccion(int alto) => new Label
         {
             Dock = DockStyle.Top,
@@ -279,9 +266,6 @@ namespace IngSoftValdezAlegre.Controles
             t.Controls.Add(campo, 1, fila);
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Tema e idioma
-        // ══════════════════════════════════════════════════════════════
         private void AplicarTema()
         {
             Tema.AplicarControl(this);
@@ -295,7 +279,6 @@ namespace IngSoftValdezAlegre.Controles
             Tema.AplicarEntrada(txtBuscar);
             Tema.AplicarEntrada(cboVista);
 
-            // AgregarFila aplica el estilo de "entrada"; acá se restituye el look de etiqueta.
             lblMontoValor.ForeColor = Tema.Primario;
             lblMontoValor.BackColor = Tema.FondoApp;
             lblMontoValor.Font = new Font("Segoe UI Semibold", 13f, FontStyle.Bold);
@@ -348,9 +331,6 @@ namespace IngSoftValdezAlegre.Controles
             else ActualizarDetalle();
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Datos
-        // ══════════════════════════════════════════════════════════════
         private void CargarVistas()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -455,9 +435,6 @@ namespace IngSoftValdezAlegre.Controles
                 }
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Panel de detalle
-        // ══════════════════════════════════════════════════════════════
         private void ActualizarDetalle()
         {
             flpDetalle.Controls.Clear();
@@ -482,7 +459,6 @@ namespace IngSoftValdezAlegre.Controles
             lblDetEstado.ForeColor = entregada ? Tema.TextoSuave : Tema.Exito;
             lblDetEstado.Font = new Font("Segoe UI Semibold", 9.5f, FontStyle.Bold);
 
-            // Cliente
             if (o.Cliente != null)
             {
                 flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_cliente"), fuerte: true));
@@ -490,7 +466,6 @@ namespace IngSoftValdezAlegre.Controles
                     (string.IsNullOrWhiteSpace(o.Cliente.Telefono) ? "" : "   ·   " + o.Cliente.Telefono)));
             }
 
-            // Equipo
             flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_computadora")));
             flpDetalle.Controls.Add(TextoSecundario(
                 (o.Computadora != null ? o.Computadora.Nombre : "-") +
@@ -505,7 +480,6 @@ namespace IngSoftValdezAlegre.Controles
                 flpDetalle.Controls.Add(TextoSecundario(o.FechaCierre.Value.ToString("dd/MM/yyyy HH:mm")));
             }
 
-            // Importes
             if (v != null)
             {
                 flpDetalle.Controls.Add(Separador());
@@ -529,7 +503,6 @@ namespace IngSoftValdezAlegre.Controles
                     : v.SaldoPendiente.ToString("C2")));
             }
 
-            // ── ¿Qué sigue? ──────────────────────────────────────
             flpDetalle.Controls.Add(Separador());
             flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_que_sigue"), fuerte: true));
 
@@ -577,9 +550,6 @@ namespace IngSoftValdezAlegre.Controles
             return b;
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Navegación
-        // ══════════════════════════════════════════════════════════════
         private void MostrarGrilla()
         {
             pnlFormCobro.Visible = false;
@@ -631,9 +601,6 @@ namespace IngSoftValdezAlegre.Controles
             pnlFormCobro.BringToFront();
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Acciones
-        // ══════════════════════════════════════════════════════════════
         private void ConfirmarEntrega()
         {
             if (_ordenCobro == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
@@ -647,7 +614,6 @@ namespace IngSoftValdezAlegre.Controles
                 MostrarGrilla();
                 Cargar();
 
-                // La factura siempre queda guardada; solo se abre el PDF si el cliente lo pide.
                 string factura = ComprobantePcFactory06AV.GenerarFactura(actualizada.Venta, actualizada);
                 ComprobantePcFactory06AV.PreguntarEImprimir(factura, esFactura: true, owner: FindForm(),
                     encabezado: $"Entrega registrada. La orden #{actualizada.NumeroOrden} queda cerrada.");
@@ -684,9 +650,6 @@ namespace IngSoftValdezAlegre.Controles
             mensaje, GestorIdioma06AV.Instancia.Obtener("aviso"),
             ConfirmacionForm.TipoConfirmacion.Advertencia, FindForm());
 
-        // ══════════════════════════════════════════════════════════════
-        //  View-models
-        // ══════════════════════════════════════════════════════════════
         private class EntregaVm
         {
             public int Orden { get; set; }

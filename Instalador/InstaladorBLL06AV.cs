@@ -2,7 +2,6 @@ using System;
 
 namespace Instalador
 {
-    /// <summary>Resultado de una verificación post-instalación.</summary>
     public class ResultadoInstalacion06AV
     {
         public int CantidadTablas { get; set; }
@@ -10,12 +9,6 @@ namespace Instalador
         public bool Correcto => CantidadTablas > 0 && CantidadUsuarios > 0;
     }
 
-    /// <summary>
-    /// Lógica de negocio del Instalador. Coordina el flujo completo:
-    ///   1. Preparar la base de datos (conexión + creación).
-    ///   2. Ejecutar los scripts (esquema, procedimientos, seeds, admin).
-    ///   3. Verificar que la instalación quedó consistente.
-    /// </summary>
     public class InstaladorBLL06AV
     {
         private readonly OpcionesInstalacion06AV _opciones;
@@ -29,7 +22,6 @@ namespace Instalador
             _dal = new InstaladorDAL06AV(opciones);
         }
 
-        /// <summary>Ejecuta la instalación completa y devuelve el resultado de la verificación.</summary>
         public ResultadoInstalacion06AV Instalar(Action<string> log)
         {
             log?.Invoke("=== INSTALACIÓN DEL SISTEMA IngSoftValdezAlegre ===");
@@ -53,7 +45,6 @@ namespace Instalador
             return resultado;
         }
 
-        /// <summary>Comprueba que la base tenga tablas y al menos un usuario.</summary>
         public ResultadoInstalacion06AV Verificar()
         {
             return new ResultadoInstalacion06AV

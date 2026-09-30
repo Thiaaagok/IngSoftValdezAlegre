@@ -8,17 +8,6 @@ using System.Linq;
 
 namespace BLL
 {
-    /// <summary>
-    /// Reglas de la ORDEN DE PRODUCCIÓN (RFN1). Es el circuito de FÁBRICA, posterior
-    /// y separado de la venta:
-    ///   CU04 Gestionar orden de producción → <see cref="CrearOrden"/>
-    ///   CU05 Asignar línea de ensamblaje   → <see cref="AsignarLinea"/>
-    ///        Iniciar ensamblaje            → <see cref="IniciarEnsamblaje"/>
-    ///   CU06 Cerrar orden de producción    → <see cref="RegistrarControlCalidad"/>
-    ///
-    /// Al cerrarse, la orden pasa a la bandeja de <see cref="EntregasBLL06AV"/>: la
-    /// entrega al cliente y el cobro del saldo (CU07) son un circuito comercial aparte.
-    /// </summary>
     public class OrdenProduccionBLL06AV
     {
         private readonly ProduccionMPP06AV _mpp = new ProduccionMPP06AV();
@@ -26,9 +15,6 @@ namespace BLL
         private readonly LineasEnsamblajeMPP06AV _lineasMpp = new LineasEnsamblajeMPP06AV();
         private readonly ComponentesMPP06AV _componentesMpp = new ComponentesMPP06AV();
 
-        // ══════════════════════════════════════════════════════════
-        //  Lectura
-        // ══════════════════════════════════════════════════════════
         public List<OrdenProduccion06AV> ObtenerTodas()
         {
             try { return _mpp.ObtenerTodas(); }
@@ -41,20 +27,12 @@ namespace BLL
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo obtener la orden.", ex); }
         }
 
-        /// <summary>CU04 (paso 2): ventas con seña registrada y sin orden asociada.</summary>
         public List<Venta06AV> ObtenerVentasDisponibles()
         {
             try { return _ventasMpp.ObtenerParaProduccion(); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudieron obtener las ventas señadas.", ex); }
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  CU04 · Gestionar orden de producción
-        // ══════════════════════════════════════════════════════════
-        /// <summary>
-        /// El gerente genera la orden sobre una venta YA SEÑADA y fija la fecha de
-        /// entrega comprometida. La orden nace en estado "Pendiente".
-        /// </summary>
         public OrdenProduccion06AV CrearOrden(int numeroVenta, DateTime fechaEntregaEstimada)
         {
             var venta = _ventasMpp.ObtenerPorNumero(numeroVenta);
@@ -90,9 +68,7 @@ namespace BLL
             return orden;
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  CU05 · Asignar línea de ensamblaje
-        // ══════════════════════════════════════════════════════════
+
         public void AsignarLinea(int numeroOrden, int idLinea, DateTime fechaInicio, string responsable)
         {
             var orden = ObtenerOrdenOExcepcion(numeroOrden);
@@ -101,7 +77,6 @@ namespace BLL
             if (string.IsNullOrWhiteSpace(responsable))
                 throw new ValidacionException06AV("responsable", "El responsable técnico es obligatorio.");
 
-            // TODO(verificar): no se valida fechaInicio; ¿debe ser >= hoy y <= la fecha de entrega de la orden?
             var linea = _lineasMpp.ObtenerPorId(idLinea);
             if (linea == null)
                 throw new NoEncontradoException06AV($"No existe la línea #{idLinea}.");
@@ -111,7 +86,7 @@ namespace BLL
             try
             {
                 _mpp.Planificar(numeroOrden, idLinea, fechaInicio, responsable);
-                linea.Disponible = false;          // la línea queda ocupada
+                linea.Disponible = false;
                 _lineasMpp.Modificar(linea);
             }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo planificar la orden.", ex); }
@@ -120,7 +95,6 @@ namespace BLL
                 $"Orden #{numeroOrden} planificada (línea #{idLinea})", ModuloBitacora.Produccion);
         }
 
-        /// <summary>De Planificada a En ensamblaje.</summary>
         public void IniciarEnsamblaje(int numeroOrden)
         {
             var orden = ObtenerOrdenOExcepcion(numeroOrden);
@@ -129,18 +103,6 @@ namespace BLL
             CambiarEstado(numeroOrden, EstadoOrdenProduccion06AV.EnEnsamblaje);
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  CU06 · Cerrar orden de producción
-        // ══════════════════════════════════════════════════════════
-        /// <summary>
-        /// Registra el control de calidad del equipo.
-        ///  · Aprobado  → descuenta del stock los componentes efectivamente utilizados
-        ///                (consumiendo la reserva de la venta), asigna número de serie
-        ///                y deja la orden "Finalizada".
-        ///  · Rechazado → la orden queda "En revisión" con las observaciones; el stock
-        ///                sigue reservado hasta que se corrija.
-        /// Devuelve el número de serie asignado, o null si el control no fue aprobado.
-        /// </summary>
         public string RegistrarControlCalidad(int numeroOrden, ControlCalidad06AV control)
         {
             if (control == null)
@@ -158,7 +120,6 @@ namespace BLL
             try { _mpp.RegistrarControlCalidad(numeroOrden, control); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo registrar el control de calidad.", ex); }
 
-            // Escenario alternativo 3.1: el equipo no pasa el control.
             if (!control.Aprobado)
             {
                 CambiarEstado(numeroOrden, EstadoOrdenProduccion06AV.EnRevision);
@@ -194,8 +155,6 @@ namespace BLL
                     "No se pudo cerrar la orden (se restituyó el stock). Detalle: " + ex.Message, ex);
             }
 
-            // La línea se ocupa al planificar y se libera acá, cuando el equipo terminado
-            // sale del puesto; si no, con todas ocupadas no se podría planificar otra orden.
             LiberarLinea(orden);
 
             AuditoriaPcFactory06AV.Modificacion(
@@ -203,9 +162,6 @@ namespace BLL
             return numeroSerie;
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  Estados
-        // ══════════════════════════════════════════════════════════
         public void CambiarEstado(int numeroOrden, EstadoOrdenProduccion06AV estado)
         {
             ObtenerOrdenOExcepcion(numeroOrden);
@@ -215,14 +171,6 @@ namespace BLL
             AuditoriaPcFactory06AV.Modificacion($"Orden #{numeroOrden} → estado {estado}", ModuloBitacora.Produccion);
         }
 
-        /// <summary>
-        /// Vuelve la orden al paso anterior:
-        ///   Planificada  → Pendiente (se suelta la línea)
-        ///   EnEnsamblaje → Planificada
-        ///   EnRevision   → EnEnsamblaje
-        /// No se permite desde Finalizada (el stock ya se consumió y hay N° de serie
-        /// asignado) ni desde Entregada (la factura ya fue emitida).
-        /// </summary>
         public EstadoOrdenProduccion06AV VolverAtras(int numeroOrden)
         {
             var orden = ObtenerOrdenOExcepcion(numeroOrden);
@@ -266,14 +214,6 @@ namespace BLL
             return anterior;
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  Helpers
-        // ══════════════════════════════════════════════════════════
-        /// <summary>
-        /// Devuelve la línea al pool de disponibles. Se llama al finalizar la orden y al
-        /// desplanificarla: son los dos momentos en que el equipo deja de ocupar el puesto.
-        /// No rompe el cierre si falla (la orden ya se cerró bien).
-        /// </summary>
         private void LiberarLinea(OrdenProduccion06AV orden)
         {
             if (orden == null || orden.LineaEnsamblaje == null) return;
@@ -285,14 +225,9 @@ namespace BLL
             catch { }
         }
 
-        /// <summary>N° de serie legible y único por orden: SN-AAAA-00042.</summary>
         private static string GenerarNumeroSerie(OrdenProduccion06AV orden) =>
             $"SN-{DateTime.Now:yyyy}-{orden.NumeroOrden:00000}";
 
-        /// <summary>
-        /// Compensación: devuelve el stock físico y la reserva de lo ya consumido. El físico
-        /// vuelve por Modificar, así que deja una versión en la bitácora de componentes.
-        /// </summary>
         private void RevertirConsumo(IEnumerable<KeyValuePair<string, int>> consumidos)
         {
             foreach (var c in consumidos)
@@ -305,7 +240,7 @@ namespace BLL
                     _componentesMpp.Modificar(comp);
                     _componentesMpp.ReservarStock(c.Key, c.Value);
                 }
-                catch { /* compensación best-effort */ }
+                catch {  }
             }
         }
 

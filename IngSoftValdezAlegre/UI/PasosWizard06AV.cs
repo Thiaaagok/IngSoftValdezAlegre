@@ -5,11 +5,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>
-    /// Cabecera de pasos del asistente: galones encadenados que muestran dónde estoy,
-    /// qué ya resolví y qué falta. Los pasos ya completados son clickeables para volver
-    /// atrás sin perder lo cargado; los futuros no, porque todavía no tienen sentido.
-    /// </summary>
     internal class PasosWizard06AV : Control
     {
         private readonly List<string> _pasos = new List<string>();
@@ -20,9 +15,6 @@ namespace IngSoftValdezAlegre.UI
         {
             SetStyle(Pintura06AV.EstilosDibujo, true);
             Height = 54;
-            // Sin BackColor transparente: es un Control puro (no lo admite) y pinta
-            // su propio fondo en OnPaint con el color del contenedor.
-
         }
 
         public event EventHandler<int> PasoElegido;
@@ -34,10 +26,6 @@ namespace IngSoftValdezAlegre.UI
             Invalidate();
         }
 
-        /// <summary>
-        /// Número que muestra el primer paso. Sirve para repartir una numeración entre dos
-        /// cabeceras: la serialización usa 1 a 4 en una y 5 a 8 en la otra.
-        /// </summary>
         public int PrimerNumero { get; set; } = 1;
 
         public int Actual

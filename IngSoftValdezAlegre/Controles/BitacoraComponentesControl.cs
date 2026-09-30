@@ -43,8 +43,6 @@ namespace IngSoftValdezAlegre.Controles
             Cargar();
         }
 
-        // ── Construcción de la interfaz ──────────────────────────────
-
         private void ConstruirUI()
         {
             lblTitulo = new Label { AutoSize = true, Location = new Point(4, 16) };
@@ -60,7 +58,6 @@ namespace IngSoftValdezAlegre.Controles
             txtCodigo      = new TextBox { Width = 120 };
             txtDescripcion = new TextBox { Width = 200 };
 
-            // ShowCheckBox: destildado = el filtro de fecha no se aplica.
             dtpFechaIni = new DateTimePicker
             {
                 Format = DateTimePickerFormat.Short, Width = 120,
@@ -91,8 +88,6 @@ namespace IngSoftValdezAlegre.Controles
                 lblFechaIni, dtpFechaIni, lblFechaFin, dtpFechaFin
             });
 
-            // Los botones van anclados a la derecha, fuera del flow de los filtros:
-            // si quedaran dentro se envuelven a una segunda fila y la grilla los tapa.
             var flpFiltroBotones = new FlowLayoutPanel
             {
                 Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight,
@@ -191,8 +186,6 @@ namespace IngSoftValdezAlegre.Controles
             grilla.Columns.Add(new DataGridViewCheckBoxColumn { Name = "BajaLogica", DataPropertyName = "BajaLogica", FillWeight = 80 });
             grilla.Columns.Add(new DataGridViewCheckBoxColumn { Name = "Activo", DataPropertyName = "Activo", FillWeight = 70 });
         }
-
-        // ── Datos ────────────────────────────────────────────────────
 
         private void Cargar()
         {
@@ -297,8 +290,6 @@ namespace IngSoftValdezAlegre.Controles
         private void MostrarAviso(string mensaje,
             ConfirmacionForm.TipoConfirmacion tipo = ConfirmacionForm.TipoConfirmacion.Advertencia) =>
             ConfirmacionForm.MostrarInfo(mensaje, GestorIdioma06AV.Instancia.Obtener("aviso"), tipo, FindForm());
-
-        // ── Tema e idioma ────────────────────────────────────────────
 
         private void AplicarTema()
         {

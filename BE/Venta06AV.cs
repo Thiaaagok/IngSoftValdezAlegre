@@ -17,7 +17,6 @@ namespace BE
         public List<Pago06AV> Pagos { get; set; } = new List<Pago06AV>();
         public decimal PrecioTotal => Computadora?.PrecioTotal ?? 0m;
 
-        /// <summary>Porcentaje de seña </summary>
         public const decimal PorcentajeSena = 0.50m;
         /// <summary>
         /// Math.Round redondea al par en el medio centavo: un total de $100,01 da una

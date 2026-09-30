@@ -15,13 +15,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    /// <summary>
-    /// A03 Serialización. Primero se elige qué hacer y después se sigue un asistente de
-    /// cuatro pasos, como el resto del sistema:
-    ///   Serializar     — 1 clase y objetos, 2 ubicación, 3 serializar, 4 verificar.
-    ///   Des-serializar — 5 ubicación de origen, 6 archivo, 7 des-serializar, 8 verificar.
-    /// La lógica está en <see cref="SerializacionBLL06AV"/>; acá solo se muestra.
-    /// </summary>
     [DesignerCategory("Code")]
     internal class SerializacionControl06AV : UserControl, IIdiomaAplicable06AV
     {
@@ -72,7 +65,6 @@ namespace IngSoftValdezAlegre.Controles
             Disposed += (s, e) => Tema.TemaChanged -= AplicarTema;
         }
 
-        /// <summary>Muestra un asistente desde el paso 1, o la elección de operación con null.</summary>
         private void Mostrar(Control asistente)
         {
             _inicio.Visible = asistente == null;
@@ -114,10 +106,6 @@ namespace IngSoftValdezAlegre.Controles
             _deserializar.AplicarIdioma();
         }
 
-        // ══════════════════════════════════════════════════════════════════
-        //  Textos y filas compartidos por los dos asistentes
-        // ══════════════════════════════════════════════════════════════════
-
         internal static string TextoClase(ClaseSerializable06AV c)
         {
             var t = GestorIdioma06AV.Instancia;
@@ -127,7 +115,6 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
-        /// <summary>El nombre de la clase sin la aclaración entre paréntesis, para los destacados.</summary>
         internal static string TextoClaseCorto(ClaseSerializable06AV c)
         {
             string texto = TextoClase(c);
@@ -160,7 +147,6 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
-        // TextBox multilínea necesita CRLF; el XML se graba con el salto del sistema.
         internal static string NormalizarSaltos(string texto) => (texto ?? "").Replace("\r\n", "\n").Replace("\n", "\r\n");
 
         internal static DataGridView NuevaGrilla(bool editable = false) => new DataGridView
@@ -185,7 +171,6 @@ namespace IngSoftValdezAlegre.Controles
             c.MinimumWidth = minimo;
         }
 
-        /// <summary>Columnas y colores de una grilla de resultados de verificación.</summary>
         internal static void PrepararResultados(DataGridView g)
         {
             g.DataBindingComplete += (s, e) =>
@@ -210,7 +195,6 @@ namespace IngSoftValdezAlegre.Controles
             };
         }
 
-        /// <summary>Franja de resultado: verde si salió bien, roja si no.</summary>
         internal static void Franja(Label l, string texto, bool ok)
         {
             l.Text = texto;
@@ -274,10 +258,6 @@ namespace IngSoftValdezAlegre.Controles
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  CU-SER01 · Serializar (pasos 1 a 4)
-    // ══════════════════════════════════════════════════════════════════════
-
     [DesignerCategory("Code")]
     internal class AsistenteSerializar06AV : AsistenteBase06AV
     {
@@ -291,27 +271,22 @@ namespace IngSoftValdezAlegre.Controles
         private InformeVerificacion06AV _informe;
         private bool _verXml;
 
-        // Paso 1
         private Label lblClaseTit, lblObjetosTit, lblSeleccion;
         private FlowLayoutPanel flpClases;
         private Button btnTodos, btnNinguno;
         private DataGridView grillaObjetos;
 
-        // Paso 2
         private Label lblCarpetaTit, lblArchivoTit, lblAvisoDestino;
         private TextBox txtCarpeta, txtArchivo;
         private Button btnExaminar;
 
-        // Paso 3
         private Label lblListoTit, lblListoDet, lblResultadoSer;
 
-        // Paso 4
         private Label lblResultadoVerif;
         private Button btnVerPorObjeto, btnVerXml;
         private DataGridView grillaResultados;
         private TextBox txtXml;
 
-        // Lateral y barra
         private Label lblResumenTit;
         private FichaDatos06AV ficha;
         private Button btnSerializar, btnVerificar, btnOtra, btnSalir;
@@ -339,7 +314,6 @@ namespace IngSoftValdezAlegre.Controles
             AplicarTema();
         }
 
-        /// <summary>Arranca desde el paso 1 con todo limpio.</summary>
         public void Empezar()
         {
             _clase = null;
@@ -350,11 +324,9 @@ namespace IngSoftValdezAlegre.Controles
             _nombrePropuesto = null;
             Reiniciar();
             IrA(0);
-            // Solo se serializan ventas: la clase queda elegida y se listan las ventas.
             ElegirClase(ClaseSerializable06AV.Venta);
         }
 
-        // ── Armado ───────────────────────────────────────────────────────
         private void ConstruirPaso1(Panel pagina)
         {
             lblClaseTit = Rotulo();
@@ -383,7 +355,6 @@ namespace IngSoftValdezAlegre.Controles
             grillaObjetos = SerializacionControl06AV.NuevaGrilla(true);
             grillaObjetos.DataSource = _filas;
             grillaObjetos.DataBindingComplete += (s, e) => FormatearObjetos();
-            // El tilde se confirma al hacer clic, no al salir de la celda.
             grillaObjetos.CurrentCellDirtyStateChanged += (s, e) =>
             {
                 if (grillaObjetos.IsCurrentCellDirty) grillaObjetos.CommitEdit(DataGridViewDataErrorContexts.Commit);
@@ -436,7 +407,6 @@ namespace IngSoftValdezAlegre.Controles
             pagina.Controls.Add(Pila(Fila(lblResultadoVerif), Fila(btnVerPorObjeto, btnVerXml)));
         }
 
-        // ── Pasos ────────────────────────────────────────────────────────
         private List<object> Seleccionados() => _filas.Where(f => f.Incluir).Select(f => f.Objeto).ToList();
 
         private string Ruta()
@@ -466,7 +436,6 @@ namespace IngSoftValdezAlegre.Controles
         {
             if (PasoActual == 1)
             {
-                // Paso 2: se valida el destino con las reglas de la BLL antes de avanzar.
                 string ruta = Ruta();
                 try { SerializacionBLL06AV.ValidarDestino(ruta); }
                 catch (ValidacionException06AV ex)
@@ -504,7 +473,6 @@ namespace IngSoftValdezAlegre.Controles
             ActualizarResumen();
         }
 
-        // ── Paso 1 ───────────────────────────────────────────────────────
         private void ElegirClase(ClaseSerializable06AV clase)
         {
             _clase = clase;
@@ -522,7 +490,6 @@ namespace IngSoftValdezAlegre.Controles
             finally { Cursor = Cursors.Default; }
 
             MostrarObjetos(objetos);
-            // Un nombre que propuso el sistema se actualiza con la clase; uno escrito a mano, no.
             if (string.IsNullOrWhiteSpace(txtArchivo.Text) || txtArchivo.Text == _nombrePropuesto) ProponerNombre();
             AlMostrarPaso(PasoActual);
         }
@@ -568,7 +535,6 @@ namespace IngSoftValdezAlegre.Controles
             grillaObjetos.ClearSelection();
         }
 
-        // ── Paso 2 ───────────────────────────────────────────────────────
         private void ElegirCarpeta()
         {
             using (var dlg = new FolderBrowserDialog
@@ -605,7 +571,6 @@ namespace IngSoftValdezAlegre.Controles
             lblAvisoDestino.ForeColor = existe ? Tema.Advertencia : Tema.TextoSuave;
         }
 
-        // ── Paso 3 ───────────────────────────────────────────────────────
         private void Serializar()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -634,7 +599,6 @@ namespace IngSoftValdezAlegre.Controles
             ActualizarBarra();
         }
 
-        /// <summary>Cualquier cambio en los pasos 1 o 2 invalida el archivo generado.</summary>
         private void Reiniciar()
         {
             _rutaSerializada = null;
@@ -643,7 +607,6 @@ namespace IngSoftValdezAlegre.Controles
             if (lblResultadoSer != null) SerializacionControl06AV.Franja(lblResultadoSer, "", true);
         }
 
-        // ── Paso 4 ───────────────────────────────────────────────────────
         private void Verificar()
         {
             if (_rutaSerializada == null) return;
@@ -684,7 +647,6 @@ namespace IngSoftValdezAlegre.Controles
             if (!hay) SerializacionControl06AV.Franja(lblResultadoVerif, "", true);
         }
 
-        // ── Lateral ──────────────────────────────────────────────────────
         private void ActualizarResumen()
         {
             if (ficha == null) return;
@@ -711,7 +673,6 @@ namespace IngSoftValdezAlegre.Controles
                     _clase.HasValue ? SerializacionControl06AV.TextoClase(_clase.Value) : "—", ruta ?? "—");
         }
 
-        // ── Tema e idioma ────────────────────────────────────────────────
         public override void AplicarTema()
         {
             base.AplicarTema();
@@ -781,10 +742,6 @@ namespace IngSoftValdezAlegre.Controles
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  CU-SER02 · Des-serializar (pasos 5 a 8)
-    // ══════════════════════════════════════════════════════════════════════
-
     [DesignerCategory("Code")]
     internal class AsistenteDeserializar06AV : AsistenteBase06AV
     {
@@ -796,26 +753,21 @@ namespace IngSoftValdezAlegre.Controles
         private InformeVerificacion06AV _informe;
         private bool _cargando;
 
-        // Paso 5
         private Label lblOrigenTit, lblEncontrados;
         private TextBox txtOrigen;
         private Button btnExaminar;
 
-        // Paso 6
         private Label lblArchivosTit, lblVistaTit;
         private DataGridView grillaArchivos;
         private TextBox txtVista;
 
-        // Paso 7
         private FichaDatos06AV fichaPaquete;
         private Label lblReconstruidosTit, lblResultadoDes;
         private DataGridView grillaObjetos;
 
-        // Paso 8
         private Label lblIntegridad, lblResumenVerif;
         private DataGridView grillaResultados;
 
-        // Lateral y barra
         private Label lblResumenTit;
         private FichaDatos06AV ficha;
         private Button btnDeserializar, btnVerificar, btnOtro, btnSalir;
@@ -856,7 +808,6 @@ namespace IngSoftValdezAlegre.Controles
             IrA(0);
         }
 
-        // ── Armado ───────────────────────────────────────────────────────
         private void ConstruirPaso5(Panel pagina)
         {
             lblOrigenTit = Rotulo();
@@ -917,7 +868,6 @@ namespace IngSoftValdezAlegre.Controles
             pagina.Controls.Add(Pila(Fila(lblIntegridad), lblResumenVerif));
         }
 
-        // ── Pasos ────────────────────────────────────────────────────────
         protected override bool PasoCompleto(int paso)
         {
             switch (paso)
@@ -951,7 +901,6 @@ namespace IngSoftValdezAlegre.Controles
             ActualizarResumen();
         }
 
-        // ── Paso 5 ───────────────────────────────────────────────────────
         private void ElegirCarpeta()
         {
             using (var dlg = new FolderBrowserDialog
@@ -987,7 +936,6 @@ namespace IngSoftValdezAlegre.Controles
             try
             {
                 grillaArchivos.DataSource = _archivos.Select(a => new ArchivoVm(a)).ToList();
-                // Sin fila elegida: el paso 6 lo hace el usuario.
                 grillaArchivos.ClearSelection();
                 grillaArchivos.CurrentCell = null;
             }
@@ -998,7 +946,6 @@ namespace IngSoftValdezAlegre.Controles
             ActualizarBarra();
         }
 
-        // ── Paso 6 ───────────────────────────────────────────────────────
         private void ElegirArchivo()
         {
             var fila = grillaArchivos.SelectedRows.Count > 0 ? grillaArchivos.SelectedRows[0].DataBoundItem as ArchivoVm : null;
@@ -1017,7 +964,6 @@ namespace IngSoftValdezAlegre.Controles
             ActualizarBarra();
         }
 
-        // ── Paso 7 ───────────────────────────────────────────────────────
         private void Deserializar()
         {
             if (_rutaElegida == null) return;
@@ -1063,7 +1009,6 @@ namespace IngSoftValdezAlegre.Controles
             fichaPaquete.Invalidate();
         }
 
-        // ── Paso 8 ───────────────────────────────────────────────────────
         private void Verificar()
         {
             if (_paquete == null) return;
@@ -1109,7 +1054,6 @@ namespace IngSoftValdezAlegre.Controles
             if (lblIntegridad != null) SerializacionControl06AV.Franja(lblIntegridad, "", true);
         }
 
-        // ── Lateral ──────────────────────────────────────────────────────
         private void ActualizarResumen()
         {
             if (ficha == null) return;
@@ -1130,7 +1074,6 @@ namespace IngSoftValdezAlegre.Controles
             ficha.Invalidate();
         }
 
-        // ── Tema e idioma ────────────────────────────────────────────────
         public override void AplicarTema()
         {
             base.AplicarTema();

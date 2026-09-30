@@ -12,17 +12,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    /// <summary>
-    /// PRODUCCIÓN (RFN1) — pantalla del GERENTE y del RESPONSABLE TÉCNICO. Arranca
-    /// donde termina la venta: la orden se genera sobre una venta YA SEÑADA.
-    ///   CU04 Gestionar orden de producción → "＋ Nueva orden" (elige la venta señada)
-    ///   CU05 Asignar línea de ensamblaje   → acción "Asignar línea"
-    ///        Iniciar ensamblaje            → acción "Iniciar ensamblaje"
-    ///   CU06 Cerrar orden de producción    → acción "Cerrar orden" (checklist + N° serie)
-    ///
-    /// La entrega al cliente y el cobro del saldo (CU07) se hacen desde "Entrega de
-    /// computadoras" (<see cref="EntregasControl"/>).
-    /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class ProduccionControl : UserControl, IIdiomaAplicable06AV
     {
@@ -31,10 +20,8 @@ namespace IngSoftValdezAlegre.Controles
 
         private OrdenProduccion06AV _ordenSel;
 
-        // Vistas
         private Panel pnlGrilla, pnlFormOrden, pnlFormPlan, pnlFormCierre;
 
-        // Hub (lista + detalle)
         private Label lblTitulo;
         private DataGridView grilla;
         private Button btnNueva, btnRefrescar;
@@ -42,7 +29,6 @@ namespace IngSoftValdezAlegre.Controles
         private Label lblDetTitulo, lblDetEstado;
         private FlowLayoutPanel flpDetalle;
 
-        // Vista de proceso: tablero de estaciones (operar) + grilla clásica (consultar).
         private TableroEstacionesControl06AV tablero;
         private RielEnsamblajeControl06AV riel;
         private Button btnVista;
@@ -51,7 +37,6 @@ namespace IngSoftValdezAlegre.Controles
         private bool _detalleVisible = true;
         private OrdenProduccion06AV _ordenElegidaTablero;
 
-        // Formulario "Nueva orden" (CU04)
         private Label lblFormOrdenTit, lblVenta, lblDetalleVenta, lblEntrega, lblOrdenAyuda;
         private FlowLayoutPanel flpVentas;
         private FichaDatos06AV fichaVenta;
@@ -59,7 +44,6 @@ namespace IngSoftValdezAlegre.Controles
         private DateTimePicker dtpEntrega;
         private Button btnRegistrar, btnVolverOrden;
 
-        // Formulario "Asignar línea" (CU05)
         private Label lblFormPlanTit, lblLinea, lblInicio, lblResp, lblPlanAyuda, lblSinLineas;
         private FlowLayoutPanel flpLineas;
         private LineaEnsamblaje06AV _lineaElegida;
@@ -68,7 +52,6 @@ namespace IngSoftValdezAlegre.Controles
         private Button btnConfirmarPlan, btnVolverPlan;
         private OrdenProduccion06AV _ordenPlan;
 
-        // Formulario "Cerrar orden" (CU06)
         private Label lblFormCierreTit, lblChecklist, lblObs, lblRespCc, lblCierreAyuda, lblVeredicto;
         private ItemChequeo06AV chkEncendido, chkConexiones, chkSO, chkDrivers;
         private TextBox txtObs, txtRespCc;
@@ -88,9 +71,6 @@ namespace IngSoftValdezAlegre.Controles
             CargarOrdenes();
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Construcción
-        // ══════════════════════════════════════════════════════════════
         private void ConstruirUI()
         {
             ConstruirHub();
@@ -131,7 +111,6 @@ namespace IngSoftValdezAlegre.Controles
             btnVista.Click += (s, e) => AlternarVista();
             btnDetalle.Click += (s, e) => MostrarDetalle(!_detalleVisible);
 
-            // Tablero de estaciones: una columna por etapa del proceso físico.
             tablero = new TableroEstacionesControl06AV { Dock = DockStyle.Fill };
             tablero.TarjetaElegida += (s, tarjeta) =>
             {
@@ -165,7 +144,6 @@ namespace IngSoftValdezAlegre.Controles
                 WrapContents = false, AutoScroll = true
             };
 
-            // Riel de ensamblaje: el avance como recorrido físico, no como lista de estados.
             riel = new RielEnsamblajeControl06AV { Dock = DockStyle.Top };
 
             pnlDetalle = new Panel { Dock = DockStyle.Right, Width = 400, Padding = new Padding(16, 14, 12, 12) };
@@ -180,13 +158,9 @@ namespace IngSoftValdezAlegre.Controles
             pnlGrilla.Controls.Add(pnlDetalle);
             pnlGrilla.Controls.Add(barraSup);
 
-            grilla.Visible = false;   // arranca en modo tablero
+            grilla.Visible = false;
         }
 
-        /// <summary>
-        /// CU04 — Nueva orden de producción. Cada venta señada sin orden es una tarjeta
-        /// con su cliente, su equipo y su total; la ficha de abajo muestra la elegida.
-        /// </summary>
         private void ConstruirFormOrden()
         {
             lblFormOrdenTit = new Label { AutoSize = true, Location = new Point(16, 14) };
@@ -237,7 +211,6 @@ namespace IngSoftValdezAlegre.Controles
             pnlFormOrden.Controls.Add(barraBot);
         }
 
-        /// <summary>Título de bloque con alto holgado, para que la fuente no se corte.</summary>
         private static Label TituloSeccionProd(int alto) => new Label
         {
             Dock = DockStyle.Top,
@@ -247,7 +220,6 @@ namespace IngSoftValdezAlegre.Controles
             Padding = new Padding(2, 6, 0, 0)
         };
 
-        /// <summary>Las ventas señadas listas para producir, como tarjetas comparables.</summary>
         private void ArmarTarjetasVenta()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -289,11 +261,6 @@ namespace IngSoftValdezAlegre.Controles
             MostrarDetalleVenta();
         }
 
-        /// <summary>
-        /// CU05 — Asignar línea. La línea se elige en tarjetas (solo las disponibles; la
-        /// primera queda elegida) y la fecha de inicio y el responsable van debajo. Si no
-        /// hay líneas libres el formulario no se abre.
-        /// </summary>
         private void ConstruirFormPlan()
         {
             lblFormPlanTit = new Label { AutoSize = true, Location = new Point(16, 14) };
@@ -345,7 +312,6 @@ namespace IngSoftValdezAlegre.Controles
             pnlFormPlan.Controls.Add(barraBot);
         }
 
-        /// <summary>Pinta las líneas disponibles como tarjetas y deja elegida la primera.</summary>
         private void CargarLineas(List<LineaEnsamblaje06AV> lineas)
         {
             var t = GestorIdioma06AV.Instancia;
@@ -386,11 +352,6 @@ namespace IngSoftValdezAlegre.Controles
                     t.Seleccionada = ReferenceEquals(t.Valor, linea);
         }
 
-        /// <summary>
-        /// CU06 — Cerrar orden. Los cuatro ítems del control de calidad son filas grandes
-        /// que se marcan en verde, y un veredicto en vivo anticipa si al confirmar la
-        /// orden se finaliza o pasa a En revisión.
-        /// </summary>
         private void ConstruirFormCierre()
         {
             lblFormCierreTit = new Label { AutoSize = true, Location = new Point(16, 14) };
@@ -451,11 +412,6 @@ namespace IngSoftValdezAlegre.Controles
                 chk.MarcadoCambiado += (s, e) => ActualizarVeredicto();
         }
 
-        /// <summary>
-        /// Dice en vivo qué va a pasar al confirmar: aprobado cierra y asigna serie;
-        /// con alguna verificación fallada la orden vuelve a revisión y exige explicar
-        /// por qué. Evita la sorpresa después del clic.
-        /// </summary>
         private void ActualizarVeredicto()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -519,9 +475,6 @@ namespace IngSoftValdezAlegre.Controles
             t.Controls.Add(campo, 1, fila);
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Tema e idioma
-        // ══════════════════════════════════════════════════════════════
         private void AplicarTema()
         {
             Tema.AplicarControl(this);
@@ -543,7 +496,6 @@ namespace IngSoftValdezAlegre.Controles
             Tema.AplicarBotonPrimario(btnConfirmarCierre);
             Tema.AplicarBotonSecundario(btnVolverCierre);
 
-            // AgregarFila aplica el estilo de "entrada"; acá se restituye el look de etiqueta.
             lblDetalleVenta.ForeColor = Tema.TextoSuave;
             lblDetalleVenta.BackColor = Tema.FondoApp;
             foreach (ItemChequeo06AV chk in new[] { chkEncendido, chkConexiones, chkSO, chkDrivers })
@@ -645,9 +597,6 @@ namespace IngSoftValdezAlegre.Controles
             else ActualizarDetalle();
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Datos
-        // ══════════════════════════════════════════════════════════════
         private void CargarOrdenes()
         {
             try
@@ -723,11 +672,6 @@ namespace IngSoftValdezAlegre.Controles
             tablero.SeleccionarPorEtiqueta(o => (o as OrdenProduccion06AV)?.NumeroOrden == numero);
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Tablero de estaciones
-        // ══════════════════════════════════════════════════════════════
-
-        /// <summary>Las cinco estaciones del proceso, en el orden real del taller.</summary>
         private List<EstacionRiel06AV> EstacionesProceso()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -741,14 +685,9 @@ namespace IngSoftValdezAlegre.Controles
             };
         }
 
-        /// <summary>Columna del tablero. "En revisión" no tiene columna propia: vuelve a ensamblaje.</summary>
         private static int ColumnaDe(EstadoOrdenProduccion06AV estado) =>
             estado == EstadoOrdenProduccion06AV.EnRevision ? 2 : (int)estado;
 
-        /// <summary>
-        /// Acción única posible en la estación actual. Es la misma que ofrece el panel
-        /// de detalle: el tablero no agrega caminos nuevos, sólo los acerca.
-        /// </summary>
         private void AccionPrincipal(EstadoOrdenProduccion06AV estado, out string texto, out Action accion)
         {
             var t = GestorIdioma06AV.Instancia;
@@ -775,11 +714,6 @@ namespace IngSoftValdezAlegre.Controles
             accion?.Invoke();
         }
 
-        /// <summary>
-        /// Muestra u oculta el panel de detalle. En el tablero el detalle compite por
-        /// el ancho con las cinco columnas: si la ventana no da, se pliega solo y las
-        /// acciones siguen disponibles en la píldora de cada tarjeta.
-        /// </summary>
         private void MostrarDetalle(bool visible)
         {
             _detalleVisible = visible;
@@ -788,7 +722,6 @@ namespace IngSoftValdezAlegre.Controles
             AplicarIdioma();
         }
 
-        /// <summary>Ancho mínimo para que el tablero y el detalle conviban sin apretarse.</summary>
         private void AjustarDetalleAlAncho()
         {
             if (!_modoTablero || pnlGrilla == null) return;
@@ -802,13 +735,12 @@ namespace IngSoftValdezAlegre.Controles
             tablero.Visible = _modoTablero;
             grilla.Visible = !_modoTablero;
             if (_modoTablero) tablero.BringToFront(); else grilla.BringToFront();
-            if (!_modoTablero) MostrarDetalle(true);   // la grilla sin detalle no sirve de nada
+            if (!_modoTablero) MostrarDetalle(true);
             else AjustarDetalleAlAncho();
             AplicarIdioma();
             ActualizarDetalle();
         }
 
-        /// <summary>Vuelca las órdenes al tablero: una tarjeta por orden, en su estación.</summary>
         private void RefrescarTablero(List<OrdenProduccion06AV> ordenes)
         {
             var t = GestorIdioma06AV.Instancia;
@@ -868,9 +800,6 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Panel de detalle: progreso + "¿Qué sigue?"
-        // ══════════════════════════════════════════════════════════════
         private void ActualizarDetalle()
         {
             flpDetalle.Controls.Clear();
@@ -894,7 +823,6 @@ namespace IngSoftValdezAlegre.Controles
             lblDetEstado.ForeColor = estColor;
             lblDetEstado.Font = new Font("Segoe UI Semibold", 9.5f, FontStyle.Bold);
 
-            // Progreso: riel de estaciones. "En revisión" se dibuja como desvío, no como paso.
             riel.Visible = _detalleVisible;
             riel.EstablecerDetalle(1, o.FechaInicioPrevista.HasValue
                 ? o.FechaInicioPrevista.Value.ToShortDateString() : null);
@@ -907,7 +835,6 @@ namespace IngSoftValdezAlegre.Controles
 
             flpDetalle.Controls.Add(Separador());
 
-            // Venta de origen
             flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_venta")));
             flpDetalle.Controls.Add(TextoSecundario(
                 "#" + o.NumeroVenta + "   ·   " +
@@ -924,7 +851,6 @@ namespace IngSoftValdezAlegre.Controles
                 flpDetalle.Controls.Add(TextoSecundario(ln + "   ·   " + rp));
             }
 
-            // Control de calidad y N° de serie
             if (o.ControlCalidad != null && o.ControlCalidad.Registrado)
             {
                 flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_control_calidad")));
@@ -945,7 +871,6 @@ namespace IngSoftValdezAlegre.Controles
                 flpDetalle.Controls.Add(TextoSecundario(o.NumeroSerie));
             }
 
-            // ── ¿Qué sigue? ──────────────────────────────────────
             flpDetalle.Controls.Add(Separador());
             flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_que_sigue"), fuerte: true));
 
@@ -990,7 +915,6 @@ namespace IngSoftValdezAlegre.Controles
             flpDetalle.Controls.Add(b);
         }
 
-        // ── Helpers de detalle ───────────────────────────────────────
         private Label Etiqueta(string texto, bool fuerte = false) => new Label
         {
             Text = texto, AutoSize = true, Margin = new Padding(0, fuerte ? 4 : 8, 0, 2),
@@ -1020,9 +944,6 @@ namespace IngSoftValdezAlegre.Controles
             return b;
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Navegación entre vistas
-        // ══════════════════════════════════════════════════════════════
         private void MostrarGrilla()
         {
             pnlFormOrden.Visible = false;
@@ -1033,14 +954,12 @@ namespace IngSoftValdezAlegre.Controles
             ActualizarDetalle();
         }
 
-        /// <summary>CU04: el gerente elige una venta señada sin orden y fija la fecha de entrega.</summary>
         private void AbrirFormOrden()
         {
             List<Venta06AV> disponibles;
             try { disponibles = _ordenesBLL.ObtenerVentasDisponibles() ?? new List<Venta06AV>(); }
             catch (Exception ex) { MostrarError(ex.Message); return; }
 
-            // Escenario alternativo 3.1 del CU04.
             if (disponibles.Count == 0)
             {
                 MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_sin_ventas_pendientes"));
@@ -1106,7 +1025,6 @@ namespace IngSoftValdezAlegre.Controles
             try { lineas = (_lineasBLL.ObtenerTodas() ?? new List<LineaEnsamblaje06AV>()).Where(l => l.Disponible).ToList(); }
             catch (Exception ex) { MostrarError(ex.Message); return; }
 
-            // Escenario alternativo 1.1 del CU05.
             if (lineas.Count == 0)
             {
                 MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_sin_lineas"));
@@ -1149,9 +1067,6 @@ namespace IngSoftValdezAlegre.Controles
             pnlFormCierre.BringToFront();
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Acciones (delegan en la BLL)
-        // ══════════════════════════════════════════════════════════════
         private void RegistrarOrden()
         {
             var v = (cboVenta.SelectedItem as VentaVm)?.Venta;
@@ -1208,7 +1123,6 @@ namespace IngSoftValdezAlegre.Controles
             catch (Exception ex) { MostrarError(ex.Message); }
         }
 
-        /// <summary>CU06: registra el control de calidad; si aprueba, descuenta stock y cierra.</summary>
         private void CerrarOrden()
         {
             if (_ordenCierre == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
@@ -1279,9 +1193,6 @@ namespace IngSoftValdezAlegre.Controles
             mensaje, GestorIdioma06AV.Instancia.Obtener("aviso"),
             ConfirmacionForm.TipoConfirmacion.Advertencia, FindForm());
 
-        // ══════════════════════════════════════════════════════════════
-        //  View-models
-        // ══════════════════════════════════════════════════════════════
         private class OrdenVm
         {
             public int Numero { get; set; }

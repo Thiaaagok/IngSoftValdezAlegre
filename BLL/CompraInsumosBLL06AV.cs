@@ -8,19 +8,12 @@ using System.Linq;
 
 namespace BLL
 {
-    /// <summary>
-    /// Proceso de Compras de componentes (RFN2). Tras el refactor:
-    /// el faltante es un Componente06AV (Insumo se fusionó), la orden de compra la
-    /// registra un Repositor, la aprueba un Gerente de Compras, y la recepción se
-    /// documenta con una Factura de Compra que suma stock y cierra la orden.
-    /// </summary>
     public class CompraInsumosBLL06AV
     {
         private readonly ComprasMPP06AV _mpp = new ComprasMPP06AV();
         private readonly ProveedoresMPP06AV _proveedores = new ProveedoresMPP06AV();
         private readonly ComponentesMPP06AV _componentes = new ComponentesMPP06AV();
 
-        // ── Consultas ────────────────────────────────────────────
         public List<Componente06AV> ObtenerFaltantes()
         {
             try { return _componentes.ObtenerBajoStock(); }
@@ -63,7 +56,6 @@ namespace BLL
                     $"El usuario '{usuario.Login}' no tiene el permiso '{patente}' requerido para {accion}.");
         }
 
-        // ── Paso 1: registrar la orden de compra (patente RegistrarOrdenCompra) ──
         public OrdenCompra06AV RegistrarOrdenCompra(List<DetalleComponente06AV> faltantes,
                                                     DateTime fechaLimite, Usuario06AV repositor)
         {
@@ -122,15 +114,8 @@ namespace BLL
             return oc;
         }
 
-        /// <summary>Tope de precio unitario: el de DECIMAL(18,2) con margen para el subtotal.</summary>
         public const decimal PrecioUnitarioMaximo = 99999999.99m;
 
-        // ── Paso 3: registrar cotización a un proveedor ──────────
-        /// <summary>
-        /// Registra la oferta de un proveedor con el precio unitario de cada componente de la
-        /// orden. Las cantidades salen de la orden, no de lo que mande la pantalla, y el
-        /// total es la suma de precio × cantidad de cada línea.
-        /// </summary>
         public PedidoCotizacion06AV RegistrarCotizacion(string idOrdenCompra, int idProveedor,
                                                         IList<DetalleComponente06AV> precios, string condiciones)
         {
@@ -164,7 +149,6 @@ namespace BLL
             return cot;
         }
 
-        // ── Paso 4: aprobar / desaprobar (patente AprobarCotizacion) ─
         public void AprobarCotizacion(string numeroCotizacion, Usuario06AV gerente)
         {
             ExigirPatente(PatenteEnum06AV.AprobarCotizacion, "aprobar una cotización");
@@ -203,16 +187,6 @@ namespace BLL
             AuditoriaPcFactory06AV.Modificacion($"Cotización {numeroCotizacion} desaprobada por {gerente.Login}", ModuloBitacora.Compras);
         }
 
-        // ── Paso 5: recibir mercadería = Factura de Compra ───────
-        /// <summary>
-        /// Registra la factura de compra (recepción real): suma el stock de lo recibido,
-        /// deja la orden Finalizada y guarda la fecha de cierre = fecha de entrega.
-        /// El proveedor y el total se navegan desde la cotización aprobada de la OC.
-        /// </summary>
-        /// <summary>
-        /// Lo que todavía falta recibir de una orden: lo pedido menos lo ya recibido en
-        /// recepciones anteriores. Devuelve sólo los componentes con saldo pendiente.
-        /// </summary>
         public List<DetalleComponente06AV> ObtenerPendienteDeRecibir(string idOrdenCompra)
         {
             var oc = BuscarOrden(idOrdenCompra);
@@ -245,18 +219,6 @@ namespace BLL
             return pendiente;
         }
 
-        /// <summary>
-        /// Paso 5 del RFN2 — RECEPCIÓN. Antes se asumía que llegaba todo lo pedido; ahora
-        /// se declara qué llegó realmente, como un control de recepción:
-        ///
-        ///   · suma al stock ÚNICAMENTE las unidades recibidas;
-        ///   · si con esta entrega se completó todo lo pedido, la orden queda Finalizada;
-        ///   · si quedó algo sin llegar, la orden pasa a Recibida parcial y el faltante
-        ///     queda anotado en las observaciones de la factura, para poder reclamarlo y
-        ///     recibirlo después contra la misma orden.
-        ///
-        /// <paramref name="recibidos"/> null significa "llegó todo lo pendiente".
-        /// </summary>
         public FacturaCompra06AV RegistrarFacturaCompra(string idOrdenCompra, DateTime fechaEntrega,
                                                         string observaciones,
                                                         List<DetalleComponente06AV> recibidos = null)
@@ -278,7 +240,6 @@ namespace BLL
             if (pendiente.Count == 0)
                 throw new ValidacionException06AV("estado", "Esta orden ya recibió todo lo pedido.");
 
-            // Sin detalle explícito: llegó todo lo que estaba pendiente.
             if (recibidos == null)
                 recibidos = pendiente.Select(d => new DetalleComponente06AV
                 {
@@ -306,7 +267,6 @@ namespace BLL
                         $"declarando {d.Cantidad}.");
             }
 
-            // Qué queda sin llegar DESPUÉS de esta recepción.
             var faltanteFinal = new List<DetalleComponente06AV>();
             foreach (DetalleComponente06AV p in pendiente)
             {
@@ -354,7 +314,6 @@ namespace BLL
             }
             catch (Exception ex)
             {
-                // Compensación: si algo falló después de sumar, se devuelve el stock sumado.
                 foreach (DetalleComponente06AV d in sumados)
                     try { _componentes.SumarStock(d.Componente.Codigo, -d.Cantidad); } catch { }
                 throw new AccesoDatosException06AV("No se pudo registrar la recepción de la orden.", ex);
@@ -368,8 +327,6 @@ namespace BLL
             return factura;
         }
 
-        // ── Helpers ──────────────────────────────────────────────
-        /// <summary>Busca una OC por su Id técnico o por su NumeroCompra de negocio.</summary>
         private OrdenCompra06AV BuscarOrden(string idONumero)
         {
             if (string.IsNullOrWhiteSpace(idONumero))
@@ -382,13 +339,6 @@ namespace BLL
             return oc;
         }
 
-        /// <summary>
-        /// Arma las líneas de la cotización: una por componente de la orden, con la cantidad
-        /// de la orden y el precio que cargó el operador.
-        /// </summary>
-        /// <exception cref="ValidacionException06AV">
-        /// Falta un precio, sobra un componente, hay uno repetido o un precio no es válido.
-        /// </exception>
         public static List<DetalleComponente06AV> ArmarLineasCotizacion(OrdenCompra06AV oc, IList<DetalleComponente06AV> precios)
         {
             if (precios == null || precios.Count == 0)
@@ -430,11 +380,6 @@ namespace BLL
             return lineas;
         }
 
-        /// <summary>
-        /// Importe de una recepción. Con precio por ítem es lo recibido por el precio
-        /// cotizado de cada componente. Las cotizaciones anteriores solo tienen el total:
-        /// ahí se prorratea por unidades, para que las recepciones parciales sumen el total.
-        /// </summary>
         public static decimal CalcularTotalRecepcion(PedidoCotizacion06AV cotizacion, OrdenCompra06AV oc,
                                                      IList<DetalleComponente06AV> recibidos)
         {

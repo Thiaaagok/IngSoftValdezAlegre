@@ -5,18 +5,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>
-    /// Una línea del control de recepción: un componente pedido, y cuántas unidades
-    /// de ese componente llegaron realmente.
-    ///
-    /// Funciona como un ítem de checklist, igual que el control de calidad de
-    /// producción: se marca lo que llegó. La diferencia es que acá la respuesta no
-    /// es sí/no sino CUÁNTAS, así que la fila trae su propio selector de cantidad,
-    /// precargado con lo pedido (el caso normal es que llegue todo) y acotado a ese
-    /// máximo, para que nadie infle el stock por un error de tipeo.
-    ///
-    /// El chip de la derecha dice en vivo si la línea está completa o cuánto falta.
-    /// </summary>
     internal class FilaRecepcion06AV : Control
     {
         private readonly SelectorCantidad06AV _cantidad;
@@ -59,7 +47,6 @@ namespace IngSoftValdezAlegre.UI
 
         public event EventHandler CambioRecepcion;
 
-        /// <summary>False = este componente no vino en la entrega.</summary>
         public bool Llego
         {
             get { return _llego; }
@@ -73,7 +60,6 @@ namespace IngSoftValdezAlegre.UI
             }
         }
 
-        /// <summary>Unidades efectivamente recibidas (0 si no llegó).</summary>
         public int CantidadRecibida => _llego ? _cantidad.Valor : 0;
 
         public bool Completo => CantidadRecibida >= Pendiente.Cantidad;
@@ -124,7 +110,6 @@ namespace IngSoftValdezAlegre.UI
             Pintura06AV.Borde(g, caja, Pintura06AV.RadioTarjeta,
                               Focused ? Tema.Primario : acento, Focused ? 2f : 1.4f);
 
-            // Marca de "llegó"
             var marca = new Rectangle(16, 24, 24, 24);
             if (_llego)
             {
@@ -152,7 +137,6 @@ namespace IngSoftValdezAlegre.UI
                                        Tema.FuenteMini, Tema.TextoSuave,
                                        new Rectangle(x, 52, 140, 16));
 
-            // Estado de la línea
             string estado = !_llego ? TextoNoLlego
                           : completo ? TextoCompleto
                           : string.Format(TextoFaltan, Pendiente.Cantidad - CantidadRecibida);

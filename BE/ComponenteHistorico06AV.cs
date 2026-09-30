@@ -16,10 +16,8 @@ namespace BE
         public int IdHistorico { get; set; }
         public string CodigoComponente { get; set; }
 
-        /// <summary>Fecha en que quedó asentada la versión.</summary>
         public DateTime Fecha { get; set; }
 
-        /// <summary>Hora en que quedó asentada la versión.</summary>
         public TimeSpan Hora { get; set; }
 
         public string Descripcion { get; set; }
@@ -30,13 +28,10 @@ namespace BE
         public int Stock { get; set; }
         public int StockMinimo { get; set; }
 
-        /// <summary>El componente estaba dado de baja en esta versión.</summary>
         public bool BajaLogica { get; set; }
 
-        /// <summary>Es la versión vigente del componente (Act = 1 en la base).</summary>
         public bool Activo { get; set; }
 
-        /// <summary>Fecha y hora unificadas, para ordenar y mostrar.</summary>
         public DateTime FechaHora => Fecha.Date.Add(Hora);
 
         public override string ToString() =>

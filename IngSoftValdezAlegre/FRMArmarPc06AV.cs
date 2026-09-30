@@ -11,24 +11,9 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre
 {
-    /// <summary>
-    /// ARMÁ TU PC — configurador de equipos a medida. La pantalla tiene dos mitades:
-    ///   · IZQUIERDA, el CHASIS: las bahías del equipo están todas a la vista desde el
-    ///     arranque, vacías y punteadas. Se van llenando a medida que elegís, y se puede
-    ///     volver a cualquier bahía con un clic. El total acompaña abajo.
-    ///   · DERECHA, el CATÁLOGO del paso actual: una ficha por componente con marca,
-    ///     modelo, stock y precio, más una barra proporcional al más caro del paso para
-    ///     ver el salto de precio de un vistazo. Un clic elige y avanza.
-    ///
-    /// Arriba, la tira de pasos ubica dónde estás dentro del armado.
-    /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public class FRMArmarPc06AV : Form
     {
-        // El orden de los pasos y qué bahías se pueden saltear NO se definen en la
-        // pantalla: son la receta del Director del patrón Builder
-        // (BLL.Armado.ArmadorComputadora06AV). Si la receta cambia, el configurador
-        // cambia solo, y nunca puede quedar desalineado con lo que la BLL acepta.
         private static bool EsSalteable(TipoComponente06AV t) => !ArmadorComputadora06AV.EsObligatorio(t);
 
         private readonly List<Componente06AV> _todos;
@@ -37,7 +22,6 @@ namespace IngSoftValdezAlegre
         private readonly Dictionary<TipoComponente06AV, Componente06AV> _elegidos =
             new Dictionary<TipoComponente06AV, Componente06AV>();
 
-        /// <summary>Componentes elegidos (uno por tipo). Válido tras cerrar con OK.</summary>
         public List<Componente06AV> Seleccionados => _elegidos.Values.Where(c => c != null).ToList();
 
         private ChasisPcControl06AV chasis;
@@ -51,8 +35,6 @@ namespace IngSoftValdezAlegre
                               IEnumerable<Componente06AV> preseleccion = null)
         {
             _todos = (componentes ?? Enumerable.Empty<Componente06AV>()).ToList();
-            // Las bahías obligatorias aparecen siempre, aunque el catálogo no tenga
-            // opciones (el paso lo avisa); las opcionales, sólo si hay algo para elegir.
             _pasos = ArmadorComputadora06AV.Pasos
                 .Where(p => p.Obligatorio || _todos.Any(c => c.Tipo == p.Tipo))
                 .Select(p => p.Tipo)
@@ -80,7 +62,6 @@ namespace IngSoftValdezAlegre
             ClientSize = new Size(1000, 640);
             MinimumSize = new Size(860, 560);
 
-            // ── Chasis (izquierda) ───────────────────────────────
             lblChasisTit = new Label { Dock = DockStyle.Top, Height = 30, AutoSize = false };
             chasis = new ChasisPcControl06AV { Dock = DockStyle.Fill };
             chasis.BahiaElegida += (s, i) => IrAlPaso(i);
@@ -89,7 +70,6 @@ namespace IngSoftValdezAlegre
             pnlChasis.Controls.Add(chasis);
             pnlChasis.Controls.Add(lblChasisTit);
 
-            // ── Catálogo (derecha) ───────────────────────────────
             pasos = new PasosWizard06AV { Dock = DockStyle.Top, Height = 48 };
             pasos.PasoElegido += (s, i) => IrAlPaso(i);
 
@@ -113,7 +93,6 @@ namespace IngSoftValdezAlegre
             pnlCatalogo.Controls.Add(lblPasoTit);
             pnlCatalogo.Controls.Add(pasos);
 
-            // ── Barra inferior ───────────────────────────────────
             btnCancelar = Boton(120);
             btnAtras = Boton(140);
             btnSaltear = Boton(150);
@@ -249,7 +228,6 @@ namespace IngSoftValdezAlegre
 
         private int AnchoFicha() => Math.Max(280, flpCatalogo.ClientSize.Width - 24);
 
-        /// <summary>Elegir una pieza la pone en el chasis y pasa sola al siguiente hueco.</summary>
         private void Elegir(TipoComponente06AV tipo, Componente06AV componente)
         {
             _elegidos[tipo] = componente;
@@ -296,7 +274,6 @@ namespace IngSoftValdezAlegre
 
             if (_paso == _pasos.Count - 1)
             {
-                // Último paso: sólo se cierra si no quedó ningún obligatorio sin cubrir.
                 List<TipoComponente06AV> faltantes = _pasos
                     .Where(x => !EsSalteable(x) && !(_elegidos.ContainsKey(x) && _elegidos[x] != null))
                     .ToList();
@@ -437,10 +414,6 @@ namespace IngSoftValdezAlegre
 
 namespace IngSoftValdezAlegre.Controles
 {
-    /// <summary>
-    /// Resumen de una PC ya armada, para mostrar dentro de otra pantalla (p. ej. la
-    /// venta). Agrupa por tipo de componente y cierra con el total.
-    /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public class ResumenPcControl06AV : FlowLayoutPanel
     {
@@ -464,7 +437,6 @@ namespace IngSoftValdezAlegre.Controles
             Mostrar(null);
         }
 
-        /// <summary>Reconstruye el resumen a partir de la lista de componentes.</summary>
         public void Mostrar(List<Componente06AV> componentes)
         {
             SuspendLayout();

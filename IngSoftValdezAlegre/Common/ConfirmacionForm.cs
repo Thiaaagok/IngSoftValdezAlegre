@@ -32,11 +32,6 @@ namespace IngSoftValdezAlegre.Common
             btnNo.Click += (s, e) => { this.DialogResult = DialogResult.No; this.Close(); };
         }
 
-        /// <summary>
-        /// El ajuste de botones se hace acá, cuando el formulario ya se mostró y aplicó
-        /// el auto-escalado por fuente/DPI. Si se hiciera antes de ShowDialog, en pantallas
-        /// con escala (125%/150%) el escalado posterior movía los botones y se superponían.
-        /// </summary>
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
@@ -126,17 +121,12 @@ namespace IngSoftValdezAlegre.Common
             lblTitulo.BackColor = colorHeader;
         }
 
-        /// <summary>
-        /// Ajusta el ancho de los botones al texto que tienen (para que no se corte,
-        /// p. ej. "Elegir archivo y restaurar"), ensancha el formulario si hace falta
-        /// y centra el grupo de botones dejando el "Sí/Confirmar" a la derecha.
-        /// </summary>
         private void AjustarBotones()
         {
-            const int margen = 40;       // margen a cada lado del formulario
-            const int separacion = 12;   // espacio entre los dos botones
-            const int minAncho = 100;    // ancho mínimo de un botón
-            const int padding = 30;      // relleno horizontal dentro del botón
+            const int margen = 40;
+            const int separacion = 12;
+            const int minAncho = 100;
+            const int padding = 30;
 
             btnSi.AutoSize = false;
             btnNo.AutoSize = false;
@@ -153,19 +143,14 @@ namespace IngSoftValdezAlegre.Common
                 btnNo.Width = anchoNo;
             }
 
-            // Ancho total que ocupan los botones (con separación si hay dos).
             int anchoGrupo = anchoSi + (btnNo.Visible ? anchoNo + separacion : 0);
 
-            // Ensanchar el formulario si el grupo no entra con sus márgenes.
             int anchoNecesario = anchoGrupo + margen * 2;
             if (ClientSize.Width < anchoNecesario)
                 ClientSize = new System.Drawing.Size(anchoNecesario, ClientSize.Height);
 
-            // El mensaje aprovecha el nuevo ancho.
             lblMensaje.Width = ClientSize.Width - lblMensaje.Left - margen;
 
-            // Alinear a la derecha: btnSi (confirmar) pegado al margen derecho y btnNo
-            // (cancelar) a su izquierda, con separación. Así nunca se superponen.
             int y = btnSi.Top;
             int derecha = ClientSize.Width - margen;
             btnSi.Location = new System.Drawing.Point(derecha - anchoSi, y);

@@ -58,7 +58,6 @@ namespace IngSoftValdezAlegre.UI
             _pasos = new PasosWizard06AV { Dock = DockStyle.Top };
             _pasos.PasoElegido += (s, i) => IrA(i);
 
-            // ── Paso 1 ────────────────────────────────────────────
             _lista = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
@@ -98,7 +97,6 @@ namespace IngSoftValdezAlegre.UI
             _pagina1.Controls.Add(_lista);
             _pagina1.Controls.Add(_carrito);
 
-            // ── Paso 2 ────────────────────────────────────────────
             _lblLimite = new Label { AutoSize = true, Location = new Point(16, 18) };
             _dtpLimite = new DateTimePicker
             {
@@ -126,7 +124,6 @@ namespace IngSoftValdezAlegre.UI
             _pagina2.Controls.Add(_lblRepositorValor);
             _pagina2.Controls.Add(_resumen2);
 
-            // ── Paso 3 ────────────────────────────────────────────
             _lblResumenTit = new Label { Dock = DockStyle.Top, Height = 28, AutoSize = false, Padding = new Padding(6, 4, 0, 0) };
             _resumen3 = new FlowLayoutPanel
             {
@@ -140,7 +137,6 @@ namespace IngSoftValdezAlegre.UI
             _pagina3.Controls.Add(_resumen3);
             _pagina3.Controls.Add(_lblResumenTit);
 
-            // ── Barra inferior ───────────────────────────────────
             _btnCancelar = NuevoBoton(120);
             _btnAtras = NuevoBoton(110);
             _btnSiguiente = NuevoBoton(140);
@@ -188,13 +184,10 @@ namespace IngSoftValdezAlegre.UI
 
         #region API pública
 
-        /// <summary>Confirmación final: detalles elegidos y fecha límite.</summary>
         public event EventHandler<OrdenArmada06AV> Confirmado;
 
-        /// <summary>El usuario salió del asistente.</summary>
         public event EventHandler Cancelado;
 
-        /// <summary>Carga los candidatos y vuelve al paso 1.</summary>
         public void Cargar(IEnumerable<FaltanteItem06AV> items, string loginRepositor)
         {
             var t = GestorIdioma06AV.Instancia;
@@ -207,7 +200,6 @@ namespace IngSoftValdezAlegre.UI
 
             var lista = (items ?? Enumerable.Empty<FaltanteItem06AV>()).ToList();
 
-            // Agrupación por criticidad: primero lo que puede frenar la producción.
             AgregarGrupo(t.Obtener("pcf_asis_criticos"), lista.Where(EsCritico));
             AgregarGrupo(t.Obtener("pcf_asis_bajos"), lista.Where(i => !EsCritico(i) && i.Stock < i.StockMinimo));
             AgregarGrupo(t.Obtener("pcf_asis_cubiertos"), lista.Where(i => i.Stock >= i.StockMinimo));
@@ -482,7 +474,6 @@ namespace IngSoftValdezAlegre.UI
         }
     }
 
-    /// <summary>Resultado del asistente: qué se pide y para cuándo.</summary>
     internal class OrdenArmada06AV : EventArgs
     {
         public OrdenArmada06AV(List<DetalleComponente06AV> detalles, DateTime fechaLimite)

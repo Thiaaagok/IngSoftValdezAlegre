@@ -103,7 +103,7 @@ namespace DAL
         {
             SqlConnection conn = Conexion.Instancia.ObtenerConexion();
             SqlCommand cmd = new SqlCommand(nombreSP, conn)
-            {   
+            {
                 CommandType = CommandType.StoredProcedure
             };
             if (parametros != null)

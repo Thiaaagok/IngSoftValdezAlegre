@@ -6,24 +6,18 @@ using System.Data;
 
 namespace MPP
 {
-    /// <summary>
-    /// Mapeo de la ORDEN DE PRODUCCIÓN (RFN1 - CU04 a CU07). Reconstruye la orden y
-    /// engancha la VENTA asociada (que aporta cliente, computadora y pagos).
-    /// </summary>
     public class ProduccionMPP06AV
     {
         private readonly ProduccionDAL06AV _dal = new ProduccionDAL06AV();
         private readonly VentasMPP06AV _ventas = new VentasMPP06AV();
         private readonly LineasEnsamblajeMPP06AV _lineas = new LineasEnsamblajeMPP06AV();
 
-        // ── Alta (CU04) ──────────────────────────────────────────
         public void AgregarOrden(OrdenProduccion06AV orden)
         {
             orden.NumeroOrden = _dal.AgregarOrden(orden.NumeroVenta, orden.FechaEntregaEstimada);
             orden.Estado = EstadoOrdenProduccion06AV.Pendiente;
         }
 
-        // ── Lectura ──────────────────────────────────────────────
         public List<OrdenProduccion06AV> ObtenerTodas()
         {
             var lista = new List<OrdenProduccion06AV>();
@@ -38,7 +32,6 @@ namespace MPP
             return t.Rows.Count == 0 ? null : MapearOrden(t.Rows[0]);
         }
 
-        /// <summary>CU07: órdenes en un estado dado (Finalizadas / Entregadas).</summary>
         public List<OrdenProduccion06AV> ObtenerPorEstado(EstadoOrdenProduccion06AV estado)
         {
             var lista = new List<OrdenProduccion06AV>();
@@ -53,7 +46,6 @@ namespace MPP
             return t.Rows.Count == 0 ? null : MapearOrden(t.Rows[0]);
         }
 
-        // ── Transiciones ─────────────────────────────────────────
         public void Planificar(int numero, int idLinea, DateTime fechaInicio, string responsable) =>
             _dal.PlanificarOrden(numero, idLinea, fechaInicio, responsable);
 
@@ -62,7 +54,6 @@ namespace MPP
         public void CambiarEstado(int numero, EstadoOrdenProduccion06AV estado) =>
             _dal.CambiarEstadoOrden(numero, (int)estado);
 
-        // ── Cierre de producción (CU06) ──────────────────────────
         public void RegistrarControlCalidad(int numero, ControlCalidad06AV cc) =>
             _dal.RegistrarControlCalidad(numero, cc.Encendido, cc.Conexiones,
                                          cc.SistemaOperativo, cc.Drivers,
@@ -70,9 +61,6 @@ namespace MPP
 
         public void Cerrar(int numero, string numeroSerie) => _dal.CerrarOrden(numero, numeroSerie);
 
-        // ── Helpers de mapeo ─────────────────────────────────────
-        // Cada orden trae su venta completa y su línea con consultas propias: listar N
-        // órdenes hace varias consultas por orden.
         private OrdenProduccion06AV MapearOrden(DataRow row)
         {
             int numeroVenta = Convert.ToInt32(row["NumeroVenta"]);

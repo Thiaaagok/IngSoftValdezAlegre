@@ -5,23 +5,6 @@ using System.Linq;
 
 namespace BLL.Armado
 {
-    /// <summary>
-    /// Base de los ConcreteBuilders. Guarda el equipo en construcción y hace
-    /// cumplir las reglas físicas del armado, que son las mismas para cualquier
-    /// computadora:
-    ///
-    ///   · cada pieza va en la bahía de su tipo (un disco no entra en el hueco del
-    ///     procesador);
-    ///   · las bahías únicas admiten una sola pieza (un procesador, una placa madre,
-    ///     una fuente, un gabinete, una placa de video);
-    ///   · no se colocan componentes dados de baja;
-    ///   · el equipo sólo se entrega completo: con todas las bahías obligatorias
-    ///     cubiertas.
-    ///
-    /// Lo que NO resuelve la base es cómo se representa el producto terminado —
-    /// su tipo de configuración, su nombre y el modelo del que sale —, que es
-    /// justamente lo que distingue a un ConcreteBuilder de otro.
-    /// </summary>
     public abstract class ComputadoraBuilderBase06AV : IComputadoraBuilder06AV
     {
         private readonly Dictionary<TipoComponente06AV, List<Componente06AV>> _bahias =
@@ -66,18 +49,12 @@ namespace BLL.Armado
             return pc;
         }
 
-        /// <summary>Estándar o Configurable: cómo se registra el equipo en la venta.</summary>
         protected abstract TipoConfiguracion06AV TipoDeConfiguracion { get; }
 
-        /// <summary>Nombre con el que el equipo figura en la venta, el recibo y la factura.</summary>
         protected abstract string NombrarEquipo(IReadOnlyList<Componente06AV> piezas);
 
-        /// <summary>Modelo del catálogo del que sale el equipo; null si es a medida.</summary>
         protected virtual ModeloEstandar06AV ModeloDeOrigen => null;
 
-        // ══════════════════════════════════════════════════════════
-        //  Reglas comunes
-        // ══════════════════════════════════════════════════════════
         private void Colocar(TipoComponente06AV bahia, Componente06AV pieza)
         {
             if (pieza == null)
@@ -105,7 +82,6 @@ namespace BLL.Armado
             lista.Add(pieza);
         }
 
-        /// <summary>Las piezas colocadas, en el orden de la receta.</summary>
         protected List<Componente06AV> PiezasEnOrden()
         {
             var piezas = new List<Componente06AV>();
@@ -115,7 +91,6 @@ namespace BLL.Armado
             return piezas;
         }
 
-        /// <summary>Primera pieza de una bahía, o null si está vacía.</summary>
         protected static Componente06AV PiezaDe(IEnumerable<Componente06AV> piezas, TipoComponente06AV bahia) =>
             piezas.FirstOrDefault(c => c.Tipo == bahia);
 

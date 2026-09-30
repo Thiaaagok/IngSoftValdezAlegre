@@ -4,16 +4,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>
-    /// Tarjeta de una orden dentro del tablero de estaciones.
-    ///
-    /// Lee como una ficha de trabajo colgada en la línea, no como una fila de grilla:
-    ///   · franja de urgencia a la izquierda, calculada contra la fecha comprometida
-    ///     (verde / ámbar / rojo). El atraso se ve antes de leer la fecha;
-    ///   · el número de orden es el dato ancla y va en grande;
-    ///   · píldora de acción al pie con el ÚNICO próximo paso posible en esa estación,
-    ///     así el operario no tiene que ir al panel de detalle para avanzar la orden.
-    /// </summary>
     internal class TarjetaOrden06AV : Control
     {
         private bool _hot;
@@ -33,34 +23,22 @@ namespace IngSoftValdezAlegre.UI
 
         #region Datos que muestra la tarjeta
 
-        /// <summary>Objeto de negocio asociado (la orden). Lo usa la pantalla, no la tarjeta.</summary>
         public object Etiqueta { get; set; }
 
-        /// <summary>Clave visible, p. ej. "#14".</summary>
         public string Clave { get; set; } = string.Empty;
 
-        /// <summary>Título principal: cliente o proveedor.</summary>
         public string Titulo { get; set; } = string.Empty;
 
-        /// <summary>Segunda línea: equipo, modelo, detalle.</summary>
         public string Subtitulo { get; set; } = string.Empty;
 
-        /// <summary>Chips cortos: línea de ensamblaje, responsable.</summary>
         public string[] Chips { get; set; }
 
-        /// <summary>Texto del pie: fecha comprometida.</summary>
         public string PieIzquierda { get; set; } = string.Empty;
 
-        /// <summary>Texto corto de plazo: "en 3 días", "atrasada 2 d".</summary>
         public string TextoPlazo { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Nivel de urgencia 0 = a tiempo, 1 = por vencer, 2 = vencida.
-        /// Define la franja lateral y el color del plazo.
-        /// </summary>
         public int Urgencia { get; set; }
 
-        /// <summary>Texto de la píldora de acción. Vacío = la tarjeta no ofrece acción.</summary>
         public string TextoAccion { get; set; }
 
         public bool Seleccionada { get; set; }
@@ -132,7 +110,7 @@ namespace IngSoftValdezAlegre.UI
         protected override void OnGotFocus(EventArgs e)
         {
             base.OnGotFocus(e);
-            Elegida?.Invoke(this, EventArgs.Empty);   // moverse con Tab ya muestra el detalle
+            Elegida?.Invoke(this, EventArgs.Empty);
             Invalidate();
         }
 
@@ -159,7 +137,6 @@ namespace IngSoftValdezAlegre.UI
             Pintura06AV.Borde(g, caja, Pintura06AV.RadioTarjeta,
                               destacada ? Tema.Primario : Tema.Borde, destacada ? 1.8f : 1f);
 
-            // Franja de urgencia (izquierda), recortada al radio de la tarjeta.
             using (var recorte = Pintura06AV.Redondeado(caja, Pintura06AV.RadioTarjeta))
             {
                 Region previa = g.Clip;
@@ -172,7 +149,6 @@ namespace IngSoftValdezAlegre.UI
             int x = 18;
             int ancho = caja.Right - x - 12;
 
-            // Clave + plazo
             var rClave = new Rectangle(x, 10, 64, 24);
             Pintura06AV.TextoIzquierda(g, Clave, Tema.FuenteTitulo, Tema.TextoFuerte, rClave);
 
@@ -189,7 +165,6 @@ namespace IngSoftValdezAlegre.UI
             Pintura06AV.TextoIzquierda(g, Subtitulo, Tema.FuenteRegular, Tema.TextoSuave,
                                        new Rectangle(x, 54, ancho, 17));
 
-            // Chips de contexto
             if (Chips != null)
             {
                 int cx = x;

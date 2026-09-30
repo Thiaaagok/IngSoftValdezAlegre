@@ -19,7 +19,7 @@ namespace IngSoftValdezAlegre.Controles
         private Familia06AV _familiaPendiente;
         private List<IComponentePermiso06AV> _hijosOriginales;
         private bool _creando;
-        private bool _suspenderSeleccion; 
+        private bool _suspenderSeleccion;
 
         public FamiliasControl()
         {
@@ -34,7 +34,6 @@ namespace IngSoftValdezAlegre.Controles
             GestorIdioma06AV.Instancia.IdiomaChanged += AplicarIdioma;
             Disposed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
 
-            // Observer: repintar cuando se cambia entre tema claro y oscuro.
             Tema.TemaChanged += AplicarTema;
             Disposed += (s, e) => Tema.TemaChanged -= AplicarTema;
 
@@ -110,8 +109,6 @@ namespace IngSoftValdezAlegre.Controles
             if (grilla.Columns["Descripcion"] != null) grilla.Columns["Descripcion"].HeaderText = t.Obtener("descripcion");
         }
 
-        // AutoGenerateColumns=false evita que el binding genere una columna extra
-        // por la propiedad de colección 'Hijos' al re-vincular la grilla.
         private void ConfigurarColumnas()
         {
             grilla.AutoGenerateColumns = false;
@@ -157,7 +154,6 @@ namespace IngSoftValdezAlegre.Controles
             txtMensaje.SetBounds(accionesX, y + 258, accionesW, Math.Max(90, alto - y - 266));
         }
 
-
         private void CargarDatos(string idSeleccionar = null)
         {
             _suspenderSeleccion = true;
@@ -179,7 +175,6 @@ namespace IngSoftValdezAlegre.Controles
                 _suspenderSeleccion = false;
             }
 
-            // Reposicionar DESPUÉS de levantar el flag
             if (idSeleccionar != null)
                 SeleccionarPorId(idSeleccionar);
             else if (_familias.Count > 0)
@@ -198,7 +193,6 @@ namespace IngSoftValdezAlegre.Controles
             cmbSubfamilias.DataSource = candidatas;
         }
 
-
         private void MostrarSeleccion()
         {
             if (_suspenderSeleccion) return;
@@ -216,8 +210,6 @@ namespace IngSoftValdezAlegre.Controles
             txtDescripcion.Text = familia.Descripcion;
             CargarComboSubfamilias(familia.Id);
 
-            // Se trabaja sobre una copia en memoria: agregar/quitar patentes y
-            // subfamilias no toca la base hasta que el usuario presiona Guardar.
             _hijosOriginales = new List<IComponentePermiso06AV>(familia.Hijos);
             _familiaPendiente = new Familia06AV { Id = familia.Id, Descripcion = familia.Descripcion };
             if (_hijosOriginales.Count > 0)
@@ -254,10 +246,8 @@ namespace IngSoftValdezAlegre.Controles
                 _suspenderSeleccion = false;
             }
 
-            // Una sola llamada controlada al final
             MostrarSeleccion();
         }
-
 
         private void Nuevo()
         {
@@ -364,7 +354,6 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
-
         private void AgregarPatente()
         {
             if (cmbPatentes.SelectedValue == null) return;
@@ -395,7 +384,6 @@ namespace IngSoftValdezAlegre.Controles
 
             QuitarPendiente(tag);
         }
-
 
         private void AgregarPendiente(IComponentePermiso06AV componente)
         {
@@ -448,11 +436,6 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
-
-        /// <summary>
-        /// Compara los hijos originales (en base) contra los hijos pendientes
-        /// (en memoria) y persiste solo las diferencias.
-        /// </summary>
         private void PersistirDiferencias(string idFamilia, List<IComponentePermiso06AV> originales, IReadOnlyList<IComponentePermiso06AV> actuales)
         {
             var aQuitar = originales.Where(o => !actuales.Any(a => Coinciden(a, o))).ToList();

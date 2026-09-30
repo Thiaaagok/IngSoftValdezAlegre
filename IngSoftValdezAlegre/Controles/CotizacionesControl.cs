@@ -11,24 +11,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    /// <summary>
-    /// MESA DE COTIZACIONES (RFN2, paso 3 y 4).
-    ///
-    /// Antes el circuito de cotización vivía apretado en el panel de detalle de
-    /// Compras: un combo de proveedor y un botón. Eso alcanzaba para cargar UNA
-    /// oferta, pero no para lo que realmente hace un gerente de compras, que es
-    /// PEDIR VARIAS Y ELEGIR.
-    ///
-    /// Esta pantalla es una mesa de comparación:
-    ///   · izquierda, las órdenes que esperan resolución, con cuántas ofertas tienen;
-    ///   · centro, las ofertas de la orden elegida una al lado de la otra, con precio
-    ///     total, costo por unidad, barra proporcional y diferencia porcentual contra
-    ///     la más barata. La mejor se marca sola;
-    ///   · abajo, el formulario para sumar otra oferta sin salir de la pantalla.
-    ///
-    /// Adjudicar una oferta desaprueba el resto en el mismo acto (lo resuelve el BLL)
-    /// y pasa la orden a Enviada.
-    /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public class CotizacionesControl : UserControl, IIdiomaAplicable06AV
     {
@@ -39,23 +21,19 @@ namespace IngSoftValdezAlegre.Controles
         private List<PedidoCotizacion06AV> _cotizaciones = new List<PedidoCotizacion06AV>();
         private OrdenCompra06AV _sel;
 
-        // Cabecera
         private Label lblTitulo;
         private ComboBox cboFiltro;
         private Button btnActualizar;
 
-        // Lista de órdenes
         private Panel pnlLista;
         private Label lblListaTit;
         private FlowLayoutPanel flpOrdenes;
         private Label lblListaVacia;
 
-        // Mesa
         private Panel pnlMesa, pnlCabOrden, pnlNueva;
         private Label lblOrdenTit, lblOrdenDet, lblOfertasTit, lblMesaVacia;
         private FlowLayoutPanel flpOfertas;
 
-        // Alta de oferta: abre el asistente de cotización (precio por producto).
         private Label lblNuevaTit, lblNuevaAyuda;
         private Button btnRegistrar;
         private Panel pnlCotizador;
@@ -77,7 +55,6 @@ namespace IngSoftValdezAlegre.Controles
 
         private void ConstruirUI()
         {
-            // ── Cabecera ─────────────────────────────────────────
             lblTitulo = new Label { AutoSize = true, Location = new Point(6, 16) };
 
             cboFiltro = new ComboBox
@@ -106,7 +83,6 @@ namespace IngSoftValdezAlegre.Controles
             barraSup.Controls.Add(lblTitulo);
             barraSup.Controls.Add(flpCab);
 
-            // ── Lista de órdenes ─────────────────────────────────
             lblListaTit = new Label { Dock = DockStyle.Top, Height = 26, AutoSize = false, Padding = new Padding(4, 4, 0, 0) };
             lblListaVacia = new Label { Dock = DockStyle.Top, Height = 60, AutoSize = false, Padding = new Padding(4, 10, 4, 0), Visible = false };
             flpOrdenes = new FlowLayoutPanel
@@ -123,21 +99,18 @@ namespace IngSoftValdezAlegre.Controles
             pnlLista.Controls.Add(lblListaVacia);
             pnlLista.Controls.Add(lblListaTit);
 
-            // ── Cabecera de la orden elegida ─────────────────────
             lblOrdenTit = new Label { AutoSize = false, Dock = DockStyle.Top, Height = 30, Padding = new Padding(2, 4, 0, 0) };
             lblOrdenDet = new Label { AutoSize = false, Dock = DockStyle.Top, Height = 42, Padding = new Padding(2, 0, 0, 0) };
             pnlCabOrden = new Panel { Dock = DockStyle.Top, Height = 78, Padding = new Padding(14, 8, 14, 0) };
             pnlCabOrden.Controls.Add(lblOrdenDet);
             pnlCabOrden.Controls.Add(lblOrdenTit);
 
-            // ── Sumar oferta: el precio se carga producto por producto en el asistente ──
             lblNuevaTit = new Label { AutoSize = true, Margin = new Padding(0, 8, 0, 0) };
             lblNuevaAyuda = new Label { AutoSize = true, Margin = new Padding(0, 4, 0, 8) };
             btnRegistrar = NuevoBoton(260);
             btnRegistrar.Margin = new Padding(0, 0, 0, 4);
             btnRegistrar.Click += (s, e) => AbrirCotizador();
 
-            // Crece con el texto: con la escala de Windows al 125% un alto fijo cortaba el botón.
             var flpNueva = new FlowLayoutPanel
             {
                 Dock = DockStyle.Bottom, FlowDirection = FlowDirection.TopDown, WrapContents = false,
@@ -153,7 +126,6 @@ namespace IngSoftValdezAlegre.Controles
             pnlCotizador = new Panel { Dock = DockStyle.Fill, Visible = false };
             pnlCotizador.Controls.Add(cotizador);
 
-            // ── Ofertas ──────────────────────────────────────────
             lblOfertasTit = new Label { Dock = DockStyle.Top, Height = 26, AutoSize = false, Padding = new Padding(14, 4, 0, 0) };
             lblMesaVacia = new Label { Dock = DockStyle.Top, Height = 40, AutoSize = false, Padding = new Padding(16, 8, 0, 0) };
             flpOfertas = new FlowLayoutPanel
@@ -209,7 +181,6 @@ namespace IngSoftValdezAlegre.Controles
                                .OrderBy(c => c.Costo)
                                .ToList();
 
-        /// <summary>Estado de la orden desde el punto de vista de la mesa de cotizaciones.</summary>
         private enum Situacion { SinOfertas, ConOfertas, Adjudicada, Cerrada }
 
         private Situacion SituacionDe(OrdenCompra06AV oc)
@@ -434,10 +405,6 @@ namespace IngSoftValdezAlegre.Controles
             catch (Exception ex) { MostrarError(ex.Message); }
         }
 
-        /// <summary>
-        /// Abre el asistente de cotización sobre la orden elegida: proveedor, precio
-        /// unitario de cada producto y confirmación. La mesa queda detrás.
-        /// </summary>
         private void AbrirCotizador()
         {
             if (_sel == null) return;

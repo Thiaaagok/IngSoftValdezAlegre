@@ -2,15 +2,8 @@
 {
     partial class FRMLogin
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -22,10 +15,6 @@
 
         #region Windows Form Designer generated code
 
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
             this.materialLabel2 = new ReaLTaiizor.Controls.MaterialLabel();
@@ -39,9 +28,6 @@
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.logo)).BeginInit();
             this.SuspendLayout();
-            // 
-            // materialLabel2
-            // 
             this.materialLabel2.AutoSize = true;
             this.materialLabel2.BackColor = System.Drawing.Color.RoyalBlue;
             this.materialLabel2.Depth = 0;
@@ -52,9 +38,6 @@
             this.materialLabel2.Size = new System.Drawing.Size(103, 19);
             this.materialLabel2.TabIndex = 6;
             this.materialLabel2.Text = "CONTRASEÑA";
-            // 
-            // Usuario
-            // 
             this.Usuario.AutoSize = true;
             this.Usuario.BackColor = System.Drawing.Color.RoyalBlue;
             this.Usuario.Depth = 0;
@@ -65,36 +48,24 @@
             this.Usuario.Size = new System.Drawing.Size(66, 19);
             this.Usuario.TabIndex = 7;
             this.Usuario.Text = "USUARIO";
-            // 
-            // panel1
-            // 
             this.panel1.BackColor = System.Drawing.Color.RoyalBlue;
             this.panel1.Controls.Add(this.logo);
             this.panel1.Location = new System.Drawing.Point(0, -7);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(295, 419);
             this.panel1.TabIndex = 9;
-            // 
-            // logo
-            // 
             this.logo.Image = global::IngSoftValdezAlegre.Properties.Resources.pcforge_logo1;
             this.logo.Location = new System.Drawing.Point(12, 79);
             this.logo.Name = "logo";
             this.logo.Size = new System.Drawing.Size(264, 214);
             this.logo.TabIndex = 14;
             this.logo.TabStop = false;
-            // 
-            // LoginTextBox
-            // 
             this.LoginTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.LoginTextBox.Location = new System.Drawing.Point(301, 117);
             this.LoginTextBox.Multiline = true;
             this.LoginTextBox.Name = "LoginTextBox";
             this.LoginTextBox.Size = new System.Drawing.Size(387, 29);
             this.LoginTextBox.TabIndex = 10;
-            // 
-            // ContraseniaTextBox
-            // 
             this.ContraseniaTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ContraseniaTextBox.Location = new System.Drawing.Point(301, 180);
             this.ContraseniaTextBox.Multiline = true;
@@ -102,9 +73,6 @@
             this.ContraseniaTextBox.PasswordChar = '*';
             this.ContraseniaTextBox.Size = new System.Drawing.Size(387, 28);
             this.ContraseniaTextBox.TabIndex = 11;
-            // 
-            // IniciarSesionBTN
-            // 
             this.IniciarSesionBTN.Location = new System.Drawing.Point(316, 262);
             this.IniciarSesionBTN.Name = "IniciarSesionBTN";
             this.IniciarSesionBTN.Size = new System.Drawing.Size(354, 48);
@@ -112,9 +80,6 @@
             this.IniciarSesionBTN.Text = "INICIAR SESION";
             this.IniciarSesionBTN.UseVisualStyleBackColor = true;
             this.IniciarSesionBTN.Click += new System.EventHandler(this.IniciarSesionBTN_Click);
-            // 
-            // CerrarBTN
-            // 
             this.CerrarBTN.Location = new System.Drawing.Point(316, 316);
             this.CerrarBTN.Name = "CerrarBTN";
             this.CerrarBTN.Size = new System.Drawing.Size(354, 48);
@@ -122,9 +87,6 @@
             this.CerrarBTN.Text = "CERRAR";
             this.CerrarBTN.UseVisualStyleBackColor = true;
             this.CerrarBTN.Click += new System.EventHandler(this.CerrarBTN_Click);
-            // 
-            // FRMLogin
-            // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.LavenderBlush;

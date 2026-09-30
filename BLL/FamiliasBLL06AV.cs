@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace BLL
 {
-   
+
     public class FamiliasBLL06AV
     {
         private readonly FamiliaMPP06AV _mpp = new FamiliaMPP06AV();
@@ -56,7 +56,6 @@ namespace BLL
             if (familia == null)
                 throw new InvalidOperationException("Familia no encontrada.");
 
-            // 1. Tiene hijos propios
             if (familia.Hijos.Any())
             {
                 int patentes = familia.Hijos.Count(h => h is Patente06AV);
@@ -69,7 +68,6 @@ namespace BLL
                     $"Quitá sus hijos antes de eliminarla.");
             }
 
-            // 2. Es subfamilia de otra familia
             var familiasPadre = _mpp.ObtenerTodos()
                 .Where(f => !string.Equals(f.Id, id, StringComparison.OrdinalIgnoreCase)
                             && f.Hijos.Any(h => h is Familia06AV sf &&
@@ -84,7 +82,6 @@ namespace BLL
                     $"Quitala de esas familias antes de eliminarla.");
             }
 
-            // 3. Está asignada directamente a un rol
             RolesBLL06AV rolesBLL = new RolesBLL06AV();
             var rolesConFamilia = rolesBLL.ObtenerTodos()
                 .Where(r => r.Hijos.Any(h => h is Familia06AV f &&
@@ -103,10 +100,6 @@ namespace BLL
             RecalcularIntegridad();
         }
 
-        /// <summary>
-        /// Agrega una patente directa a la familia, validando que no quede duplicada
-        /// en la propia familia, en sus familias ancestras, ni en roles que ya la contengan.
-        /// </summary>
         public void AgregarPatente(string idFamilia, string idPatente)
         {
             Familia06AV familia = _mpp.ObtenerPorId(idFamilia);
@@ -161,7 +154,6 @@ namespace BLL
                 throw new InvalidOperationException(
                     "No se puede agregar la subfamilia porque generaría un ciclo en la jerarquía.");
 
-            // Verificar que la subfamilia no esté ya asignada directamente a un rol
             RolesBLL06AV rolesBLL = new RolesBLL06AV();
             var rolesConHijo = rolesBLL.ObtenerTodos()
                 .Where(r => r.Hijos.Any(h => h is Familia06AV f &&
@@ -197,7 +189,6 @@ namespace BLL
             RecalcularIntegridad();
         }
 
-
         private void ValidarDescripcionUnica(string descripcion, string idExcluir)
         {
             bool existe = _mpp.ObtenerTodos().Any(f =>
@@ -209,10 +200,6 @@ namespace BLL
                     GestorIdioma06AV.Instancia.Obtener("val_familia_descripcion_duplicada", descripcion));
         }
 
-        /// <summary>
-        /// Recorre todas las familias que contienen (directa o indirectamente) a <paramref name="idFamilia"/>
-        /// y verifica que ninguna de las patentes nuevas ya exista en otra rama de esa familia ancestra.
-        /// </summary>
         private void ValidarPatentesEnAncestros(string idFamilia, IEnumerable<Patente06AV> patentesNuevas)
         {
             foreach (var posibleAncestro in _mpp.ObtenerTodos())
@@ -233,10 +220,6 @@ namespace BLL
             }
         }
 
-        /// <summary>
-        /// Misma validación que <see cref="ValidarPatentesEnAncestros"/> pero recorriendo roles
-        /// que contienen a la familia, en vez de otras familias.
-        /// </summary>
         private void ValidarPatentesEnRolesQueContienenFamilia(string idFamilia, IEnumerable<Patente06AV> patentesNuevas)
         {
             RolesBLL06AV rolesBLL = new RolesBLL06AV();

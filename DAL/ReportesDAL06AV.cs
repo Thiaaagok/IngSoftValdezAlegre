@@ -5,10 +5,8 @@ using System.Data.SqlClient;
 
 namespace DAL
 {
-    /// <summary>Consultas de solo lectura de los reportes.</summary>
     public class ReportesDAL06AV
     {
-        /// <summary>Reporte RF1 (sp_Reporte_VentasProduccion). Los opcionales en null no filtran.</summary>
         public DataTable ObtenerVentasProduccion(DateTime desde, DateTime hasta,
                                                  int? estado, int? tipoConfiguracion, string cliente)
         {

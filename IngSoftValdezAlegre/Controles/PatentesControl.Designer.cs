@@ -24,17 +24,11 @@ namespace IngSoftValdezAlegre.Controles
             this.grilla = new System.Windows.Forms.DataGridView();
             ((System.ComponentModel.ISupportInitialize)(this.grilla)).BeginInit();
             this.SuspendLayout();
-            // 
-            // lblTitulo
-            // 
             this.lblTitulo.Location = new System.Drawing.Point(8, 0);
             this.lblTitulo.Name = "lblTitulo";
             this.lblTitulo.Size = new System.Drawing.Size(240, 34);
             this.lblTitulo.TabIndex = 0;
             this.lblTitulo.Text = "Patentes";
-            // 
-            // grilla
-            // 
             this.grilla.AllowUserToAddRows = false;
             this.grilla.AllowUserToDeleteRows = false;
             this.grilla.Location = new System.Drawing.Point(-45, 37);
@@ -43,9 +37,6 @@ namespace IngSoftValdezAlegre.Controles
             this.grilla.ReadOnly = true;
             this.grilla.Size = new System.Drawing.Size(765, 470);
             this.grilla.TabIndex = 1;
-            // 
-            // PatentesControl
-            // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.lblTitulo);

@@ -6,7 +6,6 @@ using System.Data;
 
 namespace MPP
 {
-    /// <summary>Mapea entre LineaEnsamblaje06AV y la capa de acceso a datos.</summary>
     public class LineasEnsamblajeMPP06AV
     {
         private readonly LineasEnsamblajeDAL06AV _dal = new LineasEnsamblajeDAL06AV();

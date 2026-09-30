@@ -14,7 +14,6 @@ namespace IngSoftValdezAlegre.Controles
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class ConsultarStockControl : UserControl, IIdiomaAplicable06AV
     {
-        // Tras el refactor, Insumo se fusionó en Componente: una sola fuente de stock.
         private readonly ComponentesBLL06AV _compBLL = new ComponentesBLL06AV();
 
         private Label lblTitulo, lblFiltro;
@@ -74,7 +73,7 @@ namespace IngSoftValdezAlegre.Controles
         {
             try
             {
-                int filtro = cboFiltro.SelectedIndex; // 0 Todos, 1 Bajo stock
+                int filtro = cboFiltro.SelectedIndex;
                 var componentes = _compBLL.ObtenerTodos() ?? new List<Componente06AV>();
                 if (filtro == 1)
                     componentes = componentes.Where(c => c.BajoStock).ToList();

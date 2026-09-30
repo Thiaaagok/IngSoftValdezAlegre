@@ -45,13 +45,6 @@ namespace BLL
 
         private readonly VentasBLL06AV _ventas = new VentasBLL06AV();
 
-        // ══════════════════════════════════════════════════════════
-        //  CU-SER01 Serializar objetos
-        // ══════════════════════════════════════════════════════════
-
-        /// <summary>Paso 1: los objetos de la clase elegida, para seleccionarlos.</summary>
-        /// <exception cref="ValidacionException06AV">Sin la patente Serializar.</exception>
-        /// <exception cref="AccesoDatosException06AV">Si falla la consulta.</exception>
         public List<object> ObtenerObjetos(ClaseSerializable06AV clase)
         {
             ExigirPermiso();
@@ -62,11 +55,9 @@ namespace BLL
             }
         }
 
-        /// <summary>Paso 2: nombre sugerido, &lt;Clase&gt;_&lt;aaaaMMdd_HHmmss&gt;.xml.</summary>
         public static string ProponerNombreArchivo(ClaseSerializable06AV clase, DateTime ahora) =>
             clase + "_" + ahora.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + Extension;
 
-        /// <summary>Carpeta donde se abren por primera vez los diálogos de ubicación.</summary>
         public static string CarpetaPorDefecto()
         {
             string carpeta = Path.Combine(
@@ -76,11 +67,6 @@ namespace BLL
             return carpeta;
         }
 
-        /// <summary>
-        /// Paso 2: la ruta tiene nombre y extensión .xml, la carpeta existe y se puede
-        /// escribir en ella. No valida que el archivo no exista: eso lo confirma el usuario.
-        /// </summary>
-        /// <exception cref="ValidacionException06AV">Con el motivo.</exception>
         public static void ValidarDestino(string ruta)
         {
             if (string.IsNullOrWhiteSpace(ruta))
@@ -103,7 +89,6 @@ namespace BLL
             if (string.IsNullOrWhiteSpace(carpeta) || !Directory.Exists(carpeta))
                 throw new ValidacionException06AV("ruta", "La carpeta de destino no existe.");
 
-            // La única forma confiable de saber si se puede escribir es intentarlo.
             string prueba = Path.Combine(carpeta, "." + Guid.NewGuid().ToString("N") + ".tmp");
             try
             {
@@ -116,12 +101,6 @@ namespace BLL
             }
         }
 
-        /// <summary>
-        /// Paso 3: arma el paquete con su hash y lo graba en <paramref name="ruta"/>,
-        /// reemplazando el archivo si ya existe. Registra el evento en la bitácora.
-        /// </summary>
-        /// <exception cref="ValidacionException06AV">Sin permiso, sin objetos o con destino inválido.</exception>
-        /// <exception cref="AccesoDatosException06AV">Si falla la grabación.</exception>
         public PaqueteSerializado06AV Serializar(ClaseSerializable06AV clase, List<object> objetos, string ruta)
         {
             ExigirPermiso();
@@ -141,8 +120,6 @@ namespace BLL
             return paquete;
         }
 
-        /// <summary>Arma el paquete del paso 3 y le calcula el hash. No toca el disco.</summary>
-        /// <exception cref="ValidacionException06AV">Sin objetos, con objetos de otra clase o repetidos.</exception>
         public static PaqueteSerializado06AV ArmarPaquete(ClaseSerializable06AV clase, IList<object> objetos,
                                                           string generadoPor, DateTime ahora)
         {
@@ -160,7 +137,6 @@ namespace BLL
             return paquete;
         }
 
-        /// <exception cref="ValidacionException06AV">Con el motivo.</exception>
         public static void ValidarObjetos(ClaseSerializable06AV clase, IList<object> objetos)
         {
             if (objetos == null || objetos.Count == 0)
@@ -175,18 +151,12 @@ namespace BLL
                 throw new ValidacionException06AV("objetos", $"El objeto {repetido.Key} está seleccionado más de una vez.");
         }
 
-        /// <summary>
-        /// Paso 4: lee el archivo recién grabado y compara cada objeto original con el
-        /// que se reconstruyó. Todo tiene que coincidir.
-        /// </summary>
-        /// <exception cref="ValidacionException06AV">Sin permiso o si el archivo no se puede leer.</exception>
         public InformeVerificacion06AV VerificarSerializacion(string ruta, IList<object> originales)
         {
             ExigirPermiso();
             return VerificarContraOriginales(ruta, originales);
         }
 
-        /// <summary>El paso 4 sin la sesión: se usa también desde las pruebas.</summary>
         public static InformeVerificacion06AV VerificarContraOriginales(string ruta, IList<object> originales)
         {
             PaqueteSerializado06AV paquete = LeerPaquete(ruta);
@@ -209,12 +179,6 @@ namespace BLL
             return informe;
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  CU-SER02 Des-serializar objetos
-        // ══════════════════════════════════════════════════════════
-
-        /// <summary>Paso 5: los archivos .xml de la carpeta, del más nuevo al más viejo.</summary>
-        /// <exception cref="ValidacionException06AV">Sin permiso, o carpeta inexistente o sin acceso.</exception>
         public List<string> ListarArchivos(string carpeta)
         {
             ExigirPermiso();
@@ -222,7 +186,6 @@ namespace BLL
                 throw new ValidacionException06AV("carpeta", "La carpeta de origen no existe.");
             try
             {
-                // "*.xml" en Windows también trae ".xmlx": se vuelve a filtrar por extensión exacta.
                 return Directory.GetFiles(carpeta, "*" + Extension)
                     .Where(f => string.Equals(Path.GetExtension(f), Extension, StringComparison.OrdinalIgnoreCase))
                     .OrderByDescending(File.GetLastWriteTime)
@@ -234,8 +197,6 @@ namespace BLL
             }
         }
 
-        /// <summary>Paso 6: el texto del archivo elegido, para mostrarlo antes de leerlo.</summary>
-        /// <exception cref="ValidacionException06AV">Sin permiso o si el archivo no existe.</exception>
         public string LeerContenido(string ruta)
         {
             ExigirPermiso();
@@ -247,8 +208,6 @@ namespace BLL
             }
         }
 
-        /// <summary>Paso 7: reconstruye el paquete y sus objetos. Registra el evento en la bitácora.</summary>
-        /// <exception cref="ValidacionException06AV">Sin permiso, o archivo con formato o versión inválidos.</exception>
         public PaqueteSerializado06AV Deserializar(string ruta)
         {
             ExigirPermiso();
@@ -266,11 +225,6 @@ namespace BLL
             return paquete;
         }
 
-        /// <summary>
-        /// Lee y valida un archivo: formato de paquete, versión conocida y objetos de la
-        /// clase declarada. No verifica el hash: eso es el paso 8.
-        /// </summary>
-        /// <exception cref="ValidacionException06AV">Con el motivo.</exception>
         public static PaqueteSerializado06AV LeerPaquete(string ruta)
         {
             ValidarArchivoOrigen(ruta);
@@ -301,12 +255,6 @@ namespace BLL
             return paquete;
         }
 
-        /// <summary>
-        /// Paso 8: recalcula el hash y compara cada objeto con su versión actual en la base.
-        /// Si la base no responde, el informe conserva la verificación de integridad y
-        /// deja el motivo en <see cref="InformeVerificacion06AV.ErrorComparacion"/>.
-        /// </summary>
-        /// <exception cref="ValidacionException06AV">Sin la patente Serializar.</exception>
         public InformeVerificacion06AV VerificarDeserializacion(PaqueteSerializado06AV paquete, string ruta)
         {
             ExigirPermiso();
@@ -318,7 +266,6 @@ namespace BLL
             return informe;
         }
 
-        /// <summary>El paso 8 con la búsqueda en la base recibida por parámetro.</summary>
         public static InformeVerificacion06AV VerificarContraBase(PaqueteSerializado06AV paquete, string ruta,
                                                                   Func<string, object> buscarActual)
         {
@@ -349,11 +296,6 @@ namespace BLL
             return informe;
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  Hash, claves y comparación
-        // ══════════════════════════════════════════════════════════
-
-        /// <summary>SHA-256 (en Base64) del paquete serializado con Hash en null.</summary>
         public static string CalcularHash(PaqueteSerializado06AV paquete)
         {
             string guardado = paquete.Hash;
@@ -365,7 +307,6 @@ namespace BLL
             finally { paquete.Hash = guardado; }
         }
 
-        /// <summary>El hash del archivo coincide con el recalculado y la cantidad declarada es la real.</summary>
         public static bool EsIntegro(PaqueteSerializado06AV paquete) =>
             paquete != null &&
             !string.IsNullOrEmpty(paquete.Hash) &&
@@ -381,7 +322,6 @@ namespace BLL
             }
         }
 
-        /// <summary>Número de venta, DNI del cliente o Id del modelo.</summary>
         public static string ClaveDe(object objeto)
         {
             switch (objeto)
@@ -469,10 +409,6 @@ namespace BLL
             return Convert.ToString(v, CultureInfo.InvariantCulture);
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  Auxiliares
-        // ══════════════════════════════════════════════════════════
-
         private static InformeVerificacion06AV NuevoInforme(PaqueteSerializado06AV paquete, string ruta) =>
             new InformeVerificacion06AV
             {
@@ -490,9 +426,6 @@ namespace BLL
                 throw new ValidacionException06AV("archivo", "El archivo ya no existe en la carpeta.");
         }
 
-        /// <summary>
-        /// Búsqueda por clave (número de venta) en la base para el paso 8.
-        /// </summary>
         private Func<string, object> CrearBuscador(ClaseSerializable06AV clase)
         {
             switch (clase)
@@ -518,7 +451,6 @@ namespace BLL
             catch { return null; }
         }
 
-        // Si la bitácora falla, la operación igual quedó hecha: no se revierte por eso.
         private static void Registrar(CategoriaBitacora categoria, CriticidadBitacora criticidad, string descripcion)
         {
             try { new BitacoraBLL06AV().Registrar(categoria, criticidad, descripcion, ModuloBitacora.Serializacion, DniOperador()); }

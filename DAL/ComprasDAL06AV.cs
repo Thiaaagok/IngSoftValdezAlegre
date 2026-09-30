@@ -5,16 +5,8 @@ using System.Data.SqlClient;
 
 namespace DAL
 {
-    /// <summary>
-    /// Acceso a datos del proceso de Compras (RFN2). Tras el refactor:
-    /// la Orden de Compra tiene Id string (generado por la app) y un NumeroCompra
-    /// de negocio (int, secuencia) que el SP devuelve por OUTPUT. La Cotización usa
-    /// Numero string y referencia la OC por su Id. Incluye Factura de Compra.
-    /// </summary>
     public class ComprasDAL06AV
     {
-        // ── Orden de compra ──────────────────────────────────────
-        /// <summary>Inserta la OC con Id generado y devuelve el NumeroCompra de negocio (secuencia).</summary>
         public int AgregarOrdenCompra(string id, DateTime fechaLimite, string dniRepositor)
         {
             var salida = new SqlParameter("@NumeroCompra", SqlDbType.Int) { Direction = ParameterDirection.Output };
@@ -51,7 +43,6 @@ namespace DAL
             EjecutarSPNonQuery("sp_OrdenesCompra_Cerrar", new Dictionary<string, object>
             { { "@Id", id }, { "@FechaCierre", fechaCierre } });
 
-        // ── Cotización ───────────────────────────────────────────
         public void AgregarCotizacion(string numero, string idOrdenCompra, int idProveedor,
                                       decimal costo, string condiciones)
         {
@@ -65,11 +56,6 @@ namespace DAL
             });
         }
 
-        /// <summary>
-        /// Cotización con precio por ítem. El detalle va como XML
-        /// (&lt;d c="código" q="cantidad" p="precio"/&gt;) para que cabecera y líneas se graben
-        /// en una sola transacción dentro del procedimiento.
-        /// </summary>
         public void AgregarCotizacionConDetalle(string numero, string idOrdenCompra, int idProveedor,
                                                string condiciones, string detalleXml)
         {
@@ -83,7 +69,6 @@ namespace DAL
             });
         }
 
-        /// <summary>Líneas de una cotización con el precio unitario ofrecido (PrecioCotizado).</summary>
         public DataTable ObtenerDetalleCotizacion(string numero) =>
             EjecutarSP("sp_Cotizacion_ObtenerDetalle", new Dictionary<string, object> { { "@Numero", numero } });
 
@@ -93,7 +78,6 @@ namespace DAL
             EjecutarSP("sp_Cotizacion_ObtenerPorOrden",
                 new Dictionary<string, object> { { "@IdOrdenCompra", idOrdenCompra } });
 
-        /// <summary>Cambia el estado de la cotización y registra el gerente que la aprobó/desaprobó.</summary>
         public void CambiarEstadoCotizacion(string numero, int estado, string dniGerenteAprobador) =>
             EjecutarSPNonQuery("sp_Cotizacion_CambiarEstado", new Dictionary<string, object>
             {
@@ -102,7 +86,6 @@ namespace DAL
                 { "@DniGerenteAprobador", (object)dniGerenteAprobador ?? DBNull.Value }
             });
 
-        // ── Factura de compra ────────────────────────────────────
         public void AgregarFacturaCompra(string numeroFactura, string idOrdenCompra, DateTime fechaEmision,
                                          DateTime fechaEntrega, decimal total, string observaciones)
         {
@@ -117,14 +100,12 @@ namespace DAL
             });
         }
 
-        /// <summary>Facturas (recepciones) registradas contra una orden de compra.</summary>
         public DataTable ObtenerFacturasPorOrden(string idOrdenCompra) =>
             EjecutarSP("sp_FacturaCompra_ObtenerPorOrden", new Dictionary<string, object>
             {
                 { "@IdOrdenCompra", idOrdenCompra }
             });
 
-        /// <summary>Detalle (componente + cantidad) de una factura de compra.</summary>
         public DataTable ObtenerFacturaCompraDetalle(string numeroFactura) =>
             EjecutarSP("sp_FacturaCompra_ObtenerDetalle", new Dictionary<string, object>
             {
@@ -167,7 +148,6 @@ namespace DAL
             conn.Close();
         }
 
-        /// <summary>Ejecuta un SP con parámetros de entrada y un parámetro de salida (OUTPUT).</summary>
         private void EjecutarSPConSalida(string nombreSP, Dictionary<string, object> parametros, SqlParameter salida)
         {
             SqlConnection conn = Conexion.Instancia.ObtenerConexion();

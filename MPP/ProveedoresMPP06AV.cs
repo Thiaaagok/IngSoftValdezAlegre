@@ -6,7 +6,6 @@ using System.Data;
 
 namespace MPP
 {
-    /// <summary>Mapea entre Proveedor06AV y la capa de acceso a datos.</summary>
     public class ProveedoresMPP06AV
     {
         private readonly ProveedoresDAL06AV _dal = new ProveedoresDAL06AV();
@@ -30,7 +29,6 @@ namespace MPP
             return tabla.Rows.Count == 0 ? null : Mapear(tabla.Rows[0]);
         }
 
-        /// <summary>Inserta el proveedor y le asigna el Id generado.</summary>
         public void Agregar(Proveedor06AV p)
         {
             p.Id = _dal.Agregar(p.Nombre, p.Cuit, p.Email, p.Telefono, p.Direccion);

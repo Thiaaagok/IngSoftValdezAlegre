@@ -8,7 +8,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>Resultado del control de recepción: qué llegó y cuándo.</summary>
     internal class RecepcionArmada06AV : EventArgs
     {
         public RecepcionArmada06AV(List<DetalleComponente06AV> recibidos, DateTime fechaEntrega,
@@ -26,31 +25,14 @@ namespace IngSoftValdezAlegre.UI
         public bool Completa { get; }
     }
 
-    /// <summary>
-    /// CONTROL DE RECEPCIÓN (RFN2, paso 5).
-    ///
-    /// Recibir una orden dejó de ser un botón que decía "sí, llegó todo". Es un
-    /// control de lo que bajó del camión: una línea por componente pedido, se marca lo
-    /// que llegó y se corrige la cantidad cuando vino incompleto.
-    ///
-    /// La pantalla usa la misma estructura que "Nueva venta", porque la tarea tiene la
-    /// misma forma: a la izquierda se DECIDE (qué llegó, cuánto de cada cosa) y a la
-    /// derecha un remito fijo CONFIRMA — unidades a recibir en grande, el desglose
-    /// pedido / recibido / pendiente, la fecha y las observaciones, y abajo el veredicto
-    /// en vivo: si al confirmar la orden queda finalizada o recibida parcial. El
-    /// operador ve la consecuencia ANTES de apretar el botón, no después.
-    /// </summary>
     internal class RecepcionControl06AV : UserControl, IIdiomaAplicable06AV
     {
-        // Cabecera
         private readonly Label _lblTitulo, _lblAyuda;
 
-        // Izquierda — lista
         private readonly Label _lblListaTit;
         private readonly FlowLayoutPanel _lista;
         private readonly Button _btnTodo, _btnNada;
 
-        // Derecha — remito
         private readonly Panel _pnlTicket, _pnlDatos, _relleno;
         private readonly Label _lblTicketTit, _lblVeredicto, _lblEntrega, _lblObs;
         private readonly FichaDatos06AV _ficha;
@@ -64,7 +46,6 @@ namespace IngSoftValdezAlegre.UI
 
         public RecepcionControl06AV()
         {
-            // ── Cabecera ─────────────────────────────────────────
             _lblTitulo = new Label { AutoSize = true, Location = new Point(16, 14) };
             _lblAyuda = new Label { AutoSize = true, Location = new Point(18, 40) };
 
@@ -72,7 +53,6 @@ namespace IngSoftValdezAlegre.UI
             cabecera.Controls.Add(_lblAyuda);
             cabecera.Controls.Add(_lblTitulo);
 
-            // ── Izquierda: qué bajó del camión ───────────────────
             _lblListaTit = new Label
             {
                 Dock = DockStyle.Top, Height = 34, AutoSize = false,
@@ -107,7 +87,6 @@ namespace IngSoftValdezAlegre.UI
             cuerpo.Controls.Add(flpAtajos);
             cuerpo.Controls.Add(_lblListaTit);
 
-            // ── Derecha: remito ──────────────────────────────────
             _lblTicketTit = new Label { Dock = DockStyle.Top, Height = 28, AutoSize = false };
             _ficha = new FichaDatos06AV { Dock = DockStyle.Top, Height = 190 };
 
@@ -178,7 +157,6 @@ namespace IngSoftValdezAlegre.UI
         public event EventHandler<RecepcionArmada06AV> Confirmado;
         public event EventHandler Cancelado;
 
-        /// <summary>Carga lo que falta recibir de una orden.</summary>
         public void Cargar(int numeroOrden, IEnumerable<DetalleComponente06AV> pendiente)
         {
             var t = GestorIdioma06AV.Instancia;
@@ -221,10 +199,6 @@ namespace IngSoftValdezAlegre.UI
             ActualizarVeredicto();
         }
 
-        /// <summary>
-        /// Recalcula el remito de la derecha: unidades que se van a recibir, desglose
-        /// contra lo pedido y qué va a pasar con la orden al confirmar.
-        /// </summary>
         private void ActualizarVeredicto()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -323,7 +297,6 @@ namespace IngSoftValdezAlegre.UI
             Tema.AplicarSubtitulo(_lblListaTit);
             _lblListaTit.BackColor = Tema.FondoApp;
 
-            // Remito
             foreach (Control c in new Control[] { _pnlTicket, _pnlDatos, _relleno, _flpAcciones })
                 c.BackColor = Tema.FondoPanel;
 

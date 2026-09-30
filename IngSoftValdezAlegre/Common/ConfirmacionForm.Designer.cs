@@ -2,15 +2,8 @@
 {
     partial class ConfirmacionForm
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -22,10 +15,6 @@
 
         #region Windows Form Designer generated code
 
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
             this.lblMensaje = new System.Windows.Forms.Label();
@@ -35,18 +24,12 @@
             this.lblTitulo = new System.Windows.Forms.Label();
             this.pnlTitulo.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // lblMensaje
-            // 
             this.lblMensaje.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblMensaje.Location = new System.Drawing.Point(41, 71);
             this.lblMensaje.Name = "lblMensaje";
             this.lblMensaje.Size = new System.Drawing.Size(340, 70);
             this.lblMensaje.TabIndex = 2;
             this.lblMensaje.Text = "Mensaje";
-            // 
-            // btnSi
-            // 
             this.btnSi.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(21)))), ((int)(((byte)(101)))), ((int)(((byte)(192)))));
             this.btnSi.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnSi.FlatAppearance.BorderSize = 0;
@@ -59,9 +42,6 @@
             this.btnSi.TabIndex = 5;
             this.btnSi.Text = "Aceptar";
             this.btnSi.UseVisualStyleBackColor = false;
-            // 
-            // btnNo
-            // 
             this.btnNo.BackColor = System.Drawing.Color.White;
             this.btnNo.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnNo.DialogResult = System.Windows.Forms.DialogResult.Cancel;
@@ -75,9 +55,6 @@
             this.btnNo.TabIndex = 6;
             this.btnNo.Text = "Cancelar";
             this.btnNo.UseVisualStyleBackColor = false;
-            // 
-            // pnlTitulo
-            // 
             this.pnlTitulo.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(21)))), ((int)(((byte)(101)))), ((int)(((byte)(192)))));
             this.pnlTitulo.Controls.Add(this.lblTitulo);
             this.pnlTitulo.Dock = System.Windows.Forms.DockStyle.Top;
@@ -85,9 +62,6 @@
             this.pnlTitulo.Name = "pnlTitulo";
             this.pnlTitulo.Size = new System.Drawing.Size(447, 56);
             this.pnlTitulo.TabIndex = 10;
-            // 
-            // lblTitulo
-            // 
             this.lblTitulo.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(21)))), ((int)(((byte)(101)))), ((int)(((byte)(192)))));
             this.lblTitulo.Font = new System.Drawing.Font("Segoe UI Semibold", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblTitulo.ForeColor = System.Drawing.SystemColors.Control;
@@ -96,9 +70,6 @@
             this.lblTitulo.Size = new System.Drawing.Size(300, 32);
             this.lblTitulo.TabIndex = 12;
             this.lblTitulo.Text = "Titulo";
-            // 
-            // ConfirmacionForm
-            // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(447, 200);

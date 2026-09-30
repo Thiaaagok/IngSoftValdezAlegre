@@ -5,17 +5,6 @@ using System.Windows.Forms;
 
 namespace Instalador
 {
-    /// <summary>
-    /// Punto de entrada del Instalador del sistema IngSoftValdezAlegre.
-    ///
-    /// • Sin parámetros abre el ASISTENTE GRÁFICO (elegir instancia, instalar, abrir el sistema).
-    /// • Con parámetros de línea de comandos corre en MODO CONSOLA:
-    ///     Instalador.exe --servidor . --bd IngSoftValdezAlegre
-    ///     Instalador.exe --usuario sa --password 1234        (SQL Auth)
-    ///     Instalador.exe --test                              (prueba del instalador)
-    ///     Instalador.exe --silent                            (no pide confirmaciones)
-    ///     Instalador.exe --help
-    /// </summary>
     internal static class Program
     {
         [STAThread]
@@ -27,7 +16,6 @@ namespace Instalador
             return EjecutarAsistente();
         }
 
-        /// <summary>Hay que usar consola si se pasó algún flag reconocido de línea de comandos.</summary>
         private static bool RequiereConsola(string[] args)
         {
             foreach (string a in args)
@@ -50,9 +38,6 @@ namespace Instalador
             return false;
         }
 
-        // ──────────────────────────────────────────────────────────────
-        //  MODO ASISTENTE (GUI)
-        // ──────────────────────────────────────────────────────────────
         private static int EjecutarAsistente()
         {
             Application.EnableVisualStyles();
@@ -62,7 +47,7 @@ namespace Instalador
             using (var conexion = new FrmConexion06AV())
             {
                 if (conexion.ShowDialog() != DialogResult.OK)
-                    return 2; // el usuario canceló
+                    return 2;
                 opciones = conexion.Opciones;
             }
 
@@ -76,12 +61,8 @@ namespace Instalador
             }
         }
 
-        // ──────────────────────────────────────────────────────────────
-        //  MODO CONSOLA
-        // ──────────────────────────────────────────────────────────────
         private static int EjecutarConsola(string[] args)
         {
-            // Como el proyecto es WinExe, hay que engancharse (o crear) una consola.
             if (!AttachConsole(ATTACH_PARENT_PROCESS))
                 AllocConsole();
 
@@ -124,8 +105,6 @@ namespace Instalador
 
                 new InstaladorBLL06AV(opciones).Instalar(Log);
 
-                // Dejar la app apuntando a la instancia elegida (en todas las ubicaciones
-                // del ejecutable), igual que hace el asistente gráfico.
                 var exes = ConfiguradorApp06AV.LocalizarTodosExeApp();
                 int escritos = 0;
                 foreach (string exe in exes)
@@ -180,11 +159,6 @@ namespace Instalador
             return o;
         }
 
-        /// <summary>
-        /// Carpeta de scripts por defecto: la subcarpeta "Scripts" junto al ejecutable
-        /// (los .sql se copian ahí al compilar). Si no está, prueba con la carpeta SQL
-        /// del repositorio (útil al correr desde Visual Studio).
-        /// </summary>
         private static string CarpetaScriptsPorDefecto()
         {
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
@@ -202,7 +176,7 @@ namespace Instalador
                     dir = dir.Parent;
                 }
             }
-            catch { /* se devuelve el default de todas formas */ }
+            catch {  }
 
             return junto;
         }
@@ -239,7 +213,6 @@ namespace Instalador
             Console.WriteLine("  --help              Muestra esta ayuda.");
         }
 
-        // ── Utilidades de parsing de argumentos ──────────────────────
         private static string ValorArg(string[] args, string clave)
         {
             for (int i = 0; i < args.Length - 1; i++)
@@ -256,7 +229,6 @@ namespace Instalador
             return false;
         }
 
-        // ── Consola para un proceso WinExe ───────────────────────────
         private const int ATTACH_PARENT_PROCESS = -1;
 
         [DllImport("kernel32.dll", SetLastError = true)]

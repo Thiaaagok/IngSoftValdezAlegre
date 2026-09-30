@@ -35,7 +35,6 @@ namespace IngSoftValdezAlegre.Controles
             GestorIdioma06AV.Instancia.IdiomaChanged += AplicarIdioma;
             Disposed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
 
-            // Observer: repintar cuando se cambia entre tema claro y oscuro.
             Tema.TemaChanged += AplicarTema;
             Disposed += (s, e) => Tema.TemaChanged -= AplicarTema;
 
@@ -112,8 +111,6 @@ namespace IngSoftValdezAlegre.Controles
             if (grilla.Columns["Codigo"] != null) grilla.Columns["Codigo"].HeaderText = t.Obtener("codigo");
         }
 
-        // AutoGenerateColumns=false evita que el binding genere una columna extra
-        // por la propiedad de colección 'Hijos' al re-vincular la grilla.
         private void ConfigurarColumnas()
         {
             grilla.AutoGenerateColumns = false;
@@ -160,7 +157,6 @@ namespace IngSoftValdezAlegre.Controles
             txtMensaje.SetBounds(accionesX, y + 258, accionesW, Math.Max(90, alto - y - 266));
         }
 
-
         private void CargarDatos(string idSeleccionar = null)
         {
             _suspenderSeleccion = true;
@@ -182,7 +178,6 @@ namespace IngSoftValdezAlegre.Controles
                 _suspenderSeleccion = false;
             }
 
-            // Reposicionar DESPUÉS de levantar el flag
             if (idSeleccionar != null)
                 SeleccionarPorId(idSeleccionar);
             else if (_roles.Count > 0)
@@ -192,7 +187,6 @@ namespace IngSoftValdezAlegre.Controles
                 MostrarSeleccion();
             }
         }
-
 
         private void MostrarSeleccion()
         {
@@ -210,8 +204,6 @@ namespace IngSoftValdezAlegre.Controles
 
             txtDescripcion.Text = rol.Descripcion;
 
-            // Se trabaja sobre una copia en memoria: agregar/quitar patentes y
-            // familias no toca la base hasta que el usuario presiona Guardar.
             _hijosOriginales = new List<IComponentePermiso06AV>(rol.Hijos);
             _rolPendiente = new Rol06AV { Id = rol.Id, Descripcion = rol.Descripcion };
             if (_hijosOriginales.Count > 0)
@@ -248,10 +240,8 @@ namespace IngSoftValdezAlegre.Controles
                 _suspenderSeleccion = false;
             }
 
-            // Una sola llamada controlada al final
             MostrarSeleccion();
         }
-
 
         private void Nuevo()
         {
@@ -328,8 +318,6 @@ namespace IngSoftValdezAlegre.Controles
 
                 if (rolDeSesionAfectado)
                 {
-                    // Las patentes efectivas del rol de la sesión actual quedaron
-                    // desactualizadas: se fuerza a volver a loguearse para recalcularlas.
                     (FindForm() as FRMMain)?.ForzarReloginPorCambioDeRol();
                     return;
                 }
@@ -373,7 +361,6 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
-
         private void AgregarPatente()
         {
             if (cmbPatentes.SelectedValue == null) return;
@@ -404,7 +391,6 @@ namespace IngSoftValdezAlegre.Controles
 
             QuitarPendiente(tag);
         }
-
 
         private void AgregarPendiente(IComponentePermiso06AV componente)
         {
@@ -457,12 +443,6 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
-
-        /// <summary>
-        /// Compara los hijos originales (en base) contra los hijos pendientes
-        /// (en memoria) y persiste solo las diferencias. Devuelve true si hubo
-        /// algún cambio efectivo.
-        /// </summary>
         private bool PersistirDiferencias(string idRol, List<IComponentePermiso06AV> originales, IReadOnlyList<IComponentePermiso06AV> actuales)
         {
             bool cambios = false;
@@ -552,4 +532,4 @@ namespace IngSoftValdezAlegre.Controles
             public string Id { get; private set; }
         }
     }
-}   
+}

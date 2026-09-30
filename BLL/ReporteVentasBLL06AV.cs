@@ -8,37 +8,20 @@ using System.Linq;
 
 namespace BLL
 {
-    /// <summary>
-    /// Reporte RF1: ventas y producción. Una fila por venta del período con su
-    /// cobro (CU03), su orden de producción (CU04 a CU06) y su entrega (CU07),
-    /// más los indicadores y cortes del período.
-    ///
-    /// La base filtra (sp_Reporte_VentasProduccion) y la BLL calcula. El cálculo
-    /// vive en <see cref="CalcularResumen"/>, que no depende de la base.
-    /// </summary>
     public class ReporteVentasBLL06AV
     {
-        /// <summary>Tope del período para no pedirle a la base años de ventas de una vez.</summary>
         public const int RangoMaximoMeses = 24;
 
-        /// <summary>Con menos caracteres la búsqueda de cliente trae prácticamente todo.</summary>
         public const int LargoMinimoCliente = 3;
 
-        /// <summary>Largo del parámetro @Cliente del procedimiento.</summary>
         public const int LargoMaximoCliente = 100;
 
         public const int TopModelos = 5;
 
-        /// <summary>Clave con la que se agrupan los equipos sin modelo de catálogo.</summary>
         public const string NombreAMedida = "(a medida)";
 
         private readonly ReportesMPP06AV _mpp = new ReportesMPP06AV();
 
-        /// <summary>
-        /// Genera el reporte con los criterios dados.
-        /// </summary>
-        /// <exception cref="ValidacionException06AV">Sin la patente VerReporteVentas o con criterios inválidos.</exception>
-        /// <exception cref="AccesoDatosException06AV">Si falla la consulta.</exception>
         public ReporteVentas06AV Generar(FiltroReporteVentas06AV filtro)
         {
             ExigirPermiso();
@@ -48,7 +31,6 @@ namespace BLL
             try { filas = _mpp.ObtenerVentasProduccion(filtro) ?? new List<FilaReporteVentas06AV>(); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo generar el reporte de ventas.", ex); }
 
-            // El atraso depende de la fecha de hoy, por eso se filtra acá y no en el procedimiento.
             DateTime hoy = DateTime.Today;
             if (filtro.SoloAtrasadas)
                 filas = filas.Where(f => f.EstaAtrasada(hoy)).ToList();
@@ -63,13 +45,6 @@ namespace BLL
             };
         }
 
-        /// <summary>
-        /// Valida los criterios. Rechaza un período invertido, que empiece en el
-        /// futuro o que supere <see cref="RangoMaximoMeses"/>, y un texto de cliente
-        /// fuera de 3 a 100 caracteres. Deja <c>filtro.Cliente</c> recortado, o en
-        /// null si quedó vacío.
-        /// </summary>
-        /// <exception cref="ValidacionException06AV">Con el campo que no cumple.</exception>
         public static void ValidarFiltro(FiltroReporteVentas06AV filtro, DateTime hoy)
         {
             if (filtro == null)
@@ -95,11 +70,6 @@ namespace BLL
             filtro.Cliente = cliente.Length == 0 ? null : cliente;
         }
 
-        /// <summary>
-        /// Indicadores del período. Las anuladas se cuentan pero no suman importes ni
-        /// entran en promedios ni porcentajes. Importes redondeados a 2 decimales y
-        /// porcentajes a 1.
-        /// </summary>
         public static ResumenReporteVentas06AV CalcularResumen(IEnumerable<FilaReporteVentas06AV> filas, DateTime hoy)
         {
             var todas = (filas ?? Enumerable.Empty<FilaReporteVentas06AV>()).Where(f => f != null).ToList();
@@ -114,8 +84,6 @@ namespace BLL
                 TotalCobrado = Math.Round(vigentes.Sum(f => f.TotalCobrado), 2),
                 SaldoPendiente = Math.Round(vigentes.Sum(f => f.SaldoPendiente), 2),
                 PendientesDeSena = vigentes.Count(f => f.EstadoVenta == EstadoVenta06AV.Pendiente),
-                // La venta sigue "EnProduccion" hasta la entrega aunque la orden ya esté
-                // Finalizada; esas se cuentan aparte como listas para retirar.
                 EnProduccion = vigentes.Count(f => f.EstadoVenta == EstadoVenta06AV.EnProduccion
                                                    && f.EstadoOrden != EstadoOrdenProduccion06AV.Finalizada),
                 ListasParaEntregar = vigentes.Count(f => f.EstadoOrden == EstadoOrdenProduccion06AV.Finalizada
@@ -132,7 +100,6 @@ namespace BLL
                 ? (decimal?)null
                 : Math.Round((decimal)entregadas.Average(f => (f.FechaEntrega.Value.Date - f.FechaVenta.Date).TotalDays), 1);
 
-            // Van todos los estados, aun en cero, para que el corte tenga siempre la misma forma.
             foreach (EstadoVenta06AV e in Enum.GetValues(typeof(EstadoVenta06AV)))
             {
                 var grupo = todas.Where(f => f.EstadoVenta == e).ToList();
@@ -157,7 +124,6 @@ namespace BLL
                 });
             }
 
-            // Empates: primero el de mayor importe y después por nombre, para que el orden sea estable.
             r.PorModelo = vigentes
                 .GroupBy(f => string.IsNullOrWhiteSpace(f.ModeloOrigen) ? NombreAMedida : f.ModeloOrigen.Trim())
                 .Select(g => new GrupoReporte06AV
@@ -176,7 +142,6 @@ namespace BLL
             return r;
         }
 
-        /// <summary>Porcentaje con un decimal; 0 si el total es 0.</summary>
         public static decimal Porcentaje(int parte, int total) =>
             total <= 0 ? 0m : Math.Round(parte * 100m / total, 1);
 

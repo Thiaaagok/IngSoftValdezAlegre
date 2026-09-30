@@ -19,10 +19,6 @@ namespace MPP
             return lista;
         }
 
-        /// <summary>
-        /// Carga la familia con todos sus hijos directos (patentes y subfamilias).
-        /// Usa un conjunto de visitados para evitar ciclos.
-        /// </summary>
         public Familia06AV ObtenerPorId(string id, HashSet<string> visitados = null)
         {
             if (visitados == null) visitados = new HashSet<string>();
@@ -38,12 +34,10 @@ namespace MPP
                 Descripcion = tabla.Rows[0]["Descripcion"].ToString()
             };
 
-            // Patentes directas
             DataTable patentes = _dal.ObtenerPatentesDeFamilia(id);
             foreach (DataRow row in patentes.Rows)
                 familia.Agregar(_patenteMPP.Mapear(row));
 
-            // Subfamilias (recursivo)
             DataTable subfamilias = _dal.ObtenerSubfamiliasDeFamilia(id);
             foreach (DataRow row in subfamilias.Rows)
             {

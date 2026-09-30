@@ -4,33 +4,22 @@ using System.Text;
 
 namespace IngSoftValdezAlegre.Common
 {
-    /// <summary>
-    /// Generador de PDF mínimo en C# puro (sin librerías externas ni NuGet). Produce
-    /// un PDF de una página con texto en fuente Helvetica. Alcanza para comprobantes
-    /// simples (recibos y facturas). El texto se codifica en Windows-1252 para que los
-    /// acentos y símbolos se rendericen correctamente con WinAnsiEncoding.
-    /// </summary>
     public static class PdfSimple06AV
     {
         private const int CodePageWinAnsi = 1252;
 
-        /// <summary>
-        /// Escribe un PDF de una página en <paramref name="ruta"/> con un título grande
-        /// y una lista de líneas de texto debajo.
-        /// </summary>
         public static void Guardar(string ruta, string titulo, IList<string> lineas)
         {
             Encoding enc = Encoding.GetEncoding(CodePageWinAnsi);
 
-            // ── 1) Content stream (instrucciones de texto) ──────────
             var cs = new StringBuilder();
             cs.Append("BT\n");
             cs.Append("/F1 16 Tf\n");
-            cs.Append("1 0 0 1 60 770 Tm\n");            // origen del título (y desde abajo)
+            cs.Append("1 0 0 1 60 770 Tm\n");
             cs.Append("(").Append(Escapar(titulo)).Append(") Tj\n");
             cs.Append("/F1 11 Tf\n");
             cs.Append("0 -30 Td\n");
-            cs.Append("15 TL\n");                         // interlineado
+            cs.Append("15 TL\n");
             bool primera = true;
             foreach (string l in lineas)
             {
@@ -42,18 +31,16 @@ namespace IngSoftValdezAlegre.Common
             string content = cs.ToString();
             int contentLen = enc.GetByteCount(content);
 
-            // ── 2) Objetos del PDF ──────────────────────────────────
             var objetos = new List<string>
             {
-                "<< /Type /Catalog /Pages 2 0 R >>",                                       // 1
-                "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",                               // 2
+                "<< /Type /Catalog /Pages 2 0 R >>",
+                "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
                 "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] " +
-                    "/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",            // 3
-                "<< /Length " + contentLen + " >>\nstream\n" + content + "\nendstream",     // 4
-                "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>" // 5
+                    "/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
+                "<< /Length " + contentLen + " >>\nstream\n" + content + "\nendstream",
+                "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"
             };
 
-            // ── 3) Ensamblado con tabla de referencias cruzadas ─────
             var sb = new StringBuilder();
             sb.Append("%PDF-1.4\n");
             var offsets = new int[objetos.Count + 1];
@@ -79,7 +66,6 @@ namespace IngSoftValdezAlegre.Common
             File.WriteAllBytes(ruta, enc.GetBytes(sb.ToString()));
         }
 
-        /// <summary>Escapa los caracteres especiales de un string literal PDF.</summary>
         private static string Escapar(string s)
         {
             if (string.IsNullOrEmpty(s)) return "";

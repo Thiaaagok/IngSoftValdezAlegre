@@ -32,10 +32,6 @@ namespace SER
 
         #region Gestión de sesión
 
-        /// <summary>
-        /// Inicia la sesión guardando usuario, rol y timestamp.
-        /// Las patentes se cargan luego con <see cref="CargarPatentes"/>.
-        /// </summary>
         public void IniciarSesion(Usuario06AV usuario, Rol06AV rol)
         {
             if (usuario == null) throw new ArgumentNullException(nameof(usuario));
@@ -47,10 +43,6 @@ namespace SER
             Patentes          = new List<Patente06AV>();
         }
 
-        /// <summary>
-        /// Carga en sesión la lista de patentes obtenidas del SP recursivo.
-        /// Llamar inmediatamente después de <see cref="IniciarSesion"/>.
-        /// </summary>
         public void CargarPatentes(List<Patente06AV> patentes)
         {
             Patentes = patentes ?? new List<Patente06AV>();
@@ -86,19 +78,12 @@ namespace SER
             return Patentes.Any(p => string.Equals(p.Id, id, StringComparison.Ordinal));
         }
 
-        /// <summary>
-        /// Verifica si el rol activo coincide con la descripción indicada.
-        /// </summary>
         public bool TieneRol(string descripcion)
         {
             return Rol != null &&
                    string.Equals(Rol.Descripcion, descripcion, StringComparison.OrdinalIgnoreCase);
         }
 
-        /// <summary>
-        /// Forma legacy: comprueba por Id de patente como string.
-        /// Prefer TienePermiso(PatenteEnum) cuando sea posible.
-        /// </summary>
         public bool TienePatente(string patenteId)
         {
             if (Patentes == null) return false;

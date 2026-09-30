@@ -4,15 +4,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>
-    /// Tarjeta de opción excluyente: reemplaza al ComboBox cuando las alternativas son
-    /// pocas y la elección importa.
-    ///
-    /// Un combo esconde las opciones detrás de un clic y muestra una sola a la vez; para
-    /// elegir una línea de ensamblaje el encargado necesita ver TODAS con su estado
-    /// (libre / ocupada) al mismo tiempo. Acá cada opción es una tarjeta con su marca de
-    /// selección, y las no disponibles se muestran apagadas en vez de desaparecer.
-    /// </summary>
     internal class TarjetaOpcion06AV : Control
     {
         private bool _hot;
@@ -28,13 +19,11 @@ namespace IngSoftValdezAlegre.UI
             Margin = new Padding(0, 0, 10, 10);
         }
 
-        /// <summary>Objeto de negocio que representa esta opción.</summary>
         public object Valor { get; set; }
 
         public string Titulo { get; set; } = string.Empty;
         public string Subtitulo { get; set; } = string.Empty;
 
-        /// <summary>Chip corto a la derecha: "Disponible", "Ocupada"…</summary>
         public string Etiqueta { get; set; }
 
         public IconoPcf06AV Icono { get; set; } = IconoPcf06AV.Destornillador;
@@ -100,7 +89,6 @@ namespace IngSoftValdezAlegre.UI
                               Seleccionada ? Tema.Primario : (Focused && Habilitada ? Tema.Primario : Tema.Borde),
                               Seleccionada ? 2f : 1f);
 
-            // Radio / check
             var marca = new Rectangle(14, 22, 22, 22);
             if (Seleccionada)
             {

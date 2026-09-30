@@ -4,20 +4,10 @@ using System.Linq;
 
 namespace BLL.Armado
 {
-    /// <summary>
-    /// PATRÓN BUILDER — rol CONCRETE BUILDER (equipo a medida).
-    ///
-    /// Arma la computadora que el cliente configura pieza por pieza en "Armá tu PC".
-    /// El producto sale registrado como <see cref="TipoConfiguracion06AV.Configurable"/>
-    /// y, como no tiene un modelo detrás, se nombra por lo que lo distingue: su
-    /// procesador y, si tiene, su placa de video. Así, en el tablero de producción
-    /// y en el recibo se lee "PC a medida · AMD Ryzen 5 5600 · MSI Ventus 3060" en
-    /// lugar de un genérico "Configurable".
-    /// </summary>
     public class ComputadoraConfigurableBuilder06AV : ComputadoraBuilderBase06AV
     {
         private const string Prefijo = "PC a medida";
-        private const int LargoMaximo = 150;   // columna Computadoras.Nombre NVARCHAR(150)
+        private const int LargoMaximo = 150;
 
         protected override TipoConfiguracion06AV TipoDeConfiguracion => TipoConfiguracion06AV.Configurable;
 
@@ -34,7 +24,6 @@ namespace BLL.Armado
             return nombre.Length <= LargoMaximo ? nombre : nombre.Substring(0, LargoMaximo);
         }
 
-        /// <summary>"Marca Modelo" si están cargados; si no, la descripción.</summary>
         private static string Rotulo(Componente06AV c)
         {
             if (c == null) return null;

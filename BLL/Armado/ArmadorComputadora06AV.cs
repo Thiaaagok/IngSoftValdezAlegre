@@ -6,10 +6,6 @@ using System.Linq;
 
 namespace BLL.Armado
 {
-    /// <summary>
-    /// Un paso del armado: qué bahía se completa, si es obligatoria y si admite más
-    /// de una pieza (dos memorias, dos discos).
-    /// </summary>
     public sealed class PasoArmado06AV
     {
         internal PasoArmado06AV(TipoComponente06AV tipo, bool obligatorio, bool admiteVarios)
@@ -24,35 +20,10 @@ namespace BLL.Armado
         public bool AdmiteVarios { get; }
     }
 
-    /// <summary>
-    /// PATRÓN BUILDER — rol DIRECTOR.
-    ///
-    /// Conoce la RECETA del armado: en qué orden se colocan las piezas y cuáles son
-    /// indispensables para que el equipo funcione. No sabe qué tipo de computadora
-    /// sale al final: eso depende del builder que se le pase. Con el mismo proceso,
-    /// un <see cref="ComputadoraEstandarBuilder06AV"/> produce un modelo de catálogo y
-    /// un <see cref="ComputadoraConfigurableBuilder06AV"/> produce un equipo a medida.
-    ///
-    /// La receta es la única fuente de verdad del sistema: el configurador "Armá tu
-    /// PC" lee <see cref="Pasos"/> para dibujar sus bahías y decidir qué se puede
-    /// saltear, en lugar de tener su propia lista.
-    ///
-    /// Uso (desde el Cliente):
-    /// <code>
-    ///   var builder  = new ComputadoraConfigurableBuilder06AV();
-    ///   var armador  = new ArmadorComputadora06AV(builder);
-    ///   armador.Armar(piezasElegidas);
-    ///   Computadora06AV pc = builder.ObtenerComputadora();
-    /// </code>
-    /// </summary>
     public class ArmadorComputadora06AV
     {
-        // ══════════════════════════════════════════════════════════
-        //  La receta
-        // ══════════════════════════════════════════════════════════
         private static readonly PasoArmado06AV[] Receta =
         {
-            //                     bahía                                obligatoria  admite varios
             new PasoArmado06AV(TipoComponente06AV.Procesador,     true,  false),
             new PasoArmado06AV(TipoComponente06AV.PlacaMadre,     true,  false),
             new PasoArmado06AV(TipoComponente06AV.MemoriaRAM,     true,  true),
@@ -64,7 +35,6 @@ namespace BLL.Armado
             new PasoArmado06AV(TipoComponente06AV.Otro,           false, true)
         };
 
-        /// <summary>Los pasos del armado, en el orden en que el Director los ejecuta.</summary>
         public static IReadOnlyList<PasoArmado06AV> Pasos { get; } = Array.AsReadOnly(Receta);
 
         public static PasoArmado06AV Paso(TipoComponente06AV tipo) =>
@@ -74,7 +44,6 @@ namespace BLL.Armado
 
         public static bool AdmiteVarios(TipoComponente06AV tipo) => Paso(tipo).AdmiteVarios;
 
-        /// <summary>Bahías obligatorias que no tienen ninguna pieza en la lista dada.</summary>
         public static List<TipoComponente06AV> Faltantes(IEnumerable<Componente06AV> piezas)
         {
             var presentes = new HashSet<TipoComponente06AV>(
@@ -84,9 +53,6 @@ namespace BLL.Armado
                          .ToList();
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  El Director
-        // ══════════════════════════════════════════════════════════
         private IComputadoraBuilder06AV _builder;
 
         public ArmadorComputadora06AV(IComputadoraBuilder06AV builder)
@@ -94,10 +60,6 @@ namespace BLL.Armado
             Builder = builder;
         }
 
-        /// <summary>
-        /// El builder con el que trabaja el Director. Se puede cambiar entre armados:
-        /// la receta es la misma, lo que cambia es el producto.
-        /// </summary>
         public IComputadoraBuilder06AV Builder
         {
             get { return _builder; }
@@ -108,14 +70,6 @@ namespace BLL.Armado
             }
         }
 
-        /// <summary>
-        /// Arma un equipo con las piezas dadas, siguiendo la receta: primero el
-        /// procesador, después la placa madre, y así hasta los adicionales. El orden
-        /// en que vengan las piezas no importa: el Director las ordena.
-        ///
-        /// No devuelve el producto — como indica el patrón, el resultado se le pide
-        /// al builder con <see cref="IComputadoraBuilder06AV.ObtenerComputadora"/>.
-        /// </summary>
         public void Armar(IEnumerable<Componente06AV> piezas)
         {
             if (piezas == null)
@@ -131,7 +85,6 @@ namespace BLL.Armado
                     Colocar(paso.Tipo, pieza);
         }
 
-        /// <summary>Arma un equipo a partir de la composición de un modelo del catálogo.</summary>
         public void ArmarDesdeModelo(ModeloEstandar06AV modelo)
         {
             if (modelo == null)
@@ -139,7 +92,6 @@ namespace BLL.Armado
             Armar(modelo.Componentes);
         }
 
-        /// <summary>Despacha cada pieza al paso del builder que le corresponde.</summary>
         private void Colocar(TipoComponente06AV bahia, Componente06AV pieza)
         {
             switch (bahia)

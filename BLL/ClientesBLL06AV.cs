@@ -64,7 +64,6 @@ namespace BLL
             AuditoriaPcFactory06AV.Baja($"Cliente: {dni}", ModuloBitacora.Clientes);
         }
 
-        // ── Validaciones ─────────────────────────────────────────────
         private void Validar(Cliente06AV cliente)
         {
             if (cliente == null)

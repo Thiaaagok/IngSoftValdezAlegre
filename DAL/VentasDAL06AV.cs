@@ -5,15 +5,8 @@ using System.Data.SqlClient;
 
 namespace DAL
 {
-    /// <summary>
-    /// Acceso a datos de la VENTA (RFN1 - CU01/CU03/CU07): la computadora solicitada,
-    /// la venta en sí y los pagos (seña y saldo final).
-    /// La orden de producción vive en <see cref="ProduccionDAL06AV"/>.
-    /// </summary>
     public class VentasDAL06AV
     {
-        // ── Computadora solicitada ───────────────────────────────
-        /// <param name="idModeloOrigen">Modelo estándar del que sale el equipo; null si es a medida.</param>
         public int AgregarComputadora(string nombre, int tipoConfiguracion, decimal precioTotal, int? idModeloOrigen)
         {
             object id = EjecutarSPEscalar("sp_Computadoras_Agregar", new Dictionary<string, object>
@@ -42,7 +35,6 @@ namespace DAL
         public DataTable ObtenerComponentesDeComputadora(int id) =>
             EjecutarSP("sp_Computadoras_ObtenerComponentes", new Dictionary<string, object> { { "@IdComputadora", id } });
 
-        // ── Venta ────────────────────────────────────────────────
         public int AgregarVenta(string dniCliente, int idComputadora, DateTime fechaEntregaEstimada, string usuario)
         {
             object num = EjecutarSPEscalar("sp_Ventas_Agregar", new Dictionary<string, object>
@@ -60,7 +52,6 @@ namespace DAL
         public DataTable ObtenerVentaPorNumero(int numero) =>
             EjecutarSP("sp_Ventas_ObtenerPorNumero", new Dictionary<string, object> { { "@NumeroVenta", numero } });
 
-        /// <summary>CU04: ventas señadas que todavía no tienen orden de producción.</summary>
         public DataTable ObtenerVentasParaProduccion() => EjecutarSP("sp_Ventas_ObtenerParaProduccion", null);
 
         public void CambiarEstadoVenta(int numero, int estado)
@@ -71,8 +62,6 @@ namespace DAL
             });
         }
 
-        // ── Pagos ────────────────────────────────────────────────
-        /// <summary>Registra el pago y devuelve la fila resultante (incluye el Nº de comprobante generado).</summary>
         public DataTable AgregarPago(int numeroVenta, int tipo, decimal monto, int formaPago,
                                      string referencia, string usuario)
         {
@@ -93,9 +82,6 @@ namespace DAL
         public DataTable ObtenerPagos() => EjecutarSP("sp_Pagos_ObtenerTodos", null);
 
         #region Helpers
-
-        // Close no está en un finally: si el comando lanza, la conexión queda abierta
-        // hasta que la libere el GC.
 
         private DataTable EjecutarSP(string nombreSP, Dictionary<string, object> parametros)
         {

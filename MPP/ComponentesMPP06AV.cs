@@ -6,7 +6,6 @@ using System.Data;
 
 namespace MPP
 {
-    /// <summary>Mapea entre Componente06AV y la capa de acceso a datos.</summary>
     public class ComponentesMPP06AV
     {
         private readonly ComponentesDAL06AV _dal = new ComponentesDAL06AV();
@@ -27,7 +26,6 @@ namespace MPP
             return Mapear(tabla.Rows[0]);
         }
 
-        /// <summary>RFN2: componentes que llegaron al mínimo y hay que reponer.</summary>
         public List<Componente06AV> ObtenerBajoStock()
         {
             DataTable tabla = _dal.ObtenerBajoStock();
@@ -49,22 +47,17 @@ namespace MPP
                            c.PrecioUnitario, c.Stock, c.StockMinimo);
         }
 
-        /// <summary>RFN2: suma al stock lo efectivamente recibido del proveedor.</summary>
         public void SumarStock(string codigo, int cantidad) => _dal.SumarStock(codigo, cantidad);
 
-        /// <summary>Baja lógica: el borrado físico está prohibido por trigger.</summary>
         public void BajaLogica(string codigo) => _dal.BajaLogica(codigo);
 
-        /// <summary>Deshace la baja lógica.</summary>
         public void Reactivar(string codigo) => _dal.Reactivar(codigo);
 
-        /// <summary>Se mantiene por compatibilidad: hoy es una baja lógica.</summary>
         public void Eliminar(string codigo)
         {
             _dal.Eliminar(codigo);
         }
 
-        /// <summary>Bitácora de cambios: histórico de versiones del componente.</summary>
         public List<ComponenteHistorico06AV> ObtenerBitacora(string codigo, string descripcion,
                                                              DateTime? fechaIni, DateTime? fechaFin)
         {
@@ -75,10 +68,8 @@ namespace MPP
             return lista;
         }
 
-        /// <summary>Restaura como vigente una versión histórica.</summary>
         public void ActivarHistorico(int idHistorico) => _dal.ActivarHistorico(idHistorico);
 
-        /// <summary>Descuenta <paramref name="cantidad"/> unidades del stock del componente.</summary>
         public void DescontarStock(string codigo, int cantidad)
         {
             _dal.DescontarStock(codigo, cantidad);
@@ -90,7 +81,6 @@ namespace MPP
         /// <summary>Devuelve al stock libre unidades reservadas.</summary>
         public void LiberarReserva(string codigo, int cantidad) => _dal.LiberarReserva(codigo, cantidad);
 
-        /// <summary>CU06: descuenta el stock físico de las unidades efectivamente utilizadas.</summary>
         public void ConsumirReserva(string codigo, int cantidad) => _dal.ConsumirReserva(codigo, cantidad);
 
         private Componente06AV Mapear(DataRow row)

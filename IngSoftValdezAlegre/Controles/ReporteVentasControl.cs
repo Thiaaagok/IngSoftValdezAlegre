@@ -15,14 +15,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    /// <summary>
-    /// Reporte RF1 (ventas y producción) en tres pasos, como el resto del sistema:
-    ///   1. PERÍODO   — tarjetas con los períodos habituales y "otro período" con fechas.
-    ///   2. FILTROS   — estado, tipo de equipo, cliente y solo atrasadas; todo opcional.
-    ///   3. RESULTADO — indicadores y, debajo, una vista a la vez: detalle o cortes.
-    /// A la derecha quedan los criterios elegidos y, con el resultado, la exportación.
-    /// Los números salen de <see cref="ReporteVentasBLL06AV"/>; acá solo se muestran.
-    /// </summary>
     [DesignerCategory("Code")]
     internal class ReporteVentasControl : AsistenteBase06AV
     {
@@ -37,26 +29,22 @@ namespace IngSoftValdezAlegre.Controles
         private TipoConfiguracion06AV? _tipo;
         private Vista _vista = Vista.Detalle;
 
-        // Paso 1
         private Label lblPeriodoTit, lblDesde, lblHasta, lblErrorPeriodo;
         private FlowLayoutPanel flpPeriodos, flpFechas;
         private DateTimePicker dtpDesde, dtpHasta;
 
-        // Paso 2
         private Label lblEstadoTit, lblTipoTit, lblClienteTit, lblErrorFiltro;
         private FlowLayoutPanel flpEstados, flpTipos;
         private TextBox txtCliente;
         private CheckBox chkAtrasadas;
         private Button btnGenerar;
 
-        // Paso 3
         private FlowLayoutPanel flpKpi, flpVistas;
         private Indicador kpiVentas, kpiFacturacion, kpiCobrado, kpiSaldo, kpiTicket, kpiAtrasadas;
         private readonly Dictionary<Vista, Button> _botonesVista = new Dictionary<Vista, Button>();
         private DataGridView grilla;
         private Label lblPie;
 
-        // Lateral
         private Label lblLateralTit;
         private FichaDatos06AV ficha;
         private FlowLayoutPanel flpExportar;
@@ -79,10 +67,6 @@ namespace IngSoftValdezAlegre.Controles
             Tema.TemaChanged += AplicarTema;
             Disposed += (s, e) => Tema.TemaChanged -= AplicarTema;
         }
-
-        // ══════════════════════════════════════════════════════════════════
-        //  Armado
-        // ══════════════════════════════════════════════════════════════════
 
         private void ConstruirPeriodo(Panel pagina)
         {
@@ -215,10 +199,6 @@ namespace IngSoftValdezAlegre.Controles
             Lateral.Controls.Add(lblLateralTit);
         }
 
-        // ══════════════════════════════════════════════════════════════════
-        //  Pasos
-        // ══════════════════════════════════════════════════════════════════
-
         protected override bool PasoCompleto(int paso)
         {
             if (paso == 0) return ErrorPeriodo() == null;
@@ -226,7 +206,6 @@ namespace IngSoftValdezAlegre.Controles
             return true;
         }
 
-        // En el paso 2 el avance es "Generar reporte"; en el 3 no hay siguiente.
         protected override bool MuestraSiguiente(int paso) => paso == 0;
 
         protected override void AlSiguiente()
@@ -259,7 +238,6 @@ namespace IngSoftValdezAlegre.Controles
             Habilitar(btnNuevo, true, false);
         }
 
-        // ── Paso 1 · Período ─────────────────────────────────────────────
         private static void Rango(Periodo p, DateTime hoy, out DateTime desde, out DateTime hasta)
         {
             var inicioMes = new DateTime(hoy.Year, hoy.Month, 1);
@@ -296,7 +274,6 @@ namespace IngSoftValdezAlegre.Controles
             SoloAtrasadas = chkAtrasadas.Checked
         };
 
-        /// <summary>Error del período con las reglas de la BLL, o null si es válido.</summary>
         private string ErrorPeriodo()
         {
             var f = Criterios();
@@ -305,11 +282,9 @@ namespace IngSoftValdezAlegre.Controles
             catch (ValidacionException06AV ex) { return ex.Message; }
         }
 
-        // ── Paso 2 · Filtros ─────────────────────────────────────────────
         private void ElegirEstado(EstadoVenta06AV? e) { _estado = e; MarcarTarjetas(); CriteriosCambiaron(); }
         private void ElegirTipo(TipoConfiguracion06AV? t) { _tipo = t; MarcarTarjetas(); CriteriosCambiaron(); }
 
-        /// <summary>Cambiar un criterio descarta el resultado anterior: hay que volver a generarlo.</summary>
         private void CriteriosCambiaron()
         {
             _reporte = null;
@@ -356,7 +331,6 @@ namespace IngSoftValdezAlegre.Controles
             IrA(0);
         }
 
-        // ── Paso 3 · Resultado ───────────────────────────────────────────
         private void DibujarResultado()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -428,7 +402,6 @@ namespace IngSoftValdezAlegre.Controles
                 col.MinimumWidth = minimo;
                 if (derecha) col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
-            // Con mínimos por columna la grilla muestra scroll horizontal en vez de aplastar títulos.
             H("Venta", "rep_col_venta", 45, 60);
             H("Fecha", "rep_col_fecha", 65, 85);
             H("Cliente", "rep_col_cliente", 110, 130);
@@ -465,10 +438,6 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
-        // ══════════════════════════════════════════════════════════════════
-        //  Lateral: criterios elegidos
-        // ══════════════════════════════════════════════════════════════════
-
         private void ActualizarLateral()
         {
             if (ficha == null) return;
@@ -476,7 +445,6 @@ namespace IngSoftValdezAlegre.Controles
             string cliente = (txtCliente.Text ?? "").Trim();
 
             ficha.RotuloDestacado = t.Obtener("rep_periodo");
-            // Año corto: con cuatro dígitos el rango no entra en el destacado de la ficha.
             ficha.ValorDestacado = t.Obtener("rep_rango", dtpDesde.Value.ToString("dd/MM/yy"), dtpHasta.Value.ToString("dd/MM/yy"));
             ficha.ColorDestacado = ErrorPeriodo() == null ? Tema.Primario : Tema.Peligro;
             ficha.Definir(new[]
@@ -505,10 +473,6 @@ namespace IngSoftValdezAlegre.Controles
             l.Text = texto ?? "";
             l.Visible = !string.IsNullOrEmpty(texto);
         }
-
-        // ══════════════════════════════════════════════════════════════════
-        //  Exportación
-        // ══════════════════════════════════════════════════════════════════
 
         private Dictionary<string, Func<FilaReporteVentas06AV, object>> ColumnasExportacion()
         {
@@ -540,15 +504,14 @@ namespace IngSoftValdezAlegre.Controles
                 try
                 {
                     var t = GestorIdioma06AV.Instancia;
-                    string titulo = t.Obtener("rep_titulo") + "  ·  " +
-                                    _reporte.Filtro.Desde.ToString("dd/MM/yyyy") + " – " +
-                                    _reporte.Filtro.Hasta.ToString("dd/MM/yyyy");
-                    new ExportacionPDF().Exportar(_reporte.Filas, ColumnasExportacion(), sfd.FileName, titulo,
-                        new float[] { 5, 8, 18, 18, 8, 9, 9, 9, 10, 14, 8, 6 });
+                    Cursor = Cursors.WaitCursor;
+                    using (var pdf = new ReporteVentasPdf06AV(_reporte, DateTime.Today))
+                        pdf.Exportar(sfd.FileName);
+                    Cursor = Cursors.Default;
                     ConfirmacionForm.MostrarInfo(t.Obtener("pdf_generado"), t.Obtener("rep_titulo"),
                         ConfirmacionForm.TipoConfirmacion.Info, FindForm());
                 }
-                catch (Exception ex) { Aviso(ex.Message); }
+                catch (Exception ex) { Cursor = Cursors.Default; Aviso(ex.Message); }
             }
         }
 
@@ -572,11 +535,7 @@ namespace IngSoftValdezAlegre.Controles
         private void Aviso(string mensaje) => ConfirmacionForm.MostrarInfo(
             mensaje, GestorIdioma06AV.Instancia.Obtener("aviso"), ConfirmacionForm.TipoConfirmacion.Advertencia, FindForm());
 
-        // ══════════════════════════════════════════════════════════════════
-        //  Textos
-        // ══════════════════════════════════════════════════════════════════
-
-        private static string TextoEstadoVenta(EstadoVenta06AV e)
+        internal static string TextoEstadoVenta(EstadoVenta06AV e)
         {
             var t = GestorIdioma06AV.Instancia;
             switch (e)
@@ -615,21 +574,17 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
-        private static string TextoTipo(string tipo) =>
+        internal static string TextoTipo(string tipo) =>
             GestorIdioma06AV.Instancia.Obtener(tipo == TipoConfiguracion06AV.Estandar.ToString() ? "rep_tipo_estandar" : "rep_tipo_medida");
 
-        private static string TextoOrden(FilaReporteVentas06AV f) =>
+        internal static string TextoOrden(FilaReporteVentas06AV f) =>
             f.NumeroOrden.HasValue && f.EstadoOrden.HasValue
                 ? "#" + f.NumeroOrden.Value + " · " + TextoEstadoOrden(f.EstadoOrden.Value)
                 : GestorIdioma06AV.Instancia.Obtener("rep_sin_orden");
 
         private static EstadoVenta06AV Estado(string clave) => (EstadoVenta06AV)Enum.Parse(typeof(EstadoVenta06AV), clave);
 
-        private static string Plata(decimal v) => v.ToString("C0", CultureInfo.CurrentCulture);
-
-        // ══════════════════════════════════════════════════════════════════
-        //  Tema e idioma
-        // ══════════════════════════════════════════════════════════════════
+        internal static string Plata(decimal v) => v.ToString("C0", CultureInfo.CurrentCulture);
 
         public override void AplicarTema()
         {
@@ -711,14 +666,6 @@ namespace IngSoftValdezAlegre.Controles
             if (PasoActual == 2) { DibujarResultado(); MostrarVista(); }
         }
 
-        // ══════════════════════════════════════════════════════════════════
-        //  Piezas
-        // ══════════════════════════════════════════════════════════════════
-
-        /// <summary>
-        /// Tarjeta de indicador. El alto sale de las fuentes y no de números fijos, para que
-        /// no se corte el pie con la escala de Windows al 125% o 150%.
-        /// </summary>
         private sealed class Indicador : Control
         {
             private string _rotulo = "", _valor = "", _pie = "";

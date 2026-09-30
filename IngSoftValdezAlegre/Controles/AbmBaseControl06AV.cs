@@ -73,8 +73,8 @@ namespace IngSoftValdezAlegre.Controles
             barraGrilla.Controls.Add(BarraBotones(_btnNuevo, _btnEditar, _btnEliminar));
 
             _pnlGrilla = new Panel { Dock = DockStyle.Fill };
-            _pnlGrilla.Controls.Add(Grilla);        
-            _pnlGrilla.Controls.Add(barraGrilla);   
+            _pnlGrilla.Controls.Add(Grilla);
+            _pnlGrilla.Controls.Add(barraGrilla);
 
             _lblFormTitulo = new Label { AutoSize = true, Location = new Point(6, 16) };
             var barraForm = new Panel { Dock = DockStyle.Top, Height = 56 };
@@ -108,9 +108,9 @@ namespace IngSoftValdezAlegre.Controles
             barraFormBottom.Controls.Add(BarraBotones(_btnVolver, _btnGuardar));
 
             _pnlForm = new Panel { Dock = DockStyle.Fill, Visible = false };
-            _pnlForm.Controls.Add(contCampos);        
-            _pnlForm.Controls.Add(barraForm);        
-            _pnlForm.Controls.Add(barraFormBottom);   
+            _pnlForm.Controls.Add(contCampos);
+            _pnlForm.Controls.Add(barraForm);
+            _pnlForm.Controls.Add(barraFormBottom);
 
             Controls.Add(_pnlForm);
             Controls.Add(_pnlGrilla);
@@ -166,7 +166,6 @@ namespace IngSoftValdezAlegre.Controles
             AplicarIdiomaCampos();
         }
 
-        // ── Navegación entre vistas ──────────────────────────────────
         protected void RecargarGrilla()
         {
             try { CargarDatosEnGrilla(Grilla); }

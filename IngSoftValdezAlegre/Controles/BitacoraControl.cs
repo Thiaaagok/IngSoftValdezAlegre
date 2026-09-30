@@ -24,7 +24,6 @@ namespace IngSoftValdezAlegre.Controles
 
         private const string OPCION_TODOS = "(Todos)";
 
-        // Mapa: módulo → categorías que aplican
         private static readonly Dictionary<ModuloBitacora, CategoriaBitacora[]> _categoriasPorModulo =
             new Dictionary<ModuloBitacora, CategoriaBitacora[]>
             {
@@ -47,11 +46,9 @@ namespace IngSoftValdezAlegre.Controles
             ConfigurarColumnas();
             AplicarIdioma();
 
-            // Observer: suscribirse al cambio de idioma
             GestorIdioma06AV.Instancia.IdiomaChanged += AplicarIdioma;
             Disposed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
 
-            // Observer: repintar cuando se cambia entre tema claro y oscuro.
             Tema.TemaChanged += AplicarTema;
             Disposed += (s, e) => Tema.TemaChanged -= AplicarTema;
         }
@@ -86,7 +83,6 @@ namespace IngSoftValdezAlegre.Controles
             lblDni.Text           = t.Obtener("nombre");
             lblApellido.Text      = t.Obtener("apellido");
 
-            // Headers de la grilla
             if (grilla.Columns["UsuarioDni"]  != null) grilla.Columns["UsuarioDni"].HeaderText  = t.Obtener("dni");
             if (grilla.Columns["Fecha"]       != null) grilla.Columns["Fecha"].HeaderText       = "Fecha";
             if (grilla.Columns["Hora"]        != null) grilla.Columns["Hora"].HeaderText        = "Hora";
@@ -94,7 +90,6 @@ namespace IngSoftValdezAlegre.Controles
             if (grilla.Columns["Descripcion"] != null) grilla.Columns["Descripcion"].HeaderText = t.Obtener("evento");
             if (grilla.Columns["Criticidad"]  != null) grilla.Columns["Criticidad"].HeaderText  = t.Obtener("criticidad");
 
-            // Actualizar conteo si ya hay datos
             if (_eventosCargados != null && _eventosCargados.Count > 0)
                 lblCantidad.Text = t.Obtener("numero_eventos") + " " + _eventosCargados.Count;
         }
@@ -106,8 +101,6 @@ namespace IngSoftValdezAlegre.Controles
             EstablecerRangoPorDefecto();
             AplicarFiltros();
         }
-        // -------------------- Setup --------------------
-
         private void ConfigurarColumnas()
         {
             grilla.AutoGenerateColumns = false;
@@ -145,9 +138,7 @@ namespace IngSoftValdezAlegre.Controles
                 cmbModulo.Items.Add(m);
             }
             cmbModulo.SelectedIndexChanged += cmbModulo_SelectedIndexChanged;
-            cmbModulo.SelectedIndex = 0;  // dispara ActualizarComboEvento vía evento
-
-            // cmbEvento se llena desde ActualizarComboEvento()
+            cmbModulo.SelectedIndex = 0;
 
             cmbCriticidad.Items.Clear();
             cmbCriticidad.Items.Add(OPCION_TODOS);
@@ -172,7 +163,6 @@ namespace IngSoftValdezAlegre.Controles
 
             if (string.IsNullOrEmpty(seleccion) || seleccion == OPCION_TODOS)
             {
-                // Todos los módulos → todas las categorías
                 foreach (var c in Enum.GetNames(typeof(CategoriaBitacora)))
                     cmbEvento.Items.Add(c);
             }
@@ -184,7 +174,6 @@ namespace IngSoftValdezAlegre.Controles
             }
             else
             {
-                // Módulo sin mapa definido → todas las categorías como fallback
                 foreach (var c in Enum.GetNames(typeof(CategoriaBitacora)))
                     cmbEvento.Items.Add(c);
             }

@@ -10,13 +10,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Common
 {
-    /// <summary>
-    /// Arma los comprobantes de PC Factory (RFN1):
-    ///   · Recibo de seña  (CU03) — sobre la VENTA y el pago de seña.
-    ///   · Factura final   (CU07) — sobre la VENTA entregada y su orden de producción.
-    /// Genera un PDF con <see cref="PdfSimple06AV"/> en
-    /// Documentos\PC Factory\Comprobantes y devuelve la ruta del archivo.
-    /// </summary>
     public static class ComprobantePcFactory06AV
     {
         private static string CarpetaComprobantes()
@@ -27,10 +20,6 @@ namespace IngSoftValdezAlegre.Common
             return carpeta;
         }
 
-        /// <summary>
-        /// CU03: recibo por la seña recibida. Incluye datos del cliente, de la computadora,
-        /// forma de pago, monto abonado, saldo pendiente y fecha estimada de entrega.
-        /// </summary>
         public static string GenerarReciboSena(Venta06AV venta, Pago06AV sena)
         {
             if (venta == null) throw new ArgumentNullException(nameof(venta));
@@ -60,10 +49,6 @@ namespace IngSoftValdezAlegre.Common
             return ruta;
         }
 
-        /// <summary>
-        /// CU07: factura final al entregar. Detalla el anticipo, el saldo cancelado,
-        /// el número de serie del equipo y la fecha de entrega.
-        /// </summary>
         public static string GenerarFactura(Venta06AV venta, OrdenProduccion06AV orden = null)
         {
             if (venta == null) throw new ArgumentNullException(nameof(venta));
@@ -100,22 +85,11 @@ namespace IngSoftValdezAlegre.Common
             return ruta;
         }
 
-        /// <summary>Abre el PDF con la aplicación por defecto del sistema.</summary>
         public static void Abrir(string ruta)
         {
-            try { Process.Start(ruta); } catch { /* si no hay visor asociado, no rompemos el flujo */ }
+            try { Process.Start(ruta); } catch {  }
         }
 
-        /// <summary>
-        /// Avisa que el comprobante quedó generado y pregunta si se quiere imprimir.
-        ///   Sí → abre el PDF con el visor del sistema.
-        ///   No → el archivo queda guardado y el usuario sigue en la pantalla del sistema.
-        /// Devuelve true si se abrió el PDF.
-        /// </summary>
-        /// <param name="ruta">Ruta del PDF recién generado.</param>
-        /// <param name="esFactura">true = factura (CU07); false = recibo de seña (CU03).</param>
-        /// <param name="owner">Ventana propietaria del diálogo.</param>
-        /// <param name="encabezado">Texto opcional que se muestra antes de la pregunta.</param>
         public static bool PreguntarEImprimir(string ruta, bool esFactura,
                                               IWin32Window owner = null, string encabezado = null)
         {

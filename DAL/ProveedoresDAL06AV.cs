@@ -5,7 +5,6 @@ using System.Data.SqlClient;
 
 namespace DAL
 {
-    /// <summary>Acceso a datos de Proveedores (PC Factory). Id autonumérico.</summary>
     public class ProveedoresDAL06AV
     {
         public DataTable ObtenerTodos()
@@ -29,7 +28,6 @@ namespace DAL
             });
         }
 
-        /// <summary>Inserta y devuelve el Id generado.</summary>
         public int Agregar(string nombre, string cuit, string email, string telefono, string direccion)
         {
             object id = EjecutarSPEscalar("sp_Proveedores_Agregar", new Dictionary<string, object>

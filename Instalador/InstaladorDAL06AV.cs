@@ -9,10 +9,6 @@ using System.Text.RegularExpressions;
 
 namespace Instalador
 {
-    /// <summary>
-    /// Capa de acceso a datos del Instalador. Es autónoma (ADO.NET puro) para poder
-    /// preparar la base ANTES de que exista, sin depender de la DAL de la aplicación.
-    /// </summary>
     public class InstaladorDAL06AV
     {
         private readonly OpcionesInstalacion06AV _opciones;
@@ -22,14 +18,6 @@ namespace Instalador
             _opciones = opciones ?? throw new ArgumentNullException(nameof(opciones));
         }
 
-        /// <summary>
-        /// Detecta instancias de SQL Server disponibles en la máquina/red para ofrecerlas
-        /// en el asistente. Combina tres fuentes y nunca lanza excepción (si una falla,
-        /// simplemente aporta menos resultados):
-        ///   • LocalDB, listadas con la utilidad 'sqllocaldb info'.
-        ///   • Instancias locales y de red, vía SqlDataSourceEnumerator.
-        ///   • Valores comunes por defecto ('.' y '.\SQLEXPRESS').
-        /// </summary>
         public static List<string> DetectarInstancias()
         {
             var lista = new List<string>();
@@ -41,7 +29,6 @@ namespace Instalador
                     lista.Add(s.Trim());
             }
 
-            // 1) LocalDB (p. ej. la instancia automática "MSSQLLocalDB").
             try
             {
                 var psi = new ProcessStartInfo("sqllocaldb", "info")
@@ -62,9 +49,8 @@ namespace Instalador
                     }
                 }
             }
-            catch { /* LocalDB puede no estar instalado */ }
+            catch {  }
 
-            // 2) Instancias locales y de red visibles en el momento.
             try
             {
                 DataTable dt = SqlDataSourceEnumerator.Instance.GetDataSources();
@@ -76,16 +62,14 @@ namespace Instalador
                     Agregar(string.IsNullOrEmpty(instancia) ? servidor : servidor + "\\" + instancia);
                 }
             }
-            catch { /* el enumerador puede fallar o tardar; se ignora */ }
+            catch {  }
 
-            // 3) Valores comunes por defecto, por si nada de lo anterior devolvió algo.
             Agregar(".");
             Agregar(".\\SQLEXPRESS");
 
             return lista;
         }
 
-        /// <summary>Intenta abrir una conexión a 'master'. Lanza excepción si no puede.</summary>
         public void ProbarConexion()
         {
             using (var conn = new SqlConnection(_opciones.CadenaMaster()))
@@ -106,7 +90,6 @@ namespace Instalador
             }
         }
 
-        /// <summary>Crea la base de datos si todavía no existe.</summary>
         public void CrearBaseDatos()
         {
             if (ExisteBaseDatos()) return;
@@ -122,7 +105,6 @@ namespace Instalador
             }
         }
 
-        /// <summary>Elimina la base (usado por la prueba del instalador para limpiar).</summary>
         public void EliminarBaseDatos()
         {
             if (!ExisteBaseDatos()) return;
@@ -139,11 +121,6 @@ namespace Instalador
             }
         }
 
-        /// <summary>
-        /// Ejecuta un lote SQL contra la base de la aplicación. El texto se parte en
-        /// sublotes separados por la palabra "GO" (como en SSMS), porque ADO.NET no
-        /// entiende GO de forma nativa.
-        /// </summary>
         public void EjecutarLote(string sqlBatch)
         {
             using (var conn = new SqlConnection(_opciones.CadenaBaseDatos()))
@@ -181,14 +158,12 @@ namespace Instalador
             }
         }
 
-        /// <summary>Separa un script en sublotes usando líneas que contienen solo "GO".</summary>
         private static string[] SepararPorGo(string sql)
         {
             return Regex.Split(sql, @"^\s*GO\s*$",
                 RegexOptions.Multiline | RegexOptions.IgnoreCase);
         }
 
-        /// <summary>Evita inyección por nombre de base: solo letras, números y _.</summary>
         private static string ValidarNombreBase(string nombre)
         {
             if (string.IsNullOrWhiteSpace(nombre) || !Regex.IsMatch(nombre, @"^[A-Za-z0-9_]+$"))

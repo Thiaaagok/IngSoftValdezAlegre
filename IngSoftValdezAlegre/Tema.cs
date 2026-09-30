@@ -3,17 +3,11 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre
 {
-    /// <summary>
-    /// Identidad visual centralizada para PC Factory.
-    /// Paleta: grafito industrial, cian tecnologico y naranja de produccion.
-    /// Soporta modo claro y modo oscuro via EsOscuro / ToggleTema().
-    /// </summary>
     internal static class Tema
     {
         private static bool _oscuro = false;
         public static bool EsOscuro => _oscuro;
 
-        /// <summary>Se dispara al cambiar el tema (claro/oscuro), para que la UI se repinte.</summary>
         public static event System.Action TemaChanged;
 
         public static void ToggleTema()
@@ -22,7 +16,6 @@ namespace IngSoftValdezAlegre
             TemaChanged?.Invoke();
         }
 
-        /// <summary>Fuerza el modo indicado (true = oscuro) y notifica el cambio.</summary>
         public static void EstablecerOscuro(bool oscuro)
         {
             if (_oscuro == oscuro) return;
@@ -30,7 +23,6 @@ namespace IngSoftValdezAlegre
             TemaChanged?.Invoke();
         }
 
-        // Neutros
         public static readonly Color Grafito950 = Color.FromArgb(2, 6, 23);
         public static readonly Color Grafito900 = Color.FromArgb(15, 23, 42);
         public static readonly Color Grafito800 = Color.FromArgb(30, 41, 59);
@@ -41,19 +33,16 @@ namespace IngSoftValdezAlegre
         public static readonly Color Acero100   = Color.FromArgb(241, 245, 249);
         public static readonly Color Acero50    = Color.FromArgb(248, 250, 252);
 
-        // Marca / tecnologia
         public static readonly Color Cian50  = Color.FromArgb(236, 254, 255);
         public static readonly Color Cian100 = Color.FromArgb(207, 250, 254);
         public static readonly Color Cian400 = Color.FromArgb(34, 211, 238);
         public static readonly Color Cian600 = Color.FromArgb(8, 145, 178);
         public static readonly Color Cian700 = Color.FromArgb(14, 116, 144);
 
-        // Produccion
         public static readonly Color Naranja50  = Color.FromArgb(255, 247, 237);
         public static readonly Color Naranja500 = Color.FromArgb(249, 115, 22);
         public static readonly Color Naranja600 = Color.FromArgb(234, 88, 12);
 
-        // Estados
         public static readonly Color Verde50  = Color.FromArgb(240, 253, 244);
         public static readonly Color Verde600 = Color.FromArgb(22, 163, 74);
         public static readonly Color Verde700 = Color.FromArgb(21, 128, 61);
@@ -63,13 +52,11 @@ namespace IngSoftValdezAlegre
         public static readonly Color Rojo600  = Color.FromArgb(220, 38, 38);
         public static readonly Color Rojo700  = Color.FromArgb(185, 28, 28);
 
-        // Oscuro — fondos alternativos para estado/advertencia en dark mode
         private static readonly Color OscuroAmber  = Color.FromArgb(45, 35, 5);
         private static readonly Color OscuroVerde  = Color.FromArgb(5, 40, 20);
         private static readonly Color OscuroRojo   = Color.FromArgb(50, 10, 10);
         private static readonly Color OscuroCian   = Color.FromArgb(5, 35, 45);
 
-        // Alias de compatibilidad
         public static readonly Color Azul50  = Cian50;
         public static readonly Color Azul400 = Cian400;
         public static readonly Color Azul800 = Cian700;

@@ -7,23 +7,16 @@ using System.Linq;
 
 namespace MPP
 {
-    /// <summary>
-    /// Mapeo de la VENTA (RFN1 - CU01/CU03/CU07). Persiste y reconstruye el grafo
-    /// comercial: cliente, computadora + componentes y pagos (seña y saldo final).
-    /// </summary>
     public class VentasMPP06AV
     {
         private readonly VentasDAL06AV _dal = new VentasDAL06AV();
         private readonly ClientesMPP06AV _clientes = new ClientesMPP06AV();
 
-        // ── Computadora ──────────────────────────────────────────
         public void GuardarComputadora(Computadora06AV pc)
         {
             int? idModelo = pc.ModeloOrigen != null && pc.ModeloOrigen.Id > 0 ? pc.ModeloOrigen.Id : (int?)null;
             pc.Id = _dal.AgregarComputadora(pc.Nombre, (int)pc.TipoConfiguracion, pc.PrecioTotal, idModelo);
 
-            // La lista de componentes puede traer repetidos (2 módulos de RAM, 2 discos…):
-            // se guarda una fila por código con su cantidad.
             foreach (var g in pc.Componentes.GroupBy(c => c.Codigo))
                 _dal.AgregarComponenteAComputadora(pc.Id, g.Key, g.Count());
         }
@@ -43,8 +36,6 @@ namespace MPP
                 PrecioPactado = MapearPrecioPactado(r)
             };
 
-            // Una pieza por unidad, como la arma el builder: Requerimientos cuenta bien la
-            // cantidad y, si no hay precio pactado, la suma sigue dando el total.
             foreach (DataRow rc in _dal.ObtenerComponentesDeComputadora(id).Rows)
             {
                 int cantidad = rc.Table.Columns.Contains("Cantidad") && rc["Cantidad"] != DBNull.Value
@@ -87,7 +78,6 @@ namespace MPP
             };
         }
 
-        // ── Venta ────────────────────────────────────────────────
         public void AgregarVenta(Venta06AV venta)
         {
             GuardarComputadora(venta.Computadora);
@@ -110,7 +100,6 @@ namespace MPP
             return t.Rows.Count == 0 ? null : MapearVenta(t.Rows[0]);
         }
 
-        /// <summary>CU04: ventas señadas que todavía no tienen orden de producción.</summary>
         public List<Venta06AV> ObtenerParaProduccion()
         {
             var lista = new List<Venta06AV>();
@@ -122,8 +111,6 @@ namespace MPP
         public void CambiarEstado(int numeroVenta, EstadoVenta06AV estado) =>
             _dal.CambiarEstadoVenta(numeroVenta, (int)estado);
 
-        // ── Pagos ────────────────────────────────────────────────
-        /// <summary>Registra el pago y devuelve el comprobante generado por la base.</summary>
         public Pago06AV AgregarPago(int numeroVenta, TipoPago06AV tipo, decimal monto,
                                     FormaPago06AV formaPago, string referencia, string usuario)
         {
@@ -139,7 +126,6 @@ namespace MPP
             return lista;
         }
 
-        // ── Helpers de mapeo ─────────────────────────────────────
         private Venta06AV MapearVenta(DataRow row)
         {
             var venta = new Venta06AV

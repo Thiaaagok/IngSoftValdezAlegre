@@ -9,10 +9,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre
 {
-    /// <summary>
-    /// GUI de REPARACIÓN del Dígito Verificador, para quien tiene la patente que lo
-    /// habilita. Ofrece Recalcular (acepta/normaliza), Restore (vuelve a un backup) y Salir.
-    /// </summary>
     public partial class FRMReparacionDV : Form
     {
         private readonly ResultadoVerificacion06AV _resultado;
@@ -83,7 +79,6 @@ namespace IngSoftValdezAlegre
             return sb.ToString();
         }
 
-        // No resuelve la inconsistencia: la acepta y normaliza el DV.
         private void Recalcular()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -108,8 +103,6 @@ namespace IngSoftValdezAlegre
         {
             var t = GestorIdioma06AV.Instancia;
 
-            // Arrancar el diálogo en la MISMA carpeta por defecto que usa el Gestor de
-            // Backups (IntegridadBLL06AV.CarpetaBackupPorDefecto). Se crea si no existe.
             string carpetaBackups;
             try { carpetaBackups = _integridad.ObtenerCarpetaBackupPorDefecto(); }
             catch { carpetaBackups = string.Empty; }

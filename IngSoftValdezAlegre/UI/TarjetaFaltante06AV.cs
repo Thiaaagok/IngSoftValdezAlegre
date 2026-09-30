@@ -4,7 +4,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>Datos de un componente candidato a reposición (los arma la pantalla de Compras).</summary>
     internal class FaltanteItem06AV
     {
         public string Codigo { get; set; }
@@ -15,10 +14,8 @@ namespace IngSoftValdezAlegre.UI
         /// <summary>Ya está en una orden de compra en curso: no se puede volver a pedir (RFN2).</summary>
         public bool Bloqueado { get; set; }
 
-        /// <summary>Número de la orden que lo bloquea, para poder decirlo en pantalla.</summary>
         public int OrdenBloqueo { get; set; }
 
-        /// <summary>Cantidad sugerida: llevar el stock a 2× el punto de reposición.</summary>
         public int CantidadSugerida
         {
             get
@@ -29,22 +26,12 @@ namespace IngSoftValdezAlegre.UI
         }
     }
 
-    /// <summary>
-    /// Tarjeta de un componente faltante en el paso 1 del asistente de compra.
-    ///
-    /// Sustituye a la fila con checkbox: la tarjeta entera es el control de selección
-    /// (clic en cualquier parte, o Espacio con el foco puesto), y el medidor de
-    /// reposición le da a cada ítem un peso visual distinto según qué tan crítico está.
-    /// Los componentes ya pedidos no se ocultan: se muestran apagados y con el número de
-    /// la orden que los bloquea, para que nadie los busque en vano.
-    /// </summary>
     internal class TarjetaFaltante06AV : Control
     {
         private readonly MedidorReposicion06AV _medidor;
         private readonly SelectorCantidad06AV _cantidad;
         private readonly Label _lblReponer;
 
-        /// <summary>Ancho reservado a la derecha para el bloque "Reponer".</summary>
         private const int AnchoBloqueCantidad = 132;
         private bool _incluido;
         private bool _hot;
@@ -138,11 +125,8 @@ namespace IngSoftValdezAlegre.UI
         protected override void OnResize(EventArgs e)
         {
             base.OnResize(e);
-            // Ojo: asignar Height/Width en el constructor dispara OnResize ANTES de que
-            // existan los hijos. Sin esta guarda salta NullReferenceException al crear.
             if (_medidor == null || _cantidad == null || _lblReponer == null) return;
 
-            // El bloque "Reponer" queda pegado al borde derecho; el medidor usa el resto.
             int xBloque = Math.Max(140, Width - AnchoBloqueCantidad);
             _lblReponer.Left = xBloque;
             _cantidad.Left = xBloque;
@@ -202,7 +186,6 @@ namespace IngSoftValdezAlegre.UI
                                   Incluido || Focused ? 1.8f : 1f);
             }
 
-            // Casilla de selección dibujada (círculo con tilde).
             var sel = new Rectangle(14, 16, 20, 20);
             if (Item.Bloqueado)
             {
@@ -222,7 +205,6 @@ namespace IngSoftValdezAlegre.UI
                     g.DrawEllipse(p, sel);
             }
 
-            // Texto y ancho del chip primero: la descripción se recorta para no pisarlo.
             string textoChip = Item.Bloqueado
                 ? (TextoBloqueado ?? "en OC") + " #" + Item.OrdenBloqueo
                 : (Item.StockMinimo - Item.Stock > 0
@@ -239,7 +221,6 @@ namespace IngSoftValdezAlegre.UI
                                                      Math.Max(10, Width - AnchoBloqueCantidad - anchoChipReserva - 150),
                                                      18));
 
-            // Chip de estado, a la izquierda del bloque "Reponer"
             string texto = textoChip;
             Color cChip = Item.Bloqueado ? Tema.TextoSuave : acento;
             int anchoChip = anchoChipReserva;

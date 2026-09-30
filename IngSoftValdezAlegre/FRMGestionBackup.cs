@@ -10,13 +10,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre
 {
-    /// <summary>
-    /// GUI de Gestión de Backups. Permite:
-    ///   • Generar un backup manual, eligiendo dónde guardarlo (por defecto en
-    ///     C:\Backups\GestionUsuario\) con un nombre que incluye fecha y hora.
-    ///   • Restaurar la base eligiendo un archivo .bak desde cualquier ubicación.
-    /// Si no hay ningún backup elegido/existente, el restore no se ejecuta.
-    /// </summary>
     public partial class FRMGestionBackup : Form
     {
         private readonly IntegridadBLL06AV _integridad = new IntegridadBLL06AV();
@@ -62,7 +55,6 @@ namespace IngSoftValdezAlegre
             btnCerrar.Click += (s, e) => Close();
         }
 
-        /// <summary>Muestra cuántos backups hay y la fecha del más reciente.</summary>
         private void ActualizarEstado()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -82,7 +74,6 @@ namespace IngSoftValdezAlegre
                 ultimo.Nombre);
         }
 
-        // ── Generar backup (elige dónde guardar) ──────────────────────
         private void GenerarBackup()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -118,12 +109,10 @@ namespace IngSoftValdezAlegre
             }
         }
 
-        // ── Elegir archivo y restaurar (desde cualquier ubicación) ────
         private void Restaurar()
         {
             var t = GestorIdioma06AV.Instancia;
 
-            // El restore SIEMPRE se hace en base a un backup: hay que elegir uno.
             string carpetaInicial = Directory.Exists(IntegridadBLL06AV.CarpetaBackupPorDefecto)
                 ? IntegridadBLL06AV.CarpetaBackupPorDefecto
                 : Environment.GetFolderPath(Environment.SpecialFolder.MyComputer);

@@ -4,7 +4,6 @@ using System.Data.SqlClient;
 
 namespace DAL
 {
-    /// <summary>Acceso a datos de Clientes (PC Factory). Usa procedimientos almacenados.</summary>
     public class ClientesDAL06AV
     {
         public DataTable ObtenerTodos()

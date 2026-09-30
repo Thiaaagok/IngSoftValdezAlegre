@@ -220,7 +220,6 @@ namespace SER
         #region Alta
         public bool CrearUsuario(string dni, string nombre, string apellido, string email, string rol, string dniOperador)
         {
-            // Si no se seleccionó rol, asignar Usuario General por defecto
             if (string.IsNullOrWhiteSpace(rol))
                 rol = "UsuarioGeneral";
 
@@ -455,7 +454,7 @@ namespace SER
                 bool resultado = MPP.DesbloquearUsuario(dni, contraseniaBase);
                 MPP.LimpiarIntentosFallidos(dni);
                 RecalcularIntegridad();
-           
+
                 bitacora.Modificacion(
                     $"Usuario: {dni} desbloqueado. Se le requerirá cambiar contraseña.",
                     ModuloBitacora.Usuarios,
@@ -491,14 +490,12 @@ namespace SER
 
                 var usuario = MPP.ObtenerPorDni(dni);
 
-                // Hasheamos la contraseña actual ingresada y la comparamos contra la que está almacenada(también hasheada).
                 EncriptacionSER06AV enc = new EncriptacionSER06AV();
                 string contraseniaActualHash = enc.Encriptar(contraseniaActual);
                 string contraseniaNuevaHash = enc.Encriptar(contraseniaNueva);
 
                 if (usuario.Contrasenia != contraseniaActualHash)
                     throw new ContraseniaInvalidaException(dni);
-
 
                 bool resultado = MPP.CambiarContraseña(dni, contraseniaActualHash, contraseniaNuevaHash);
                 MPP.LimpiarIntentosFallidos(dni);
@@ -517,9 +514,6 @@ namespace SER
             }
         }
 
-        /// <summary>
-        /// Cambia el idioma del usuario: lo persiste en la BD y actualiza el GestorIdioma de la sesión.
-        /// </summary>
         public bool CambiarIdioma(string dni, string idioma)
         {
             ValidarDni(dni);
@@ -550,7 +544,6 @@ namespace SER
                 {
                     GestorIdioma06AV.Instancia.CambiarIdioma(idioma);
 
-                    // Actualizar el objeto de sesión si es el usuario activo
                     var sesion = UsuarioSesion06AV.Instancia();
                     if (sesion.UsuarioActual != null && sesion.UsuarioActual.Dni == dni)
                         sesion.UsuarioActual.Idioma = idioma;

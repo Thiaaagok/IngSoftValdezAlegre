@@ -6,10 +6,6 @@ using System.Data;
 
 namespace MPP
 {
-    /// <summary>
-    /// Orquesta el cálculo del Dígito Verificador: recorre las tablas protegidas,
-    /// calcula sus DVH/DVV con el motor y mapea contra la tabla DV.
-    /// </summary>
     public class IntegridadMPP06AV
     {
         private readonly IntegridadDAL06AV _dal = new IntegridadDAL06AV();

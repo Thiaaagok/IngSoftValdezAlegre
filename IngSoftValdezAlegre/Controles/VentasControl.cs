@@ -12,17 +12,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    /// <summary>
-    /// VENTAS (RFN1) — pantalla del RECEPCIONISTA. Es el circuito comercial, separado
-    /// de la fábrica:
-    ///   CU01 Registrar venta            → "＋ Nueva venta"
-    ///   CU02 Registrar cliente          → botón "＋" junto al combo de clientes
-    ///   CU03 Registrar seña y recibo    → acción "Registrar seña" del panel de detalle
-    ///
-    /// Acá termina el mostrador. La orden de producción la genera el gerente desde
-    /// Producción una vez que la venta quedó señada, y el retiro del equipo con el
-    /// cobro del saldo (CU07) se hace en "Entrega de computadoras".
-    /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class VentasControl : UserControl, IIdiomaAplicable06AV
     {
@@ -36,10 +25,8 @@ namespace IngSoftValdezAlegre.Controles
         private Venta06AV _ventaSel;
         private OrdenProduccion06AV _ordenSel;
 
-        // Vistas
         private Panel pnlGrilla, pnlFormVenta, pnlFormPago;
 
-        // Hub (lista + detalle)
         private Label lblTitulo;
         private DataGridView grilla;
         private Button btnNueva, btnRefrescar;
@@ -47,7 +34,6 @@ namespace IngSoftValdezAlegre.Controles
         private Label lblDetTitulo, lblDetEstado;
         private FlowLayoutPanel flpDetalle;
 
-        // Formulario "Nueva venta"
         private Label lblFormVentaTit, lblCliente, lblTipo, lblModelo, lblComp, lblEntrega;
         private Label lblResumenTit, lblResumenVacio, lblTotalRotulo, lblTotalValor, lblVentaAyuda;
         private ResumenPcControl06AV _resumen;
@@ -60,7 +46,6 @@ namespace IngSoftValdezAlegre.Controles
         private Button btnNuevoCliente, btnArmar, btnRegistrar, btnVolverVenta;
         private DateTimePicker dtpEntrega;
 
-        // Formulario "Registrar seña" (CU03)
         private Label lblFormPagoTit, lblPagoDetalle, lblMonto, lblFormaPago, lblReferencia;
         private FichaDatos06AV fichaPago;
         private FlowLayoutPanel flpFormaPago;
@@ -84,9 +69,6 @@ namespace IngSoftValdezAlegre.Controles
             CargarVentas();
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Construcción
-        // ══════════════════════════════════════════════════════════════
         private void ConstruirUI()
         {
             ConstruirHub();
@@ -147,18 +129,10 @@ namespace IngSoftValdezAlegre.Controles
             pnlGrilla.Controls.Add(barraSup);
         }
 
-        /// <summary>
-        /// NUEVA VENTA — a la izquierda lo que se decide (cliente, tipo de equipo, modelo
-        /// o armado, fecha de entrega); a la derecha un ticket fijo con el equipo, el total
-        /// y el botón de registrar, que se actualiza con cada cambio. El tipo de equipo va
-        /// en tarjetas porque cambia media pantalla (modelos o configurador).
-        /// </summary>
         private void ConstruirFormVenta()
         {
             lblFormVentaTit = new Label { AutoSize = true, Location = new Point(16, 14) };
             lblVentaAyuda = new Label { AutoSize = true, Location = new Point(18, 40) };
-            // TextAlign centrado en vertical + alto generoso: con Padding arriba y alto
-            // justo, la fuente de subtítulo se cortaba por abajo.
             lblCliente = TituloSeccion(32);
             lblTipo = TituloSeccion(40);
             lblModelo = TituloSeccion(40);
@@ -166,7 +140,6 @@ namespace IngSoftValdezAlegre.Controles
             lblEntrega = new Label();
             _resumen = new ResumenPcControl06AV();
 
-            // ── Cliente ──────────────────────────────────────────
             cboCliente = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 340 };
             btnNuevoCliente = new Button { Width = 44, Height = 28, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Margin = new Padding(8, 0, 0, 0) };
             btnNuevoCliente.Click += (s, e) => AbrirNuevoCliente();
@@ -180,7 +153,6 @@ namespace IngSoftValdezAlegre.Controles
             pnlCliente.Controls.Add(cboCliente);
             pnlCliente.Controls.Add(btnNuevoCliente);
 
-            // ── Tipo de equipo (dos tarjetas) ────────────────────
             flpTipo = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top, Height = 80,
@@ -188,7 +160,6 @@ namespace IngSoftValdezAlegre.Controles
                 WrapContents = false, Padding = new Padding(0, 2, 0, 2)
             };
 
-            // ── Modelos estándar / configurador ─────────────────
             flpModelos = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top, Height = 156,
@@ -204,12 +175,9 @@ namespace IngSoftValdezAlegre.Controles
             };
             btnArmar.Click += (s, e) => AbrirAsistenteComponentes();
 
-            // El botón va dentro de un panel acoplado: un Button suelto en un panel con
-            // hijos Dock.Top se queda en (0,0) y se monta encima del primer bloque.
             pnlArmar = new Panel { Dock = DockStyle.Top, Height = 52 };
             pnlArmar.Controls.Add(btnArmar);
 
-            // ── Entrega ──────────────────────────────────────────
             dtpEntrega = new DateTimePicker { Format = DateTimePickerFormat.Short, Value = DateTime.Today.AddDays(15), Width = 220 };
             var tablaEntrega = NuevaTabla();
             tablaEntrega.Dock = DockStyle.Top;
@@ -225,7 +193,6 @@ namespace IngSoftValdezAlegre.Controles
             cont.Controls.Add(pnlCliente);
             cont.Controls.Add(lblCliente);
 
-            // ── Ticket (derecha) ─────────────────────────────────
             lblResumenTit = new Label { Dock = DockStyle.Top, Height = 30, AutoSize = false };
             lblResumenVacio = new Label { Dock = DockStyle.Top, Height = 52, AutoSize = false, Padding = new Padding(0, 4, 0, 0) };
 
@@ -281,7 +248,6 @@ namespace IngSoftValdezAlegre.Controles
             ArmarTarjetasTipo();
         }
 
-        /// <summary>Las dos formas de comprar un equipo, como tarjetas excluyentes.</summary>
         private void ArmarTarjetasTipo()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -320,7 +286,6 @@ namespace IngSoftValdezAlegre.Controles
             ActualizarModeloSegunTipo();
         }
 
-        /// <summary>Cada modelo estándar como tarjeta con su cantidad de piezas y precio.</summary>
         private void ArmarTarjetasModelo()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -358,11 +323,6 @@ namespace IngSoftValdezAlegre.Controles
             AplicarModeloSeleccionado();
         }
 
-        /// <summary>
-        /// REGISTRAR SEÑA — el monto es fijo (50% del total); el cajero solo elige cómo
-        /// cobra. Por eso el importe es el dato destacado de la ficha y las tres formas de
-        /// pago se muestran como tarjetas.
-        /// </summary>
         private void ConstruirFormPago()
         {
             lblFormPagoTit = new Label { AutoSize = true, Location = new Point(16, 14) };
@@ -412,7 +372,6 @@ namespace IngSoftValdezAlegre.Controles
             pnlFormPago.Controls.Add(barraBot);
         }
 
-        /// <summary>Las formas de pago como tarjetas: son tres, no tiene sentido esconderlas.</summary>
         private void ArmarTarjetasFormaPago()
         {
             flpFormaPago.SuspendLayout();
@@ -445,7 +404,6 @@ namespace IngSoftValdezAlegre.Controles
                 if (c is TarjetaOpcion06AV t) t.Seleccionada = ReferenceEquals(t.Valor, item);
         }
 
-        /// <summary>Título de bloque: alto holgado y texto centrado, para que nunca se corte.</summary>
         private static Label TituloSeccion(int alto) => new Label
         {
             Dock = DockStyle.Top,
@@ -497,9 +455,6 @@ namespace IngSoftValdezAlegre.Controles
             t.Controls.Add(campo, 1, fila);
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Tema e idioma
-        // ══════════════════════════════════════════════════════════════
         private void AplicarTema()
         {
             Tema.AplicarControl(this);
@@ -517,7 +472,6 @@ namespace IngSoftValdezAlegre.Controles
             Tema.AplicarBotonPrimario(btnConfirmarPago);
             Tema.AplicarBotonSecundario(btnVolverPago);
 
-            // AgregarFila aplica el estilo de "entrada"; acá se restituye el look de etiqueta.
             lblMontoValor.ForeColor = Tema.Primario;
             lblMontoValor.BackColor = Tema.FondoApp;
             lblMontoValor.Font = new Font("Segoe UI Semibold", 13f, FontStyle.Bold);
@@ -620,9 +574,6 @@ namespace IngSoftValdezAlegre.Controles
             else ActualizarDetalle();
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Datos
-        // ══════════════════════════════════════════════════════════════
         private void CargarCombos()
         {
             try
@@ -734,9 +685,6 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Panel de detalle: "¿Qué sigue?"
-        // ══════════════════════════════════════════════════════════════
         private void ActualizarDetalle()
         {
             flpDetalle.Controls.Clear();
@@ -760,18 +708,15 @@ namespace IngSoftValdezAlegre.Controles
             lblDetEstado.ForeColor = estColor;
             lblDetEstado.Font = new Font("Segoe UI Semibold", 9.5f, FontStyle.Bold);
 
-            // Equipo
             flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_computadora"), fuerte: true));
             flpDetalle.Controls.Add(TextoSecundario(
                 (v.Computadora != null ? v.Computadora.Nombre : "-") +
                 "   ·   " + (v.Computadora != null ? v.Computadora.TipoConfiguracion.ToString() : "")));
 
-            // Importes
             flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_total") + " / " + t.Obtener("pcf_abonado") + " / " + t.Obtener("pcf_saldo")));
             flpDetalle.Controls.Add(TextoSecundario(
                 v.PrecioTotal.ToString("C0") + "   ·   " + v.TotalAbonado.ToString("C0") + "   ·   " + v.SaldoPendiente.ToString("C0")));
 
-            // Seña
             flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_sena")));
             if (v.TieneSena)
             {
@@ -788,11 +733,9 @@ namespace IngSoftValdezAlegre.Controles
                     "   (" + v.MontoSenaRequerido.ToString("C0") + ")"));
             }
 
-            // Entrega estimada
             flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_f_entrega_estimada")));
             flpDetalle.Controls.Add(TextoSecundario(v.FechaEntregaEstimada.ToShortDateString()));
 
-            // Orden de producción asociada
             if (v.NumeroOrdenProduccion.HasValue)
             {
                 try { _ordenSel = _ventasBLL.ObtenerOrdenDeVenta(v.NumeroVenta); } catch { _ordenSel = null; }
@@ -806,7 +749,6 @@ namespace IngSoftValdezAlegre.Controles
                 }
             }
 
-            // ── ¿Qué sigue? ──────────────────────────────────────
             flpDetalle.Controls.Add(Separador());
             flpDetalle.Controls.Add(Etiqueta(t.Obtener("pcf_que_sigue"), fuerte: true));
 
@@ -824,7 +766,6 @@ namespace IngSoftValdezAlegre.Controles
                     break;
 
                 case EstadoVenta06AV.EnProduccion:
-                    // El retiro y el cobro del saldo se hacen en "Entrega de computadoras".
                     flpDetalle.Controls.Add(TextoSecundario(
                         _ordenSel != null && _ordenSel.Estado == EstadoOrdenProduccion06AV.Finalizada
                             ? t.Obtener("pcf_hint_vta_retiro")
@@ -864,7 +805,6 @@ namespace IngSoftValdezAlegre.Controles
             flpDetalle.Controls.Add(b);
         }
 
-        // ── Helpers de detalle ───────────────────────────────────────
         private Label Etiqueta(string texto, bool fuerte = false) => new Label
         {
             Text = texto, AutoSize = true, Margin = new Padding(0, fuerte ? 4 : 8, 0, 2),
@@ -888,9 +828,6 @@ namespace IngSoftValdezAlegre.Controles
             return b;
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Navegación
-        // ══════════════════════════════════════════════════════════════
         private void MostrarGrilla()
         {
             pnlFormVenta.Visible = false;
@@ -917,7 +854,6 @@ namespace IngSoftValdezAlegre.Controles
             pnlFormVenta.BringToFront();
         }
 
-        /// <summary>CU03: cobro de la seña del 50% con su forma de pago.</summary>
         private void AbrirFormPago()
         {
             _ventaPago = VentaSeleccionada();
@@ -956,11 +892,6 @@ namespace IngSoftValdezAlegre.Controles
             pnlFormPago.BringToFront();
         }
 
-        // ── Componentes: modelo estándar o asistente "Armá tu PC" ────
-        /// <summary>
-        /// El tipo elegido decide qué mitad de la pantalla tiene sentido: con Estándar
-        /// se muestran los modelos y se esconde el configurador; con Configurable, al revés.
-        /// </summary>
         private void ActualizarModeloSegunTipo()
         {
             bool estandar = _tipoElegido == TipoConfiguracion06AV.Estandar;
@@ -1017,7 +948,6 @@ namespace IngSoftValdezAlegre.Controles
             else Tema.AplicarBotonDeshabilitado(btnRegistrar);
         }
 
-        /// <summary>CU02: alta rápida de cliente sin abandonar la venta.</summary>
         private void AbrirNuevoCliente()
         {
             using (var dlg = new FRMNuevoCliente06AV())
@@ -1030,9 +960,6 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  Acciones (delegan en la BLL)
-        // ══════════════════════════════════════════════════════════════
         private void RegistrarVenta()
         {
             var cliente = cboCliente.SelectedItem as Cliente06AV;
@@ -1042,8 +969,6 @@ namespace IngSoftValdezAlegre.Controles
 
             try
             {
-                // La PC la arma la BLL con el patrón Builder: la pantalla sólo dice qué
-                // se eligió, y el builder decide si con eso se puede armar un equipo.
                 Computadora06AV pc = _ventasBLL.ArmarComputadora(_tipoElegido, _modeloElegido, _componentesElegidos);
                 var venta = _ventasBLL.RegistrarVenta(cliente, pc, dtpEntrega.Value);
                 MostrarGrilla();
@@ -1072,7 +997,6 @@ namespace IngSoftValdezAlegre.Controles
                 CargarVentas();
                 SeleccionarVenta(_ventaPago.NumeroVenta);
 
-                // El recibo siempre queda guardado; solo se abre el PDF si el cliente lo pide.
                 string recibo = ComprobantePcFactory06AV.GenerarReciboSena(actualizada, pago);
                 ComprobantePcFactory06AV.PreguntarEImprimir(recibo, esFactura: false, owner: FindForm(),
                     encabezado: $"Seña registrada: ${pago.Monto:0.00} ({pago.NumeroRecibo}).\n" +
@@ -1129,9 +1053,6 @@ namespace IngSoftValdezAlegre.Controles
             mensaje, GestorIdioma06AV.Instancia.Obtener("aviso"),
             ConfirmacionForm.TipoConfirmacion.Advertencia, FindForm());
 
-        // ══════════════════════════════════════════════════════════════
-        //  View-models
-        // ══════════════════════════════════════════════════════════════
         private class VentaVm
         {
             public int Numero { get; set; }

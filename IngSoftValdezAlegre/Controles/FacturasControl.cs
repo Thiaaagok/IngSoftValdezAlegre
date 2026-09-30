@@ -11,11 +11,6 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.Controles
 {
-    /// <summary>
-    /// Facturas de venta: lista las VENTAS ya entregadas (CU07) y permite regenerar
-    /// y abrir el PDF de la factura, con el detalle del anticipo, el saldo cancelado
-    /// y el número de serie del equipo.
-    /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
     public partial class FacturasControl : UserControl, IIdiomaAplicable06AV
     {

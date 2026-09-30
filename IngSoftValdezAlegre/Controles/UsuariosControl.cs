@@ -38,22 +38,15 @@ namespace IngSoftValdezAlegre.Controles
             AjustarLayout();
             Resize += (s, e) => AjustarLayout();
 
-            // Observer: suscribirse al cambio de idioma
             GestorIdioma06AV.Instancia.IdiomaChanged += AplicarIdioma;
             Disposed += (s, e) => GestorIdioma06AV.Instancia.IdiomaChanged -= AplicarIdioma;
 
-            // Observer: suscribirse al cambio de tema (claro / oscuro)
             Tema.TemaChanged += AplicarTema;
             Disposed += (s, e) => Tema.TemaChanged -= AplicarTema;
         }
 
-        /// <summary>
-        /// Aplica la paleta activa (clara u oscura) a toda la pantalla. Se llama al
-        /// construir el control y cada vez que el usuario cambia de tema desde la topbar.
-        /// </summary>
         private void AplicarTema()
         {
-            // Recorre el árbol y aplica el estilo base a labels, entradas y paneles.
             Tema.AplicarControl(this);
 
             Tema.AplicarTitulo(lblTitulo);
@@ -61,38 +54,26 @@ namespace IngSoftValdezAlegre.Controles
             Tema.AplicarSubtitulo(lblMensajeTitulo);
             Tema.AplicarGrilla(grilla);
 
-            // Entradas del formulario "Datos del usuario".
             foreach (Control c in new Control[] { txtDni, txtApellido, txtNombre, txtEmail, txtLogin, cmbRol })
                 Tema.AplicarEntrada(c);
 
-            // Los checks y radios pintan su propio fondo: transparente para que se
-            // vea el color del panel que tienen detrás.
             foreach (Control c in new Control[] { chkActivo, chkBloqueado, radActivos, radTodos })
             {
                 c.BackColor = Color.Transparent;
                 c.ForeColor = Tema.Texto;
             }
 
-            // Cuadro de mensajes de modo.
             txtMensaje.BackColor = Tema.FondoPanel;
             txtMensaje.ForeColor = Tema.Texto;
             txtMensaje.BorderStyle = BorderStyle.FixedSingle;
 
             lblCantidad.ForeColor = Tema.TextoSuave;
 
-            // AplicarControl deja todos los botones como "primario": se restituye el
-            // estilo real de cada uno según su estado actual.
             RefrescarEstiloBotones();
 
-            // Las filas resaltadas se repintan con los colores de la paleta nueva.
             PintarFilasInactivas();
         }
 
-        /// <summary>
-        /// Reaplica el estilo de cada botón respetando si está habilitado o no.
-        /// Hace falta después de un cambio de tema, porque Tema.AplicarControl deja
-        /// todos los botones con el estilo "primario".
-        /// </summary>
         private void RefrescarEstiloBotones()
         {
             foreach (Button b in new[] { btnCrear, btnDesbloquear, btnModificar,
@@ -193,7 +174,6 @@ namespace IngSoftValdezAlegre.Controles
             btnAplicar.Text     = t.Obtener("aplicar");
             btnCancelar.Text    = t.Obtener("cancelar");
 
-            // Headers de la grilla
             if (grilla.Columns["Dni"]      != null) grilla.Columns["Dni"].HeaderText      = t.Obtener("dni");
             if (grilla.Columns["Apellido"] != null) grilla.Columns["Apellido"].HeaderText = t.Obtener("apellido");
             if (grilla.Columns["Nombre"]   != null) grilla.Columns["Nombre"].HeaderText   = t.Obtener("nombre");
@@ -203,19 +183,12 @@ namespace IngSoftValdezAlegre.Controles
             if (grilla.Columns["Activo"]   != null) grilla.Columns["Activo"].HeaderText   = t.Obtener("activo");
             if (grilla.Columns["Bloqueado"]!= null) grilla.Columns["Bloqueado"].HeaderText= t.Obtener("bloqueado");
 
-            // Actualizar conteo si ya hay datos cargados
             if (_usuariosCargados != null && _usuariosCargados.Count > 0)
                 lblCantidad.Text = t.Obtener("numero_usuarios") + " " + _usuariosCargados.Count;
 
-            // Refrescar el texto del recuadro de mensaje según el modo activo
             RefrescarMensajeModo();
         }
 
-        /// <summary>
-        /// Reescribe solo el texto de txtMensaje según el modo actual.
-        /// Se llama desde AplicarIdioma() para que el recuadro también
-        /// se actualice cuando el usuario cambia de idioma.
-        /// </summary>
         private void RefrescarMensajeModo()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -275,32 +248,23 @@ namespace IngSoftValdezAlegre.Controles
             }
         }
 
-
-        /// <summary>
-        /// Oculta los botones de acción para los que el usuario no tiene patente.
-        /// Se llama al cargar el control y cada vez que se vuelve a Modo.Consulta.
-        /// </summary>
         private void AplicarPermisosBotones()
         {
             var sesion = UsuarioSesion06AV.Instancia();
 
-            // Visible + habilitado solo si tiene la patente correspondiente
             bool puedeVer        = sesion.TienePermiso(PatenteEnum06AV.VerUsuarios);
             bool puedeCrear      = sesion.TienePermiso(PatenteEnum06AV.CrearUsuarios);
             bool puedeEditar     = sesion.TienePermiso(PatenteEnum06AV.EditarUsuarios);
             bool puedeActDesact  = sesion.TienePermiso(PatenteEnum06AV.ActDesactivarUsuarios);
             bool puedeDesbloquear= sesion.TienePermiso(PatenteEnum06AV.DesbloquearUsuarios);
 
-            // La grilla misma solo se muestra si puede ver usuarios
             grilla.Visible  = puedeVer;
 
-            // Botones de acción: visibles solo si tiene el permiso
             btnCrear.Visible       = puedeCrear;
             btnModificar.Visible   = puedeEditar;
             btnActDesact.Visible   = puedeActDesact;
             btnDesbloquear.Visible = puedeDesbloquear;
 
-            // Si el botón es visible, lo habilitamos; si no tiene permiso, ocultamos
             if (puedeCrear)       HabilitarBoton(btnCrear,       true);
             if (puedeEditar)      HabilitarBoton(btnModificar,   true);
             if (puedeActDesact)   HabilitarBoton(btnActDesact,   true);
@@ -319,7 +283,6 @@ namespace IngSoftValdezAlegre.Controles
                     SetMensaje(t.Obtener("modo_consulta_titulo"), t.Obtener("modo_consulta_detalle"));
                     SetBotones(crear: true, desbloq: true, modif: true, actDesact: true,
                                aplicar: true, cancelar: false, radios: true);
-                    // Ocultar los que no tiene permiso
                     AplicarPermisosBotones();
                     SetFormularioEditable(false, incluirEstado: false);
                     grilla.Enabled = true;
@@ -362,7 +325,6 @@ namespace IngSoftValdezAlegre.Controles
 
                     if (puedeEditar)
                     {
-                        // Puede editar cualquier usuario: email + rol
                         txtEmail.ReadOnly = false;
                         cmbRol.Enabled    = true;
                     }
@@ -374,7 +336,6 @@ namespace IngSoftValdezAlegre.Controles
                     }
                     else
                     {
-                        // Sin permiso y no es su propio usuario
                         txtEmail.ReadOnly = true;
                         cmbRol.Enabled    = false;
                     }
@@ -480,7 +441,6 @@ namespace IngSoftValdezAlegre.Controles
             txtEmail.Text = "";
             txtLogin.Text = "";
 
-            // Seleccionar "UsuarioGeneral" por defecto; si no existe, el primero de la lista
             cmbRol.SelectedValue = "UsuarioGeneral";
             if (cmbRol.SelectedValue == null && cmbRol.Items.Count > 0)
                 cmbRol.SelectedIndex = 0;
@@ -553,7 +513,6 @@ namespace IngSoftValdezAlegre.Controles
                 }
                 else
                 {
-                    // Fila normal: sigue los colores de la grilla según el tema activo.
                     row.DefaultCellStyle.BackColor = Color.Empty;
                     row.DefaultCellStyle.ForeColor = Color.Empty;
                 }
@@ -742,7 +701,7 @@ namespace IngSoftValdezAlegre.Controles
         private void UsuariosControl2_Load(object sender, EventArgs e)
         {
             CargarRoles();
-            CambiarModo(Modo.Consulta);  // ya llama AplicarPermisosBotones() internamente
+            CambiarModo(Modo.Consulta);
             RecargarGrilla();
         }
 
@@ -800,7 +759,6 @@ namespace IngSoftValdezAlegre.Controles
             bool puedeEditar  = sesion.TienePermiso(PatenteEnum06AV.EditarUsuarios);
             bool esMiUsuario  = seleccionado.Dni == sesion.UsuarioActual?.Dni;
 
-            // Puede entrar si tiene la patente de edición O si está editando su propio perfil
             if (!puedeEditar && !esMiUsuario)
             {
                 ConfirmacionForm.MostrarInfo(

@@ -6,7 +6,6 @@ using System.Data;
 
 namespace MPP
 {
-    /// <summary>Mapea las filas de los reportes. Los indicadores los calcula la BLL.</summary>
     public class ReportesMPP06AV
     {
         private readonly ReportesDAL06AV _dal = new ReportesDAL06AV();

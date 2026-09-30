@@ -5,11 +5,6 @@ using System.Windows.Forms;
 
 namespace Instalador
 {
-    /// <summary>
-    /// Primera pantalla del asistente de instalación: "Configuración inicial - Base de datos".
-    /// Permite elegir/detectar la instancia de SQL Server (incluida LocalDB) y las
-    /// credenciales, prueba la conexión y devuelve las opciones de instalación.
-    /// </summary>
     public class FrmConexion06AV : Form
     {
         private static readonly Color Primario = Color.FromArgb(21, 101, 192);
@@ -29,7 +24,6 @@ namespace Instalador
         private Button btnContinuar;
         private Button btnCancelar;
 
-        /// <summary>Opciones elegidas (válidas solo si el resultado fue OK).</summary>
         public OpcionesInstalacion06AV Opciones { get; private set; }
 
         public FrmConexion06AV()
@@ -66,7 +60,6 @@ namespace Instalador
                 Location = new Point(26, 58)
             };
 
-            // ── Instancia ────────────────────────────────────────────
             var lblInstancia = new Label
             {
                 Text = "Instancia:",
@@ -101,7 +94,6 @@ namespace Instalador
                 Location = new Point(30, 152)
             };
 
-            // ── Base de datos ────────────────────────────────────────
             var lblBase = new Label
             {
                 Text = "Base de datos:",
@@ -116,7 +108,6 @@ namespace Instalador
                 Text = "IngSoftValdezAlegre"
             };
 
-            // ── Autenticación ────────────────────────────────────────
             var lblAuth = new Label
             {
                 Text = "Autenticación:",
@@ -163,7 +154,6 @@ namespace Instalador
                 UseSystemPasswordChar = true
             };
 
-            // ── Botones ──────────────────────────────────────────────
             btnContinuar = new Button
             {
                 Text = "Continuar",
@@ -271,7 +261,6 @@ namespace Instalador
                 op.Contrasenia = txtPassword.Text;
             }
 
-            // Probar la conexión antes de avanzar.
             Cursor = Cursors.WaitCursor;
             btnContinuar.Enabled = false;
             lblEstado.Text = "Probando conexión...";

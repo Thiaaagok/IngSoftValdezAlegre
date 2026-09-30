@@ -5,12 +5,10 @@ using System.Windows.Forms;
 
 namespace IngSoftValdezAlegre.UI
 {
-    /// <summary>Una fila de la ficha: rótulo chico arriba, valor abajo.</summary>
     internal class DatoFicha06AV
     {
         public string Rotulo { get; set; }
         public string Valor { get; set; }
-        /// <summary>Ocupa toda la fila en vez de media (para textos largos).</summary>
         public bool Ancho { get; set; }
 
         public DatoFicha06AV() { }
@@ -20,18 +18,6 @@ namespace IngSoftValdezAlegre.UI
         }
     }
 
-    /// <summary>
-    /// FICHA DE CONTEXTO — el "de qué estamos hablando" de las pantallas de acción.
-    ///
-    /// Las pantallas de registrar seña, entrega y orden arrancaban con un párrafo gris
-    /// donde cliente, DNI, total y abonado iban pegados con puntos medios: para encontrar
-    /// un dato había que leer la línea entera.
-    ///
-    /// Acá los mismos datos van en una grilla de dos columnas, cada uno con su rótulo
-    /// arriba en chico y su valor abajo en negrita, de modo que el ojo salta directo al
-    /// que busca. Opcionalmente destaca UN número — el que la pantalla va a mover — en
-    /// grande y en color, porque es el dato que el operador tiene que confirmar.
-    /// </summary>
     internal class FichaDatos06AV : Control
     {
         private readonly List<DatoFicha06AV> _datos = new List<DatoFicha06AV>();
@@ -46,12 +32,10 @@ namespace IngSoftValdezAlegre.UI
 
         public string Titulo { get; set; }
 
-        /// <summary>Rótulo del número destacado (vacío = sin destacado).</summary>
         public string RotuloDestacado { get; set; }
 
         public string ValorDestacado { get; set; }
 
-        /// <summary>Color del número destacado. Por defecto, el primario del tema.</summary>
         public Color? ColorDestacado { get; set; }
 
         public void Definir(IEnumerable<DatoFicha06AV> datos)
@@ -62,7 +46,6 @@ namespace IngSoftValdezAlegre.UI
             Invalidate();
         }
 
-        /// <summary>Alto que necesita la ficha con los datos actuales.</summary>
         public int AltoNecesario
         {
             get
@@ -104,7 +87,6 @@ namespace IngSoftValdezAlegre.UI
                 y += 26;
             }
 
-            // ── Número destacado ─────────────────────────────────
             if (!string.IsNullOrEmpty(ValorDestacado))
             {
                 Color c = ColorDestacado ?? Tema.Primario;
@@ -119,7 +101,6 @@ namespace IngSoftValdezAlegre.UI
                 y += 56;
             }
 
-            // ── Datos en dos columnas ────────────────────────────
             int anchoCol = anchoUtil / 2;
             int col = 0;
             foreach (DatoFicha06AV d in _datos)

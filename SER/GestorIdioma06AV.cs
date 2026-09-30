@@ -5,11 +5,6 @@ using System.Text;
 
 namespace SER
 {
-    /// <summary>
-    /// Singleton que gestiona el idioma activo de la sesión.
-    /// Se inicializa al hacer Login con el idioma guardado del usuario.
-    /// El usuario puede cambiarlo en cualquier momento (persiste via BLL).
-    /// </summary>
     public sealed class GestorIdioma06AV
     {
         #region Singleton
@@ -46,18 +41,8 @@ namespace SER
 
         public static readonly string[] IdiomasDisponibles = { ES, EN, PT };
 
-        /// <summary>
-        /// Carpeta donde viven los archivos de traducción (relativa al ejecutable).
-        /// Estructura esperada: Resources/Idiomas/es.json, Resources/Idiomas/en.json
-        /// </summary>
         private string CarpetaIdiomas;
 
-        /// <summary>
-        /// Resuelve la carpeta de idiomas de forma robusta, para que funcione tanto en
-        /// desarrollo como en una instalación distribuida. Prioridad:
-        ///   1) Resources\Idiomas junto al ejecutable (caso instalado / desplegado).
-        ///   2) Subiendo hacia la raíz del proyecto (caso ejecución desde Visual Studio).
-        /// </summary>
         private static string ResolverCarpetaIdiomas()
         {
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
@@ -75,7 +60,7 @@ namespace SER
                     dir = dir.Parent;
                 }
             }
-            catch { /* si algo falla se usa la ruta junto al exe */ }
+            catch {  }
 
             return juntoExe;
         }
@@ -84,11 +69,6 @@ namespace SER
 
         #region Observer
 
-        /// <summary>
-        /// Se dispara cada vez que el idioma activo cambia.
-        /// Todos los formularios y controles deben suscribirse a este evento
-        /// para refrescarse automáticamente.
-        /// </summary>
         public event System.Action IdiomaChanged;
 
         private void NotificarCambio() => IdiomaChanged?.Invoke();
@@ -99,24 +79,13 @@ namespace SER
 
         private string _idiomaActual;
 
-        /// <summary>Idioma actualmente activo en la sesión.</summary>
         public string IdiomaActual => _idiomaActual;
 
-        /// <summary>
-        /// Carga el idioma del usuario al iniciar sesión.
-        /// No dispara el evento porque la UI aún no está construida en ese punto.
-        /// </summary>
         public void Cargar(string idioma)
         {
-            // Se normaliza a MAYÚSCULAS para que coincida con las claves de _traducciones
-            // (ES/EN/PT). En la BD el idioma puede estar en minúsculas ('es').
             _idiomaActual = EsValido(idioma) ? idioma.ToUpperInvariant() : IdiomaDefecto;
         }
 
-        /// <summary>
-        /// Cambia el idioma activo en memoria y notifica a todos los observadores.
-        /// Para persistirlo a la base de datos llamar a UsuariosBLL06AV.CambiarIdioma().
-        /// </summary>
         public void CambiarIdioma(string idioma)
         {
             if (!EsValido(idioma))
@@ -138,17 +107,9 @@ namespace SER
 
         #region Carga de JSON
 
-        // Diccionario en memoria: idioma → (clave → texto).
-        // Comparador OrdinalIgnoreCase: la clave de idioma se busca sin importar
-        // mayúsculas/minúsculas ('es' == 'ES'), que es la causa del bug de labels.
         private Dictionary<string, Dictionary<string, string>> _traducciones
             = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
 
-        /// <summary>
-        /// Carga todos los archivos de idioma disponibles desde Resources/Idiomas/.
-        /// Si un archivo no existe o está malformado, ese idioma queda vacío (se
-        /// devuelve la clave como fallback) sin tirar excepción en runtime.
-        /// </summary>
         private void CargarTraducciones()
         {
             CarpetaIdiomas = ResolverCarpetaIdiomas();
@@ -159,20 +120,12 @@ namespace SER
             }
         }
 
-        /// <summary>
-        /// Fuerza la recarga de todos los archivos de idioma desde disco.
-        /// Útil para desarrollo / hot-reload sin reiniciar la aplicación.
-        /// </summary>
         public void RecargarTraducciones()
         {
             CargarTraducciones();
             NotificarCambio();
         }
 
-        /// <summary>
-        /// Lee un archivo JSON plano clave:valor y devuelve el diccionario.
-        /// Implementado sin dependencias externas usando DataContractJsonSerializer.
-        /// </summary>
         private static Dictionary<string, string> LeerJson(string ruta)
         {
             var resultado = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -184,13 +137,10 @@ namespace SER
             {
                 string contenido = File.ReadAllText(ruta, Encoding.UTF8);
 
-                // Parseo manual liviano para JSON plano { "clave": "valor", ... }
-                // Evita dependencia de Newtonsoft o System.Text.Json en proyectos .NET Framework.
                 contenido = contenido.Trim();
                 if (contenido.StartsWith("{")) contenido = contenido.Substring(1);
                 if (contenido.EndsWith("}")) contenido = contenido.Substring(0, contenido.Length - 1);
 
-                // Divide en pares separados por comas que NO estén dentro de comillas
                 var pares = SplitJson(contenido);
 
                 foreach (string par in pares)
@@ -210,15 +160,11 @@ namespace SER
             }
             catch
             {
-                // Si el JSON está malformado, devolvemos lo que pudimos parsear
             }
 
             return resultado;
         }
 
-        /// <summary>
-        /// Divide el contenido JSON en pares clave:valor respetando comas dentro de strings.
-        /// </summary>
         private static List<string> SplitJson(string contenido)
         {
             var pares = new List<string>();
@@ -241,7 +187,6 @@ namespace SER
                 }
             }
 
-            // último par
             string ultimo = contenido.Substring(inicio).Trim();
             if (!string.IsNullOrEmpty(ultimo))
                 pares.Add(ultimo);
@@ -249,9 +194,6 @@ namespace SER
             return pares;
         }
 
-        /// <summary>
-        /// Quita las comillas externas de un token JSON y decodifica secuencias de escape básicas.
-        /// </summary>
         private static string LimpiarCadenaJson(string token)
         {
             if (token.Length >= 2 && token[0] == '"' && token[token.Length - 1] == '"')
@@ -269,22 +211,14 @@ namespace SER
 
         #region Traducciones
 
-        /// <summary>
-        /// Retorna el texto traducido para la clave dada en el idioma activo.
-        /// Si la clave no existe, retorna la clave misma como fallback.
-        /// </summary>
         public string Obtener(string clave)
         {
             if (_traducciones.TryGetValue(_idiomaActual, out var dicc))
                 if (dicc.TryGetValue(clave, out var texto))
                     return texto;
-            return clave; 
+            return clave;
         }
 
-        /// <summary>
-        /// Retorna el texto traducido con formato aplicado (string.Format).
-        /// Útil para mensajes con parámetros como nombres, DNIs, etc.
-        /// </summary>
         public string Obtener(string clave, params object[] args)
         {
             string plantilla = Obtener(clave);

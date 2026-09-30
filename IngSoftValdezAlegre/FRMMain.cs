@@ -20,9 +20,8 @@ namespace IngSoftValdezAlegre
         private Button _moduloActivo;
         private ToolStripMenuItem cambiarIdiomaToolStripMenuItem;
         private ContextMenuStrip cmsIdiomas;
-        private Button btnTema;   // toggle de tema claro/oscuro (topbar)
+        private Button btnTema;
 
-        // Backup automático cada 3 horas (solo administrador).
         private const int IntervaloAutoBackupMs = 3 * 60 * 60 * 1000;
         private System.Windows.Forms.Timer _timerAutoBackup;
         private ToolStripMenuItem gestionBackupsToolStripMenuItem;
@@ -47,7 +46,7 @@ namespace IngSoftValdezAlegre
             ConfigurarGestionBackups();
         }
 
-        
+
         private void ConstruirMenuAgrupado()
         {
             flpModulos.Controls.Clear();
@@ -87,7 +86,6 @@ namespace IngSoftValdezAlegre
                 Item("menu_facturas", "\uE8A5", PatenteEnum06AV.GestionarVentas, false, () => new Controles.FacturasControl()),
             });
 
-            // Circuito de fabrica (gerente / responsable tecnico).
             AgregarGrupo("menu_grp_produccion", "\uE713", new List<ItemMenu>
             {
                 Item("pcf_menu_produccion", "\uE713", PatenteEnum06AV.GestionarProduccion, false, () => new Controles.ProduccionControl()),
@@ -150,7 +148,7 @@ namespace IngSoftValdezAlegre
         private void ConfigurarBotonGrupo(Button btn)
         {
             btn.Height = 40;
-            btn.Margin = new Padding(0, 3, 0, 3);   // sin margen horizontal: evita el scroll-x al aparecer el scroll-y
+            btn.Margin = new Padding(0, 3, 0, 3);
             btn.FlatStyle = FlatStyle.Flat;
             btn.FlatAppearance.BorderSize = 0;
             btn.Font = new Font("Segoe UI Semibold", 9.5f, FontStyle.Bold);
@@ -178,13 +176,9 @@ namespace IngSoftValdezAlegre
             ant?.Dispose();
         }
 
-        // Ancho útil real del área de módulos. Se toma de flpModulos.ClientSize, que
-        // YA descuenta la barra de scroll vertical cuando aparece; así los botones
-        // nunca sobresalen y no se dispara una barra de scroll horizontal fantasma.
         private int AnchoBotonSidebar() =>
             Math.Max(1, flpModulos.ClientSize.Width);
 
-        /// <summary>Crea (una sola vez) el botón de tema claro/oscuro en la barra superior.</summary>
         private void CrearBotonTema()
         {
             if (btnTema != null) return;
@@ -203,15 +197,14 @@ namespace IngSoftValdezAlegre
             ActualizarTextoBotonTema();
 
             flpTopActions.Controls.Add(btnTema);
-            flpTopActions.Controls.SetChildIndex(btnTema, 0);   // primero (a la izquierda del idioma)
+            flpTopActions.Controls.SetChildIndex(btnTema, 0);
             toolTipMain.SetToolTip(btnTema, GestorIdioma06AV.Instancia.Obtener("cambiar_tema"));
         }
 
-        /// <summary>El botón muestra el modo al que se cambiaría: sol si está oscuro, luna si está claro.</summary>
         private void ActualizarTextoBotonTema()
         {
             if (btnTema != null)
-                btnTema.Text = Tema.EsOscuro ? "☀" : "☾";   // ☀ / ☾
+                btnTema.Text = Tema.EsOscuro ? "☀" : "☾";
         }
 
         private void RefrescarTema()
@@ -361,18 +354,12 @@ namespace IngSoftValdezAlegre
             ConfigurarMenuUsuario();
             AjustarSidebar();
 
-            // Cuando el área de módulos cambia de ancho (aparece/desaparece la barra
-            // de scroll vertical, o se colapsa el sidebar) reajustamos el ancho de los
-            // botones para que sigan encajando y NO aparezca una barra horizontal.
             flpModulos.ClientSizeChanged += (s, e) => AjustarAnchosModulos();
 
-            // La ventana no tiene bordes (FormBorderStyle = None), así que se permite
-            // moverla arrastrando la barra superior (y el título), como una barra de título.
             HabilitarArrastreVentana(pnlTopBar);
             HabilitarArrastreVentana(lblSistema);
         }
 
-        // ── Arrastre de la ventana sin bordes ────────────────────────
         private const int WM_NCLBUTTONDOWN = 0xA1;
         private const int HT_CAPTION = 0x2;
 
@@ -382,8 +369,6 @@ namespace IngSoftValdezAlegre
         [DllImport("user32.dll")]
         private static extern bool ReleaseCapture();
 
-        /// <summary>Hace que arrastrar el control indicado mueva toda la ventana,
-        /// igual que si se arrastrara la barra de título de una ventana normal.</summary>
         private void HabilitarArrastreVentana(Control control)
         {
             if (control == null) return;
@@ -397,9 +382,6 @@ namespace IngSoftValdezAlegre
 
         private bool _ajustandoAnchos;
 
-        /// <summary>Iguala el ancho de todos los botones del menú al área cliente
-        /// actual de flpModulos (que ya descuenta el scroll vertical), evitando el
-        /// scroll horizontal. Reentrante-safe.</summary>
         private void AjustarAnchosModulos()
         {
             if (_ajustandoAnchos) return;
@@ -449,7 +431,7 @@ namespace IngSoftValdezAlegre
         private void ConfigurarBotonModulo(Button btn, string texto, string icono)
         {
             btn.Tag = new ModuloSidebar(texto, icono);
-            btn.Margin = new Padding(0, 3, 0, 3);   // sin margen horizontal: evita el scroll-x al aparecer el scroll-y
+            btn.Margin = new Padding(0, 3, 0, 3);
             btn.Width = AnchoBotonSidebar();
             btn.Height = 42;
             btn.FlatStyle = FlatStyle.Flat;
@@ -550,7 +532,6 @@ namespace IngSoftValdezAlegre
             }
         }
 
-        /// <summary>Reemplaza el módulo visible en el área de contenido.</summary>
         public void MostrarControl(UserControl control)
         {
             foreach (Control c in panelPrincipal.Controls)
@@ -562,7 +543,6 @@ namespace IngSoftValdezAlegre
             control.Dock = DockStyle.Fill;
             panelPrincipal.Controls.Add(control);
 
-            // El control recién mostrado siempre queda en el idioma activo de la sesión.
             if (control is IIdiomaAplicable06AV aplicable)
                 aplicable.AplicarIdioma();
         }
@@ -628,8 +608,6 @@ namespace IngSoftValdezAlegre
             ctxMenuUsuario.Show(panel4, new Point(panel4.Width - ctxMenuUsuario.Width, panel4.Height + 2));
         }
 
-        // Hay más de dos idiomas disponibles (ES/EN/PT), así que el botón y el ítem
-        // de menú despliegan un listado en vez de alternar entre dos opciones fijas.
         private void btnIdioma_Click(object sender, EventArgs e)
         {
             cmsIdiomas.Show(btnIdioma, new Point(0, btnIdioma.Height));
@@ -640,10 +618,6 @@ namespace IngSoftValdezAlegre
             cmsIdiomas.Show(Cursor.Position);
         }
 
-        /// <summary>
-        /// Crea, una sola vez, el menú con todos los idiomas en SER.GestorIdioma06AV.IdiomasDisponibles.
-        /// Si se agrega un idioma nuevo (otro .json + otra constante), aparece solo, sin tocar este método.
-        /// </summary>
         private void ConstruirMenuIdiomas()
         {
             if (cmsIdiomas != null) return;
@@ -723,13 +697,6 @@ namespace IngSoftValdezAlegre
             Close();
         }
 
-        /// <summary>
-        /// Se llama cuando se le agregan o quitan patentes/familias al rol que
-        /// tiene asignado el usuario de la sesión actual. Las patentes efectivas
-        /// quedaron cacheadas en UsuarioSesion06AV al momento del login, así que
-        /// hay que cerrar sesión y obligar a loguearse de nuevo para que se
-        /// recalculen (CargarPatentes se llama otra vez dentro de Login).
-        /// </summary>
         public void ForzarReloginPorCambioDeRol()
         {
             var t = GestorIdioma06AV.Instancia;
@@ -742,14 +709,6 @@ namespace IngSoftValdezAlegre
             CerrarSesionYVolverALogin();
         }
 
-        /// <summary>
-        /// "Relogin": es como cerrar sesión a nivel de pantalla, pero a propósito
-        /// NO se llama a UsuarioSesion06AV.Instancia().CerrarSesion(). El singleton
-        /// se queda con el usuario, rol y patentes cargados. Sirve para demostrar
-        /// que el singleton retiene su estado: cualquier intento de login posterior
-        /// (propio o de otro usuario) va a ser rechazado por UsuariosBLL06AV.Login,
-        /// que verifica si ya hay una sesión activa antes de autenticar a nadie.
-        /// </summary>
         private void reloginToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var t = GestorIdioma06AV.Instancia;
@@ -786,7 +745,6 @@ namespace IngSoftValdezAlegre
             var usuarioActual = UsuarioSesion06AV.Instancia().UsuarioActual;
             if (usuarioActual != null)
             {
-                // Persistir idioma elegido durante la sesión
                 try
                 {
                     new UsuariosBLL06AV().CambiarIdioma(usuarioActual.Dni, t.IdiomaActual);
@@ -795,7 +753,6 @@ namespace IngSoftValdezAlegre
                 {
                 }
 
-                // Registrar evento de logout en bitácora
                 new BitacoraBLL06AV().Logout(usuarioActual.Dni);
             }
 
@@ -848,18 +805,16 @@ namespace IngSoftValdezAlegre
             public string Icono { get; }
         }
 
-        /// <summary>Definición de un ítem del menú agrupado (submenú).</summary>
         private sealed class ItemMenu
         {
             public string Clave;
             public string Icono;
-            public PatenteEnum06AV? Patente;   // null = sin gating por patente
-            public bool SoloAdmin;             // true = solo para administradores
-            public Func<UserControl> Crear;    // control a mostrar
-            public Action Accion;              // acción alternativa (p. ej. abrir un diálogo)
+            public PatenteEnum06AV? Patente;
+            public bool SoloAdmin;
+            public Func<UserControl> Crear;
+            public Action Accion;
         }
 
-        /// <summary>Encabezado desplegable de un grupo del menú lateral.</summary>
         private sealed class GrupoSidebar
         {
             public GrupoSidebar(string texto, string icono) { Texto = texto; Icono = icono; Expandido = false; }

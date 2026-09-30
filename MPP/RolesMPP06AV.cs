@@ -74,12 +74,10 @@ namespace MPP
                                   : id
             };
 
-            // Patentes directas
             DataTable patentes = _dal.ObtenerPatentesPorRol(id);
             foreach (DataRow p in patentes.Rows)
                 rol.Agregar(_patenteMPP.Mapear(p));
 
-            // Familias con su árbol interno ya construido
             DataTable familias = _dal.ObtenerFamiliasPorRol(id);
             foreach (DataRow f in familias.Rows)
             {

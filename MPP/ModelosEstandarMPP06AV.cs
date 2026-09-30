@@ -6,7 +6,6 @@ using System.Data;
 
 namespace MPP
 {
-    /// <summary>Mapea entre ModeloEstandar06AV y la capa de datos, resolviendo sus componentes.</summary>
     public class ModelosEstandarMPP06AV
     {
         private readonly ModelosEstandarDAL06AV _dal = new ModelosEstandarDAL06AV();

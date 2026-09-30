@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MPP
-{   
+{
     public class BitacoraMPP06AV
     {
         BitacoraDAL06AV BitacoraDAL = new BitacoraDAL06AV();
@@ -36,10 +36,6 @@ namespace MPP
 
         #region Obtener
 
-
-        // AsEnumerable => Transforma un DataTable a IEnumerable<DataRow> para poder utilizar LINQ
-        // .Select(row => MapearBitacora(row)) => Por cada fila de la tabla ejecuta MapearBitacora
-        // .ToList() => Devuelte todo el resultado en una list para sel SER
         public List<Bitacora06AV> ObtenerTodos()
         {
             DataTable tabla = BitacoraDAL.ObtenerTodos(new Dictionary<string, object>());
