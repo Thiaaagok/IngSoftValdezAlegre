@@ -117,6 +117,9 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="UI\DatosTarjetaControl06AV.cs" />
+    <Compile Include="UI\FichaCliente06AV.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="UI\TarjetaComponente06AV.cs">
       <SubType>Component</SubType>
     </Compile>

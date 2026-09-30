@@ -38,7 +38,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
         private Label lblResumenTit, lblResumenVacio, lblTotalRotulo, lblTotalValor, lblVentaAyuda;
         private ResumenPcControl06AV _resumen;
         private TextBox txtDniCliente;
-        private Label lblClienteInfo;
+        private FichaCliente06AV fichaCliente;
         private Cliente06AV _clienteElegido;
         private string _dniNoEncontrado;
         private readonly ToolTip _tips = new ToolTip();
@@ -175,11 +175,8 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             btnNuevoCliente = new Button { Width = 44, Height = 28, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Margin = new Padding(8, 0, 0, 0) };
             btnNuevoCliente.Click += (s, e) => AbrirNuevoCliente();
 
-            lblClienteInfo = new Label
-            {
-                Dock = DockStyle.Top, Height = 30, AutoSize = false,
-                TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(2, 0, 0, 4)
-            };
+            fichaCliente = new FichaCliente06AV { Dock = DockStyle.Top, Height = 100 };
+            fichaCliente.RegistrarSolicitado += (s, e) => AbrirNuevoCliente();
 
             var pnlCliente = new FlowLayoutPanel
             {
@@ -228,7 +225,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             cont.Controls.Add(lblModelo);
             cont.Controls.Add(flpTipo);
             cont.Controls.Add(lblTipo);
-            cont.Controls.Add(lblClienteInfo);
+            cont.Controls.Add(fichaCliente);
             cont.Controls.Add(pnlCliente);
             cont.Controls.Add(lblCliente);
 
@@ -1073,30 +1070,10 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
 
         private void PintarInfoCliente()
         {
-            if (lblClienteInfo == null) return;
-            var t = GestorIdioma06AV.Instancia;
-
-            lblClienteInfo.BackColor = Tema.FondoApp;
-            if (_clienteElegido != null)
-            {
-                var c = _clienteElegido;
-                string extra = string.IsNullOrWhiteSpace(c.Telefono) ? "" : "   ·   " + c.Telefono;
-                lblClienteInfo.Text = "✔  " + c.NombreCompleto + "   ·   " + t.Obtener("dni") + " " + c.Dni + extra;
-                lblClienteInfo.ForeColor = Tema.Exito;
-                lblClienteInfo.Font = Tema.FuenteBold;
-            }
-            else if (!string.IsNullOrEmpty(_dniNoEncontrado))
-            {
-                lblClienteInfo.Text = "✖  " + t.Obtener("pcf_venta_cliente_no_existe", _dniNoEncontrado);
-                lblClienteInfo.ForeColor = Tema.Peligro;
-                lblClienteInfo.Font = Tema.FuenteBold;
-            }
-            else
-            {
-                lblClienteInfo.Text = t.Obtener("pcf_venta_cliente_hint");
-                lblClienteInfo.ForeColor = Tema.TextoSuave;
-                lblClienteInfo.Font = Tema.FuenteRegular;
-            }
+            if (fichaCliente == null) return;
+            if (_clienteElegido != null) fichaCliente.MostrarCliente(_clienteElegido);
+            else if (!string.IsNullOrEmpty(_dniNoEncontrado)) fichaCliente.MostrarNoEncontrado(_dniNoEncontrado);
+            else fichaCliente.MostrarVacia();
         }
 
         private void RegistrarVenta()
