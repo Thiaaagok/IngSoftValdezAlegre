@@ -58,6 +58,8 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
         private TextBox txtReferencia;
         private Button btnConfirmarPago, btnVolverPago;
         private Venta06AV _ventaPago;
+        // Venta armada en pantalla que todavía no se guardó: se registra junto con la seña.
+        private Venta06AV _ventaNueva;
         private DatosTarjetaControl06AV _datosTarjeta;
 
         public VentasControl()
@@ -246,7 +248,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
 
             btnRegistrar = NuevoBoton(240);
             btnVolverVenta = NuevoBoton(240);
-            btnRegistrar.Click += (s, e) => RegistrarVenta();
+            btnRegistrar.Click += (s, e) => ContinuarASena();
             btnVolverVenta.Click += (s, e) => MostrarGrilla();
             btnRegistrar.Margin = new Padding(0, 6, 0, 4);
             btnVolverVenta.Margin = new Padding(0, 0, 0, 4);
@@ -385,7 +387,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             btnConfirmarPago = NuevoBoton(210);
             btnVolverPago = NuevoBoton(120);
             btnConfirmarPago.Click += (s, e) => ConfirmarPago();
-            btnVolverPago.Click += (s, e) => MostrarGrilla();
+            btnVolverPago.Click += (s, e) => VolverDesdePago();
 
             var tabla = NuevaTabla();
             tabla.Dock = DockStyle.Top;
@@ -620,7 +622,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             btnArmar.Text = t.Obtener("pcf_elegir_componentes");
             lblEntrega.Text = t.Obtener("pcf_f_entrega_estimada") + ":";
             btnVolverVenta.Text = t.Obtener("volver");
-            btnRegistrar.Text = t.Obtener("pcf_registrar_venta");
+            btnRegistrar.Text = t.Obtener("pcf_continuar_sena");
             btnVolverVenta.Text = t.Obtener("volver");
             ActualizarResumenComp();
 
@@ -892,6 +894,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
 
         private void MostrarGrilla()
         {
+            _ventaNueva = null;
             pnlFormVenta.Visible = false;
             pnlFormPago.Visible = false;
             pnlGrilla.Visible = true;
@@ -920,20 +923,72 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             txtDniCliente.Focus();
         }
 
+        // Seña de una venta que quedó pendiente (ventas cargadas antes de este flujo).
         private void AbrirFormPago()
         {
-            _ventaPago = VentaSeleccionada();
-            if (_ventaPago == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
+            var venta = VentaSeleccionada();
+            if (venta == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
+            _ventaNueva = null;
+            MostrarFormPago(venta);
+        }
 
+        // CU "Registrar venta": armada la venta, ANTES de guardarla se cobra la seña.
+        // Primero se valida todo (cliente, equipo completo, stock) para no cobrar algo
+        // que después no se pueda registrar.
+        private void ContinuarASena()
+        {
+            var t = GestorIdioma06AV.Instancia;
+            var cliente = _clienteElegido;
+            if (cliente == null)
+            {
+                MostrarError(t.Obtener("pcf_venta_cliente_requerido"));
+                txtDniCliente.Focus();
+                return;
+            }
+            if (_componentesElegidos == null || _componentesElegidos.Count == 0)
+            { MostrarError("Elegí al menos un componente (botón “Armá tu PC”) o un modelo estándar."); return; }
+
+            try
+            {
+                Computadora06AV pc = _ventasBLL.ArmarComputadora(_tipoElegido, _modeloElegido, _componentesElegidos);
+                _ventasBLL.ValidarVenta(cliente, pc, dtpEntrega.Value);
+                _ventaNueva = new Venta06AV
+                {
+                    Cliente = cliente,
+                    Computadora = pc,
+                    FechaEntregaEstimada = dtpEntrega.Value.Date
+                };
+            }
+            catch (Exception ex) { MostrarError(ex.Message); return; }
+
+            MostrarFormPago(_ventaNueva);
+        }
+
+        private void VolverDesdePago()
+        {
+            if (_ventaNueva == null) { MostrarGrilla(); return; }
+            // Vuelve a la venta que se estaba armando, sin perder lo elegido.
+            _ventaNueva = null;
+            pnlFormPago.Visible = false;
+            pnlGrilla.Visible = false;
+            pnlFormVenta.Visible = true;
+            pnlFormVenta.BringToFront();
+        }
+
+        private void MostrarFormPago(Venta06AV venta)
+        {
+            _ventaPago = venta;
+            bool nueva = _ventaNueva != null;
             var t = GestorIdioma06AV.Instancia;
 
-            lblFormPagoTit.Text = t.Obtener("pcf_registrar_sena") + " — " +
-                                  t.Obtener("pcf_venta") + " #" + _ventaPago.NumeroVenta;
+            lblFormPagoTit.Text = nueva
+                ? t.Obtener("pcf_nueva_venta") + " — " + t.Obtener("pcf_registrar_sena")
+                : t.Obtener("pcf_registrar_sena") + " — " + t.Obtener("pcf_venta") + " #" + _ventaPago.NumeroVenta;
 
             string cli = _ventaPago.Cliente != null ? _ventaPago.Cliente.NombreCompleto : "";
-            lblPagoDetalle.Text = t.Obtener("pcf_sena_ayuda");
+            lblPagoDetalle.Text = t.Obtener(nueva ? "pcf_sena_ayuda_nueva" : "pcf_sena_ayuda");
 
-            fichaPago.Titulo = t.Obtener("pcf_venta") + " #" + _ventaPago.NumeroVenta;
+            fichaPago.Titulo = nueva ? t.Obtener("pcf_nueva_venta") : t.Obtener("pcf_venta") + " #" + _ventaPago.NumeroVenta;
             fichaPago.RotuloDestacado = t.Obtener("pcf_sena_a_cobrar");
             fichaPago.ValorDestacado = _ventaPago.MontoSenaRequerido.ToString("C2");
             fichaPago.ColorDestacado = Tema.Primario;
@@ -947,7 +1002,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             fichaPago.Height = fichaPago.AltoNecesario;
 
             lblMontoValor.Text = _ventaPago.MontoSenaRequerido.ToString("C2");
-            btnConfirmarPago.Text = t.Obtener("pcf_confirmar_sena");
+            btnConfirmarPago.Text = t.Obtener(nueva ? "pcf_confirmar_venta_sena" : "pcf_confirmar_sena");
             txtReferencia.Clear();
             if (cboFormaPago.Items.Count > 0) cboFormaPago.SelectedIndex = 0;
             ArmarTarjetasFormaPago();
@@ -1076,34 +1131,6 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             else fichaCliente.MostrarVacia();
         }
 
-        private void RegistrarVenta()
-        {
-            var cliente = _clienteElegido;
-            if (cliente == null)
-            {
-                MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_venta_cliente_requerido"));
-                txtDniCliente.Focus();
-                return;
-            }
-            if (_componentesElegidos == null || _componentesElegidos.Count == 0)
-            { MostrarError("Elegí al menos un componente (botón “Armá tu PC”) o un modelo estándar."); return; }
-
-            try
-            {
-                Computadora06AV pc = _ventasBLL.ArmarComputadora(_tipoElegido, _modeloElegido, _componentesElegidos);
-                var venta = _ventasBLL.RegistrarVenta(cliente, pc, dtpEntrega.Value);
-                MostrarGrilla();
-                CargarVentas();
-                SeleccionarVenta(venta.NumeroVenta);
-                ConfirmacionForm.MostrarInfo(
-                    $"Venta #{venta.NumeroVenta} registrada. Total: ${venta.PrecioTotal:0.00}.\n" +
-                    $"Seña a cobrar (50%): ${venta.MontoSenaRequerido:0.00}.",
-                    GestorIdioma06AV.Instancia.Obtener("pcf_ventas_titulo"),
-                    ConfirmacionForm.TipoConfirmacion.Info, FindForm());
-            }
-            catch (Exception ex) { MostrarError(ex.Message); }
-        }
-
         private void ConfirmarPago()
         {
             if (_ventaPago == null) { MostrarError(GestorIdioma06AV.Instancia.Obtener("pcf_seleccione_registro")); return; }
@@ -1122,16 +1149,30 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
 
             try
             {
-                var pago = _ventasBLL.RegistrarSena(_ventaPago.NumeroVenta, forma, referencia);
+                Pago06AV pago;
+                Venta06AV actualizada;
+                if (_ventaNueva != null)
+                {
+                    // Venta + seña en una sola operación: si la seña falla, la venta no queda.
+                    actualizada = _ventasBLL.RegistrarVentaConSena(_ventaNueva.Cliente, _ventaNueva.Computadora,
+                                                                   _ventaNueva.FechaEntregaEstimada, forma, referencia,
+                                                                   out pago);
+                }
+                else
+                {
+                    pago = _ventasBLL.RegistrarSena(_ventaPago.NumeroVenta, forma, referencia);
+                    actualizada = _ventasBLL.ObtenerPorNumero(_ventaPago.NumeroVenta) ?? _ventaPago;
+                }
                 _datosTarjeta.Limpiar();
-                var actualizada = _ventasBLL.ObtenerPorNumero(_ventaPago.NumeroVenta) ?? _ventaPago;
+                int numero = actualizada.NumeroVenta;
                 MostrarGrilla();
                 CargarVentas();
-                SeleccionarVenta(_ventaPago.NumeroVenta);
+                SeleccionarVenta(numero);
 
                 string recibo = ComprobantePcFactory06AV.GenerarReciboSena(actualizada, pago);
                 ComprobantePcFactory06AV.PreguntarEImprimir(recibo, esFactura: false, owner: FindForm(),
-                    encabezado: $"Seña registrada: ${pago.Monto:0.00} ({pago.NumeroRecibo}).\n" +
+                    encabezado: $"Venta #{numero} registrada · total ${actualizada.PrecioTotal:0.00}.\n" +
+                                $"Seña cobrada: ${pago.Monto:0.00} ({pago.NumeroRecibo}).\n" +
                                 (autorizacion != null
                                     ? GestorIdioma06AV.Instancia.Obtener("pcf_tj_aprobada", autorizacion) + "\n"
                                     : "") +

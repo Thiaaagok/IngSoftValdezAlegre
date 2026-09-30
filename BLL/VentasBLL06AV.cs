@@ -110,6 +110,18 @@ namespace BLL
         /// </summary>
         public Venta06AV RegistrarVenta(Cliente06AV cliente, Computadora06AV computadora, DateTime fechaEntregaEstimada)
         {
+            var requeridos = ValidarVenta(cliente, computadora, fechaEntregaEstimada);
+            return RegistrarVentaValidada(cliente, computadora, fechaEntregaEstimada, requeridos);
+        }
+
+        /// <summary>
+        /// Controles de la venta SIN tocar la base (cliente, computadora completa, fecha y
+        /// stock libre). La UI lo usa antes de pasar al cobro de la seña, para que el
+        /// "Componente sin stock" (escenario alternativo 4.1) aparezca antes de cobrar.
+        /// </summary>
+        public List<KeyValuePair<string, int>> ValidarVenta(Cliente06AV cliente, Computadora06AV computadora,
+                                                            DateTime fechaEntregaEstimada)
+        {
             if (cliente == null || string.IsNullOrWhiteSpace(cliente.Dni))
                 throw new ValidacionException06AV("cliente", "Debe indicarse un cliente válido.");
             if (computadora == null || computadora.Componentes == null || computadora.Componentes.Count == 0)
@@ -134,7 +146,13 @@ namespace BLL
                     throw new ValidacionException06AV("stock",
                         $"Componente sin stock: '{comp.Descripcion}' (libre {comp.StockLibre}, requerido {r.Value}).");
             }
+            return requeridos;
+        }
 
+        private Venta06AV RegistrarVentaValidada(Cliente06AV cliente, Computadora06AV computadora,
+                                                 DateTime fechaEntregaEstimada,
+                                                 List<KeyValuePair<string, int>> requeridos)
+        {
             // El control de arriba da el mensaje claro; ante dos ventas simultáneas, la
             // garantía es sp_Componentes_ReservarStock, que solo reserva si hay stock libre.
             // Si una reserva falla se liberan las anteriores.
@@ -172,6 +190,36 @@ namespace BLL
 
             AuditoriaPcFactory06AV.Alta($"Venta #{venta.NumeroVenta} (cliente {cliente.Dni})", ModuloBitacora.Ventas);
             return venta;
+        }
+
+        // ══════════════════════════════════════════════════════════
+        //  CU01 + CU03 · Venta con su seña (flujo del mostrador)
+        // ══════════════════════════════════════════════════════════
+        /// <summary>
+        /// Registra la venta y, en la misma operación, la seña del 50% con su recibo
+        /// (postcondición del CU: "se registra una venta con su seña y recibo").
+        /// Si la seña no se puede asentar, la venta recién creada se anula y se liberan
+        /// los componentes reservados: nunca queda una venta nueva sin seña.
+        /// </summary>
+        public Venta06AV RegistrarVentaConSena(Cliente06AV cliente, Computadora06AV computadora,
+                                               DateTime fechaEntregaEstimada, FormaPago06AV formaPago,
+                                               string referencia, out Pago06AV sena)
+        {
+            var requeridos = ValidarVenta(cliente, computadora, fechaEntregaEstimada);
+            Venta06AV venta = RegistrarVentaValidada(cliente, computadora, fechaEntregaEstimada, requeridos);
+
+            try
+            {
+                sena = RegistrarSena(venta.NumeroVenta, formaPago, referencia);
+            }
+            catch (Exception ex)
+            {
+                try { AnularVenta(venta.NumeroVenta); } catch { }
+                throw new AccesoDatosException06AV(
+                    "No se pudo cobrar la seña: la venta no quedó registrada. Detalle: " + ex.Message, ex);
+            }
+
+            return ObtenerPorNumero(venta.NumeroVenta) ?? venta;
         }
 
         public Pago06AV RegistrarSena(int numeroVenta, FormaPago06AV formaPago, string referencia = null)
