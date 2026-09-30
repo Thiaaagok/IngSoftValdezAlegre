@@ -126,7 +126,7 @@ namespace PCFORGE_ValdezThiago_96VA.UI
             lblAviso.ForeColor = Tema.TextoSuave;
             lblCodigoAyuda.ForeColor = Tema.TextoSuave;
             lblMarca.Font = Tema.FuenteBold;
-            lblMarca.ForeColor = Tema.Primario;
+            ActualizarMarca();
             Invalidate();
         }
 
@@ -194,10 +194,37 @@ namespace PCFORGE_ValdezThiago_96VA.UI
             ActualizarMarca();
         }
 
+        /// <summary>
+        /// Indicador en vivo al lado del número: mientras se escribe muestra la marca; con los
+        /// 16 dígitos aplica Luhn y marca en verde (número válido) o en rojo (no existe).
+        /// </summary>
         private void ActualizarMarca()
         {
             if (lblMarca == null) return;
-            lblMarca.Text = Marca(Digitos());
+            var t = GestorIdioma06AV.Instancia;
+            string d = Digitos();
+            string marca = Marca(d);
+
+            if (d.Length < 16)
+            {
+                lblMarca.Text = marca;
+                lblMarca.ForeColor = Tema.Primario;
+            }
+            else if (!CumpleLuhn(d))
+            {
+                lblMarca.Text = "✖ " + t.Obtener("pcf_tj_luhn_mal");
+                lblMarca.ForeColor = Tema.Peligro;
+            }
+            else if (string.IsNullOrEmpty(marca))
+            {
+                lblMarca.Text = "✖ " + t.Obtener("pcf_tj_marca_desconocida");
+                lblMarca.ForeColor = Tema.Peligro;
+            }
+            else
+            {
+                lblMarca.Text = marca + "  ✔ " + t.Obtener("pcf_tj_luhn_ok");
+                lblMarca.ForeColor = Tema.Exito;
+            }
         }
 
         private static string Marca(string d)
@@ -208,7 +235,6 @@ namespace PCFORGE_ValdezThiago_96VA.UI
             {
                 int dos = int.Parse(d.Substring(0, 2));
                 if (dos >= 51 && dos <= 55) return "MASTERCARD";
-                if (dos == 34 || dos == 37) return "AMEX";
             }
             if (d.Length >= 4)
             {
@@ -219,9 +245,20 @@ namespace PCFORGE_ValdezThiago_96VA.UI
             return string.Empty;
         }
 
-        /// <summary>Algoritmo de Luhn: el dígito de control que usan todas las tarjetas.</summary>
-        private static bool Luhn(string d)
+        /// <summary>
+        /// Algoritmo de Luhn (módulo 10, ISO/IEC 7812): el último dígito de toda tarjeta es un
+        /// dígito de control calculado sobre los anteriores, así que un número inventado o mal
+        /// tipeado casi nunca lo cumple.
+        ///   1. Se recorre el número de derecha a izquierda.
+        ///   2. Se duplica un dígito sí y uno no, empezando por el segundo desde la derecha.
+        ///   3. Si al duplicar da más de 9, se le resta 9 (equivale a sumar sus dos cifras).
+        ///   4. Se suman todos los dígitos: el número es válido si la suma es múltiplo de 10.
+        /// Ej.: 4111 1111 1111 1111 → suma 30 → válido; cambiando el último 1 por 2 → inválido.
+        /// </summary>
+        internal static bool CumpleLuhn(string d)
         {
+            if (string.IsNullOrEmpty(d) || !d.All(char.IsDigit)) return false;
+
             int suma = 0;
             bool doblar = false;
             for (int i = d.Length - 1; i >= 0; i--)
@@ -251,8 +288,10 @@ namespace PCFORGE_ValdezThiago_96VA.UI
 
             if (d.Length != 16)
             { error = t.Obtener("pcf_tj_err_numero"); txtNumero.Focus(); return false; }
-            if (!Luhn(d))
+            if (!CumpleLuhn(d))
             { error = t.Obtener("pcf_tj_err_luhn"); txtNumero.Focus(); return false; }
+            if (string.IsNullOrEmpty(Marca(d)))
+            { error = t.Obtener("pcf_tj_err_marca"); txtNumero.Focus(); return false; }
 
             string nombre = txtNombre.Text.Trim();
             if (nombre.Length < 5 || !nombre.Contains(" "))
