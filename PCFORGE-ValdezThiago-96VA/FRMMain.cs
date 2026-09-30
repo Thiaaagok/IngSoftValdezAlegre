@@ -44,6 +44,72 @@ namespace PCFORGE_ValdezThiago_96VA
             MostrarControl(new UsuariosControl());
 
             ConfigurarGestionBackups();
+
+            Microsoft.Win32.SystemEvents.DisplaySettingsChanged += PantallaCambiada;
+            FormClosed += (s, e) => Microsoft.Win32.SystemEvents.DisplaySettingsChanged -= PantallaCambiada;
+        }
+
+        // ── Tamaño de la ventana según la pantalla ──────────────────────────────
+        // La ventana no tiene borde (FormBorderStyle.None): Windows no la achica ni deja
+        // redimensionarla. En pantallas chicas (o con la escala de Windows al 125/150 %)
+        // los 1300×788 del diseñador se salían por abajo y las barras de botones de cada
+        // pantalla (Confirmar, Volver, Registrar entrega…) quedaban cortadas.
+        // Ahora la ventana nunca pasa del área útil del monitor (sin tapar la barra de
+        // tareas) y con doble clic en la barra superior se alterna entre ocupar toda la
+        // pantalla y el tamaño normal.
+        private Size _tamanioDisenio;          // el del diseñador (ya escalado por Windows)
+        private Rectangle? _limitesNormales;
+        private int _ultimoClicBarra;
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            _tamanioDisenio = Size;
+            AjustarAPantalla();
+        }
+
+        private void PantallaCambiada(object sender, EventArgs e)
+        {
+            if (IsHandleCreated && !IsDisposed) BeginInvoke((Action)AjustarAPantalla);
+        }
+
+        private Rectangle AreaUtil() => Screen.FromControl(this).WorkingArea;
+
+        private void AjustarAPantalla()
+        {
+            Rectangle area = AreaUtil();
+            MinimumSize = new Size(Math.Min(900, area.Width), Math.Min(560, area.Height));
+            MaximizedBounds = area;   // si Windows la maximiza, que respete la barra de tareas
+
+            if (Width > area.Width || Height > area.Height)
+            {
+                // No entra: ocupa toda el área útil.
+                Bounds = area;
+                return;
+            }
+            if (!area.Contains(Bounds))
+                Location = new Point(area.Left + (area.Width - Width) / 2, area.Top + (area.Height - Height) / 2);
+        }
+
+        private void AlternarPantallaCompleta()
+        {
+            Rectangle area = AreaUtil();
+            if (Bounds != area)
+            {
+                _limitesNormales = Bounds;
+                Bounds = area;
+                return;
+            }
+
+            // Volver al tamaño normal: el que tenía antes o el de diseño, siempre dentro de la pantalla.
+            Size tam = _limitesNormales?.Size ?? _tamanioDisenio;
+            if (tam.Width >= area.Width || tam.Height >= area.Height)
+                tam = new Size(Math.Max(MinimumSize.Width, area.Width * 85 / 100),
+                               Math.Max(MinimumSize.Height, area.Height * 85 / 100));
+            tam = new Size(Math.Min(tam.Width, area.Width), Math.Min(tam.Height, area.Height));
+            Bounds = new Rectangle(area.Left + (area.Width - tam.Width) / 2,
+                                   area.Top + (area.Height - tam.Height) / 2,
+                                   tam.Width, tam.Height);
         }
 
 
@@ -375,6 +441,15 @@ namespace PCFORGE_ValdezThiago_96VA
             control.MouseDown += (s, e) =>
             {
                 if (e.Button != MouseButtons.Left) return;
+                // Doble clic detectado a mano: el arrastre de la ventana se "come" el segundo clic.
+                int ahora = Environment.TickCount;
+                if (ahora - _ultimoClicBarra <= SystemInformation.DoubleClickTime)
+                {
+                    _ultimoClicBarra = 0;
+                    AlternarPantallaCompleta();
+                    return;
+                }
+                _ultimoClicBarra = ahora;
                 ReleaseCapture();
                 SendMessage(this.Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
             };
