@@ -16,6 +16,7 @@ namespace MPP
             var lista = new List<Componente06AV>();
             foreach (DataRow row in tabla.Rows)
                 lista.Add(Mapear(row));
+            AdjuntarEspecificaciones(lista);
             return lista;
         }
 
@@ -23,8 +24,61 @@ namespace MPP
         {
             DataTable tabla = _dal.ObtenerPorCodigo(codigo);
             if (tabla.Rows.Count == 0) return null;
-            return Mapear(tabla.Rows[0]);
+            Componente06AV c = Mapear(tabla.Rows[0]);
+            DataTable esp = _dal.ObtenerEspecificacion(codigo);
+            if (esp.Rows.Count > 0) c.Especificacion = MapearEspecificacion(esp.Rows[0]);
+            return c;
         }
+
+        public void GuardarEspecificacion(string codigo, EspecificacionComponente06AV e)
+        {
+            if (e == null) e = new EspecificacionComponente06AV();
+            _dal.GuardarEspecificacion(codigo, e.Plataforma, e.Socket, e.TipoMemoria, e.FrecuenciaMemoriaMhz,
+                                       e.CapacidadGb, e.SlotsMemoria, e.MemoriaMaximaGb, e.Formato, e.ConsumoW,
+                                       e.PotenciaW, e.TdpSoportadoW, e.GraficosIntegrados, e.Desbloqueado,
+                                       e.PermiteOverclock);
+        }
+
+        private void AdjuntarEspecificaciones(List<Componente06AV> lista)
+        {
+            if (lista.Count == 0) return;
+            var porCodigo = new Dictionary<string, EspecificacionComponente06AV>(StringComparer.OrdinalIgnoreCase);
+            foreach (DataRow row in _dal.ObtenerEspecificaciones().Rows)
+                porCodigo[row["CodigoComponente"].ToString()] = MapearEspecificacion(row);
+            foreach (Componente06AV c in lista)
+                if (porCodigo.TryGetValue(c.Codigo, out EspecificacionComponente06AV e))
+                    c.Especificacion = e.Copiar();
+        }
+
+        private static EspecificacionComponente06AV MapearEspecificacion(DataRow row)
+        {
+            return new EspecificacionComponente06AV
+            {
+                Plataforma           = Texto(row, "Plataforma"),
+                Socket               = Texto(row, "Socket"),
+                TipoMemoria          = Texto(row, "TipoMemoria"),
+                FrecuenciaMemoriaMhz = Entero(row, "FrecuenciaMemoriaMhz"),
+                CapacidadGb          = Entero(row, "CapacidadGb"),
+                SlotsMemoria         = Entero(row, "SlotsMemoria"),
+                MemoriaMaximaGb      = Entero(row, "MemoriaMaximaGb"),
+                Formato              = Texto(row, "Formato"),
+                ConsumoW             = Entero(row, "ConsumoW"),
+                PotenciaW            = Entero(row, "PotenciaW"),
+                TdpSoportadoW        = Entero(row, "TdpSoportadoW"),
+                GraficosIntegrados   = Logico(row, "GraficosIntegrados"),
+                Desbloqueado         = Logico(row, "Desbloqueado"),
+                PermiteOverclock     = Logico(row, "PermiteOverclock")
+            };
+        }
+
+        private static string Texto(DataRow row, string col) =>
+            row[col] == DBNull.Value ? null : row[col].ToString();
+
+        private static int? Entero(DataRow row, string col) =>
+            row[col] == DBNull.Value ? (int?)null : Convert.ToInt32(row[col]);
+
+        private static bool? Logico(DataRow row, string col) =>
+            row[col] == DBNull.Value ? (bool?)null : Convert.ToBoolean(row[col]);
 
         public List<Componente06AV> ObtenerBajoStock()
         {

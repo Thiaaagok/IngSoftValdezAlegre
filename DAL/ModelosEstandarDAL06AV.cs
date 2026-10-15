@@ -32,10 +32,10 @@ namespace DAL
             EjecutarSPNonQuery("sp_ModeloEstandar_Eliminar",
                 new Dictionary<string, object> { { "@Id", id } });
 
-        public void AgregarComponente(int idModelo, string codigo) =>
+        public void AgregarComponente(int idModelo, string codigo, int cantidad) =>
             EjecutarSPNonQuery("sp_ModeloEstandar_AgregarComponente", new Dictionary<string, object>
             {
-                { "@IdModelo", idModelo }, { "@CodigoComponente", codigo }
+                { "@IdModelo", idModelo }, { "@CodigoComponente", codigo }, { "@Cantidad", cantidad }
             });
 
         public void QuitarComponentes(int idModelo) =>

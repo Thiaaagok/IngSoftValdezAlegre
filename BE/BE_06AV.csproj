@@ -45,6 +45,8 @@
     <Compile Include="Enumeraciones06AV.cs" />
     <Compile Include="Cliente06AV.cs" />
     <Compile Include="Componente06AV.cs" />
+    <Compile Include="EspecificacionComponente06AV.cs" />
+    <Compile Include="ReglaCompatibilidad06AV.cs" />
     <Compile Include="ComponenteHistorico06AV.cs" />
     <Compile Include="Computadora06AV.cs" />
     <Compile Include="LineaEnsamblaje06AV.cs" />
@@ -58,6 +60,9 @@
     <Compile Include="DetalleComponente06AV.cs" />
     <Compile Include="OrdenCompra06AV.cs" />
     <Compile Include="FacturaCompra06AV.cs" />
+    <Compile Include="PagoProveedor06AV.cs" />
+    <Compile Include="Aviso06AV.cs" />
+    <Compile Include="FilaReporteProveedores06AV.cs" />
     <Compile Include="ModeloEstandar06AV.cs" />
     <Compile Include="PedidoCotizacion06AV.cs" />
     <Compile Include="PaqueteSerializado06AV.cs" />

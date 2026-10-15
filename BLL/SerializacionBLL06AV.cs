@@ -36,7 +36,7 @@ namespace BLL
         // Datos de inventario: cambian con cada venta o compra, no con el objeto
         // serializado, y harían que toda venta vieja figure como "Difiere".
         private static readonly HashSet<string> PropiedadesIgnoradas =
-            new HashSet<string>(StringComparer.Ordinal) { "Stock", "StockReservado", "StockMinimo" };
+            new HashSet<string>(StringComparer.Ordinal) { "Stock", "StockReservado", "StockMinimo", "Especificacion" };
 
         private const int MaximoDiferencias = 8;
 

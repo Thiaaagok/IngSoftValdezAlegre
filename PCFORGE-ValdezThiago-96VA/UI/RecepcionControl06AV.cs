@@ -1,4 +1,6 @@
 using BE;
+using BLL;
+using PCFORGE_ValdezThiago_96VA.Common;
 using SER;
 using System;
 using System.Collections.Generic;
@@ -11,18 +13,26 @@ namespace PCFORGE_ValdezThiago_96VA.UI
     internal class RecepcionArmada06AV : EventArgs
     {
         public RecepcionArmada06AV(List<DetalleComponente06AV> recibidos, DateTime fechaEntrega,
-                                   string observaciones, bool completa)
+                                   string observaciones, bool completa,
+                                   string numeroFacturaProveedor = null, decimal? totalFacturado = null,
+                                   decimal totalEsperado = 0m)
         {
             Recibidos = recibidos;
             FechaEntrega = fechaEntrega;
             Observaciones = observaciones;
             Completa = completa;
+            NumeroFacturaProveedor = numeroFacturaProveedor;
+            TotalFacturado = totalFacturado;
+            TotalEsperado = totalEsperado;
         }
 
         public List<DetalleComponente06AV> Recibidos { get; }
         public DateTime FechaEntrega { get; }
         public string Observaciones { get; }
         public bool Completa { get; }
+        public string NumeroFacturaProveedor { get; }
+        public decimal? TotalFacturado { get; }
+        public decimal TotalEsperado { get; }
     }
 
     internal class RecepcionControl06AV : UserControl, IIdiomaAplicable06AV
@@ -35,6 +45,9 @@ namespace PCFORGE_ValdezThiago_96VA.UI
 
         private readonly Panel _pnlTicket, _pnlDatos, _relleno;
         private readonly Label _lblTicketTit, _lblVeredicto, _lblEntrega, _lblObs;
+        private readonly Label _lblNroFactura, _lblTotalFact, _lblEsperado;
+        private readonly TextBox _txtNroFactura;
+        private readonly NumericUpDown _numTotalFact;
         private readonly FichaDatos06AV _ficha;
         private readonly DateTimePicker _dtpEntrega;
         private readonly TextBox _txtObs;
@@ -43,6 +56,10 @@ namespace PCFORGE_ValdezThiago_96VA.UI
 
         private readonly List<FilaRecepcion06AV> _filas = new List<FilaRecepcion06AV>();
         private int _numeroOrden;
+        private OrdenCompra06AV _orden;
+        private PedidoCotizacion06AV _cotizacion;
+        private decimal _esperado;
+        private bool _totalEditado, _sincronizando;
 
         public RecepcionControl06AV()
         {
@@ -88,26 +105,43 @@ namespace PCFORGE_ValdezThiago_96VA.UI
             cuerpo.Controls.Add(_lblListaTit);
 
             _lblTicketTit = new Label { Dock = DockStyle.Top, Height = 28, AutoSize = false };
-            _ficha = new FichaDatos06AV { Dock = DockStyle.Top, Height = 190 };
+            _ficha = new FichaDatos06AV { Dock = DockStyle.Top, Height = 160 };
 
             _lblEntrega = new Label { AutoSize = true, Location = new Point(2, 4) };
             _dtpEntrega = new DateTimePicker
             {
                 Format = DateTimePickerFormat.Short,
                 Value = DateTime.Today,
+                MaxDate = DateTime.Today.AddDays(1).AddTicks(-1),
                 Width = 150,
                 Location = new Point(2, 22)
             };
-            _lblObs = new Label { AutoSize = true, Location = new Point(2, 58) };
+            _lblNroFactura = new Label { AutoSize = true, Location = new Point(162, 4) };
+            _txtNroFactura = new TextBox { Location = new Point(162, 22), Width = 150, MaxLength = 50 };
+
+            _lblTotalFact = new Label { AutoSize = true, Location = new Point(2, 56) };
+            _numTotalFact = new NumericUpDown
+            {
+                Location = new Point(2, 74), Width = 150, DecimalPlaces = 2, ThousandsSeparator = true,
+                Minimum = 0, Maximum = CompraInsumosBLL06AV.TotalFacturadoMaximo, Increment = 1000
+            };
+            _numTotalFact.ValueChanged += (s, e) => { if (!_sincronizando) { _totalEditado = true; ActualizarDiferencia(); } };
+            _lblEsperado = new Label { AutoSize = false, Location = new Point(162, 70), Size = new Size(152, 48) };
+
+            _lblObs = new Label { AutoSize = true, Location = new Point(2, 120) };
             _txtObs = new TextBox
             {
-                Location = new Point(2, 76), Width = 300, Height = 54,
+                Location = new Point(2, 138), Width = 306, Height = 46,
                 Multiline = true, ScrollBars = ScrollBars.Vertical,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
 
-            _pnlDatos = new Panel { Dock = DockStyle.Bottom, Height = 140 };
-            _pnlDatos.Controls.AddRange(new Control[] { _lblEntrega, _dtpEntrega, _lblObs, _txtObs });
+            _pnlDatos = new Panel { Dock = DockStyle.Bottom, Height = 192 };
+            _pnlDatos.Controls.AddRange(new Control[]
+            {
+                _lblEntrega, _dtpEntrega, _lblNroFactura, _txtNroFactura,
+                _lblTotalFact, _numTotalFact, _lblEsperado, _lblObs, _txtObs
+            });
 
             _lblVeredicto = new Label
             {
@@ -157,10 +191,12 @@ namespace PCFORGE_ValdezThiago_96VA.UI
         public event EventHandler<RecepcionArmada06AV> Confirmado;
         public event EventHandler Cancelado;
 
-        public void Cargar(int numeroOrden, IEnumerable<DetalleComponente06AV> pendiente)
+        public void Cargar(OrdenCompra06AV orden, PedidoCotizacion06AV cotizacion, IEnumerable<DetalleComponente06AV> pendiente)
         {
             var t = GestorIdioma06AV.Instancia;
-            _numeroOrden = numeroOrden;
+            _orden = orden;
+            _cotizacion = cotizacion;
+            _numeroOrden = orden?.NumeroCompra ?? 0;
 
             _lista.SuspendLayout();
             foreach (Control c in _lista.Controls.Cast<Control>().ToList()) c.Dispose();
@@ -185,8 +221,13 @@ namespace PCFORGE_ValdezThiago_96VA.UI
 
             _lista.ResumeLayout();
 
+            _dtpEntrega.MaxDate = DateTime.Today.AddDays(1).AddTicks(-1);
+            _dtpEntrega.MinDate = cotizacion != null && cotizacion.FechaEmision.Date <= DateTime.Today
+                ? cotizacion.FechaEmision.Date : DateTimePicker.MinimumDateTime;
             _dtpEntrega.Value = DateTime.Today;
             _txtObs.Clear();
+            _txtNroFactura.Clear();
+            _totalEditado = false;
             AplicarIdioma();
             ActualizarVeredicto();
         }
@@ -229,6 +270,15 @@ namespace PCFORGE_ValdezThiago_96VA.UI
             else _lblVeredicto.Text = "!  " + t.Obtener("pcf_rec_ver_parcial", unidades, esperadas - unidades);
             _lblVeredicto.ForeColor = color;
 
+            _esperado = CalcularEsperado();
+            if (!_totalEditado)
+            {
+                _sincronizando = true;
+                _numTotalFact.Value = Math.Min(_numTotalFact.Maximum, _esperado);
+                _sincronizando = false;
+            }
+            ActualizarDiferencia();
+
             _btnConfirmar.Enabled = algo;
             _btnConfirmar.Text = completa
                 ? t.Obtener("pcf_rec_confirmar_completa")
@@ -237,6 +287,40 @@ namespace PCFORGE_ValdezThiago_96VA.UI
             if (!algo) Tema.AplicarBotonDeshabilitado(_btnConfirmar);
             else if (completa) Tema.AplicarBotonPrimario(_btnConfirmar);
             else Tema.AplicarBotonAcento(_btnConfirmar);
+        }
+
+        private List<DetalleComponente06AV> Recibidos() => _filas
+            .Where(f => f.CantidadRecibida > 0)
+            .Select(f => new DetalleComponente06AV { Componente = f.Pendiente.Componente, Cantidad = f.CantidadRecibida })
+            .ToList();
+
+        private decimal CalcularEsperado()
+        {
+            if (_cotizacion == null || _orden == null) return 0m;
+            try { return CompraInsumosBLL06AV.CalcularTotalRecepcion(_cotizacion, _orden, Recibidos()); }
+            catch { return 0m; }
+        }
+
+        private void ActualizarDiferencia()
+        {
+            if (_lblEsperado == null) return;
+            var t = GestorIdioma06AV.Instancia;
+            decimal dif = _numTotalFact.Value - _esperado;
+            if (_esperado <= 0m)
+            {
+                _lblEsperado.Text = string.Empty;
+                return;
+            }
+            if (Math.Abs(dif) < 0.01m)
+            {
+                _lblEsperado.Text = "✓  " + t.Obtener("pcf_rec_esperado", _esperado.ToString("C2"));
+                _lblEsperado.ForeColor = Tema.Exito;
+            }
+            else
+            {
+                _lblEsperado.Text = "!  " + t.Obtener("pcf_rec_diferencia", (dif > 0 ? "+" : "") + dif.ToString("C2"), _esperado.ToString("C2"));
+                _lblEsperado.ForeColor = Tema.Advertencia;
+            }
         }
 
         private void Confirmar()
@@ -253,8 +337,21 @@ namespace PCFORGE_ValdezThiago_96VA.UI
             if (recibidos.Count == 0) return;
 
             bool completa = _filas.All(f => f.Completo);
+            var t = GestorIdioma06AV.Instancia;
+            decimal? facturado = _numTotalFact.Value > 0m ? _numTotalFact.Value : (decimal?)null;
+            decimal esperado = CalcularEsperado();
+            if (facturado.HasValue && esperado > 0m && Math.Abs(facturado.Value - esperado) >= 0.01m)
+            {
+                bool seguir = ConfirmacionForm.Mostrar(
+                    t.Obtener("pcf_rec_confirmar_dif", facturado.Value.ToString("C2"), esperado.ToString("C2"),
+                              (facturado.Value - esperado).ToString("C2")),
+                    t.Obtener("pcf_rec_titulo"), ConfirmacionForm.TipoConfirmacion.Advertencia,
+                    t.Obtener("pcf_rec_registrar_igual"), t.Obtener("cancelar"), FindForm());
+                if (!seguir) return;
+            }
             Confirmado?.Invoke(this, new RecepcionArmada06AV(
-                recibidos, _dtpEntrega.Value, _txtObs.Text.Trim(), completa));
+                recibidos, _dtpEntrega.Value, _txtObs.Text.Trim(), completa,
+                _txtNroFactura.Text.Trim(), facturado, esperado));
         }
 
         private static Button NuevoBoton(int ancho) => new Button
@@ -279,6 +376,8 @@ namespace PCFORGE_ValdezThiago_96VA.UI
             _lblTicketTit.Text = t.Obtener("pcf_rec_remito");
             _lblEntrega.Text = t.Obtener("pcf_rec_fecha");
             _lblObs.Text = t.Obtener("pcf_observaciones");
+            _lblNroFactura.Text = t.Obtener("pcf_rec_nro_factura");
+            _lblTotalFact.Text = t.Obtener("pcf_rec_total_facturado");
             ActualizarVeredicto();
         }
 
@@ -305,7 +404,7 @@ namespace PCFORGE_ValdezThiago_96VA.UI
             _lblVeredicto.Font = Tema.FuenteBold;
             _lblVeredicto.BackColor = Tema.FondoPanel;
 
-            foreach (Label l in new[] { _lblEntrega, _lblObs })
+            foreach (Label l in new[] { _lblEntrega, _lblObs, _lblNroFactura, _lblTotalFact })
             {
                 l.Font = Tema.FuenteMini;
                 l.ForeColor = Tema.TextoSuave;
@@ -314,6 +413,10 @@ namespace PCFORGE_ValdezThiago_96VA.UI
 
             Tema.AplicarEntrada(_dtpEntrega);
             Tema.AplicarEntrada(_txtObs);
+            Tema.AplicarEntrada(_txtNroFactura);
+            Tema.AplicarEntrada(_numTotalFact);
+            _lblEsperado.Font = Tema.FuenteMini;
+            _lblEsperado.BackColor = Tema.FondoPanel;
             Tema.AplicarBotonSecundario(_btnTodo);
             Tema.AplicarBotonSecundario(_btnNada);
             Tema.AplicarBotonSecundario(_btnCancelar);

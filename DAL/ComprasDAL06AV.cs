@@ -43,6 +43,13 @@ namespace DAL
             EjecutarSPNonQuery("sp_OrdenesCompra_Cerrar", new Dictionary<string, object>
             { { "@Id", id }, { "@FechaCierre", fechaCierre } });
 
+        public void TerminarOrdenCompra(string id, int estado, DateTime fechaCierre, string motivo) =>
+            EjecutarSPNonQuery("sp_OrdenesCompra_Terminar", new Dictionary<string, object>
+            {
+                { "@Id", id }, { "@Estado", estado }, { "@FechaCierre", fechaCierre },
+                { "@Motivo", string.IsNullOrWhiteSpace(motivo) ? (object)DBNull.Value : motivo.Trim() }
+            });
+
         public void AgregarCotizacion(string numero, string idOrdenCompra, int idProveedor,
                                       decimal costo, string condiciones)
         {
@@ -87,7 +94,8 @@ namespace DAL
             });
 
         public void AgregarFacturaCompra(string numeroFactura, string idOrdenCompra, DateTime fechaEmision,
-                                         DateTime fechaEntrega, decimal total, string observaciones)
+                                         DateTime fechaEntrega, decimal total, string observaciones,
+                                         string numeroFacturaProveedor, decimal? totalFacturado)
         {
             EjecutarSPNonQuery("sp_FacturaCompra_Agregar", new Dictionary<string, object>
             {
@@ -96,9 +104,28 @@ namespace DAL
                 { "@FechaEmision", fechaEmision },
                 { "@FechaEntrega", fechaEntrega },
                 { "@Total", total },
-                { "@Observaciones", (object)observaciones ?? "" }
+                { "@Observaciones", (object)observaciones ?? "" },
+                { "@NumeroFacturaProveedor", string.IsNullOrWhiteSpace(numeroFacturaProveedor) ? (object)DBNull.Value : numeroFacturaProveedor.Trim() },
+                { "@TotalFacturado", totalFacturado.HasValue ? (object)totalFacturado.Value : DBNull.Value }
             });
         }
+
+        public void AgregarPagoProveedor(string numero, string idOrdenCompra, decimal monto, DateTime fechaPago,
+                                         int formaPago, string referencia, string dniUsuario)
+        {
+            EjecutarSPNonQuery("sp_PagosProveedor_Agregar", new Dictionary<string, object>
+            {
+                { "@Numero", numero },
+                { "@IdOrdenCompra", idOrdenCompra },
+                { "@Monto", monto },
+                { "@FechaPago", fechaPago.Date },
+                { "@FormaPago", formaPago },
+                { "@Referencia", (object)referencia ?? "" },
+                { "@DniUsuario", string.IsNullOrWhiteSpace(dniUsuario) ? (object)DBNull.Value : dniUsuario }
+            });
+        }
+
+        public DataTable ObtenerPagosProveedor() => EjecutarSP("sp_PagosProveedor_ObtenerTodos", null);
 
         public DataTable ObtenerFacturasPorOrden(string idOrdenCompra) =>
             EjecutarSP("sp_FacturaCompra_ObtenerPorOrden", new Dictionary<string, object>

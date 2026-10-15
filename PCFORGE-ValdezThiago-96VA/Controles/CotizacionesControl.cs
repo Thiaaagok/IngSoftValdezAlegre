@@ -34,6 +34,10 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
         private Label lblOrdenTit, lblOrdenDet, lblOfertasTit, lblMesaVacia;
         private FlowLayoutPanel flpOfertas;
 
+        private Panel pnlComparar;
+        private Label lblCompararTit;
+        private DataGridView dgvComparar;
+
         private Label lblNuevaTit, lblNuevaAyuda;
         private Button btnRegistrar;
         private Panel pnlCotizador;
@@ -137,8 +141,23 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
                 Padding = new Padding(14, 4, 8, 8)
             };
 
+            lblCompararTit = new Label { Dock = DockStyle.Top, Height = 26, AutoSize = false, Padding = new Padding(0, 4, 0, 0) };
+            dgvComparar = new DataGridView
+            {
+                Dock = DockStyle.Fill, ReadOnly = true, AllowUserToAddRows = false, AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false, MultiSelect = false, RowHeadersVisible = false, BorderStyle = BorderStyle.None,
+                SelectionMode = DataGridViewSelectionMode.CellSelect, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing, ColumnHeadersHeight = 30
+            };
+            dgvComparar.RowTemplate.Height = 26;
+            dgvComparar.SelectionChanged += (s, e) => dgvComparar.ClearSelection();
+            pnlComparar = new Panel { Dock = DockStyle.Bottom, Height = 180, Padding = new Padding(14, 2, 14, 8), Visible = false };
+            pnlComparar.Controls.Add(dgvComparar);
+            pnlComparar.Controls.Add(lblCompararTit);
+
             pnlMesa = new Panel { Dock = DockStyle.Fill };
             pnlMesa.Controls.Add(flpOfertas);
+            pnlMesa.Controls.Add(pnlComparar);
             pnlMesa.Controls.Add(lblMesaVacia);
             pnlMesa.Controls.Add(lblOfertasTit);
             pnlMesa.Controls.Add(pnlCabOrden);
@@ -185,8 +204,16 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
 
         private Situacion SituacionDe(OrdenCompra06AV oc)
         {
-            if (oc.Estado == EstadoOrdenCompra06AV.Finalizada) return Situacion.Cerrada;
-            if (oc.Estado == EstadoOrdenCompra06AV.Enviada) return Situacion.Adjudicada;
+            switch (oc.Estado)
+            {
+                case EstadoOrdenCompra06AV.Finalizada:
+                case EstadoOrdenCompra06AV.Anulada:
+                case EstadoOrdenCompra06AV.CerradaConFaltante:
+                    return Situacion.Cerrada;
+                case EstadoOrdenCompra06AV.Enviada:
+                case EstadoOrdenCompra06AV.RecibidaParcial:
+                    return Situacion.Adjudicada;
+            }
             return OfertasDe(oc).Any(c => c.Estado == EstadoCotizacion06AV.PorAprobar)
                 ? Situacion.ConOfertas
                 : Situacion.SinOfertas;
@@ -230,7 +257,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
                                        oc.ComponentesFaltantes.Count, UnidadesDe(oc)),
                     Subtitulo = t.Obtener("pcf_repositor") + ": " +
                                 (oc.RepositorSolicitante != null ? oc.RepositorSolicitante.Login : "-"),
-                    Chips = new[] { TextoSituacion(sit), t.Obtener("pcf_cot_ofertas_n", ofertas.Count) },
+                    Chips = new[] { TextoSituacion(sit, oc), t.Obtener("pcf_cot_ofertas_n", ofertas.Count) },
                     PieIzquierda = t.Obtener("pcf_f_limite") + ": " + oc.FechaLimite.ToShortDateString(),
                     TextoPlazo = cerrada ? null : TextoPlazo(dias),
                     Urgencia = cerrada ? 0 : (dias < 0 ? 2 : (dias <= 2 ? 1 : 0))
@@ -264,9 +291,11 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             }
         }
 
-        private string TextoSituacion(Situacion s)
+        private string TextoSituacion(Situacion s, OrdenCompra06AV oc = null)
         {
             var t = GestorIdioma06AV.Instancia;
+            if (s == Situacion.Cerrada && oc != null && oc.Estado != EstadoOrdenCompra06AV.Finalizada)
+                return t.Obtener("pcf_oc_est_" + oc.Estado);
             switch (s)
             {
                 case Situacion.SinOfertas: return t.Obtener("pcf_cot_sit_sin");
@@ -322,6 +351,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
                 lblMesaVacia.Text = t.Obtener("pcf_cot_elegi_orden");
                 lblMesaVacia.Visible = true;
                 pnlNueva.Visible = false;
+                pnlComparar.Visible = false;
                 flpOfertas.ResumeLayout();
                 return;
             }
@@ -329,9 +359,11 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             List<PedidoCotizacion06AV> ofertas = OfertasDe(_sel);
             Situacion sit = SituacionDe(_sel);
             bool resoluble = sit == Situacion.ConOfertas || sit == Situacion.SinOfertas;
+            bool puedeAprobar = Puede(PatenteEnum06AV.AprobarCotizacion);
+            bool puedeCotizar = Puede(PatenteEnum06AV.RegistrarOrdenCompra);
 
             lblOrdenTit.Text = t.Obtener("pcf_orden_num") + " #" + _sel.NumeroCompra +
-                               "   —   " + TextoSituacion(sit);
+                               "   —   " + TextoSituacion(sit, _sel);
             lblOrdenDet.Text =
                 string.Join("   ·   ", _sel.ComponentesFaltantes
                     .Select(d => (d.Componente != null ? d.Componente.Descripcion : "?") + " ×" + d.Cantidad)) +
@@ -355,13 +387,15 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
                     Unidades = unidades,
                     EsMejor = ofertas.Count > 1 && cot.Costo == mejor
                                                 && cot.Estado != EstadoCotizacion06AV.Desaprobada,
-                    PermiteResolver = resoluble,
+                    PermiteResolver = resoluble && puedeAprobar,
                     TextoMejor = t.Obtener("pcf_cot_mejor"),
                     TextoAprobar = t.Obtener("pcf_cot_adjudicar"),
                     TextoDescartar = t.Obtener("pcf_cot_descartar"),
                     TextoUnidad = t.Obtener("pcf_cot_por_unidad"),
                     TextoSinCondiciones = t.Obtener("pcf_cot_sin_cond"),
-                    TextoEstadoAprobada = t.Obtener("pcf_cot_adjudicada"),
+                    TextoEstadoAprobada = cot.GerenteAprobador != null
+                        ? t.Obtener("pcf_cot_adjudicada_por", cot.GerenteAprobador.Login)
+                        : t.Obtener("pcf_cot_adjudicada"),
                     TextoEstadoDescartada = t.Obtener("pcf_cot_descartada"),
                     TextoEstadoPendiente = t.Obtener("pcf_est_por_aprobar")
                 };
@@ -373,8 +407,11 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
 
             lblMesaVacia.Text = t.Obtener("pcf_cot_sin_ofertas");
             lblMesaVacia.Visible = ofertas.Count == 0;
-            pnlNueva.Visible = resoluble;
+            pnlNueva.Visible = resoluble && puedeCotizar;
+            if (resoluble && !puedeAprobar && ofertas.Any(c => c.Estado == EstadoCotizacion06AV.PorAprobar))
+                lblOfertasTit.Text += "   ·   " + t.Obtener("pcf_oc_espera_aprobacion");
 
+            ArmarComparacion(ofertas);
             flpOfertas.ResumeLayout();
             AplicarTemaMesa();
         }
@@ -398,18 +435,111 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             try
             {
                 var gerente = UsuarioSesion06AV.Instancia().UsuarioActual;
-                if (adjudicar) _bll.AprobarCotizacion(cot.Numero, gerente);
-                else _bll.DesaprobarCotizacion(cot.Numero, gerente);
-                Cargar();
+                OrdenCompra06AV oc = _sel;
+                if (adjudicar && ComprasControl.EsAutoaprobacion(oc, gerente) &&
+                    !ConfirmacionForm.Mostrar(t.Obtener("pcf_autoaprobacion", oc.NumeroCompra), t.Obtener("pcf_menu_cotizaciones"),
+                        ConfirmacionForm.TipoConfirmacion.Advertencia, t.Obtener("pcf_aprobar_igual"), t.Obtener("cancelar"), FindForm()))
+                    return;
+
+                if (adjudicar)
+                {
+                    PedidoCotizacion06AV aprobada = _bll.AprobarCotizacion(cot.Numero, gerente);
+                    Cargar();
+                    OrdenCompra06AV actual = _ordenes.FirstOrDefault(o => o.Id == oc?.Id) ?? oc;
+                    if (actual != null) ComprobanteCompras06AV.Ofrecer(actual, aprobada ?? cot, true, FindForm());
+                }
+                else
+                {
+                    _bll.DesaprobarCotizacion(cot.Numero, gerente);
+                    Cargar();
+                }
             }
             catch (Exception ex) { MostrarError(ex.Message); }
+        }
+
+        private static bool Puede(PatenteEnum06AV patente)
+        {
+            try { return UsuarioSesion06AV.Instancia().TienePermiso(patente); }
+            catch { return false; }
+        }
+
+        private void ArmarComparacion(List<PedidoCotizacion06AV> ofertas)
+        {
+            var t = GestorIdioma06AV.Instancia;
+            List<PedidoCotizacion06AV> conPrecios = ofertas.Where(c => c.TienePreciosPorItem).ToList();
+            dgvComparar.Rows.Clear();
+            dgvComparar.Columns.Clear();
+            if (_sel == null || conPrecios.Count < 2)
+            {
+                pnlComparar.Visible = false;
+                return;
+            }
+
+            lblCompararTit.Text = t.Obtener("pcf_cot_comparar");
+            dgvComparar.Columns.Add("Componente", t.Obtener("pcf_col_descripcion"));
+            dgvComparar.Columns.Add("Cantidad", t.Obtener("pcf_col_cantidad"));
+            dgvComparar.Columns[0].FillWeight = 180;
+            dgvComparar.Columns[1].FillWeight = 50;
+            dgvComparar.Columns[1].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            foreach (PedidoCotizacion06AV c in conPrecios)
+            {
+                string nombre = c.Proveedor?.Nombre ?? c.Numero;
+                if (c.Estado == EstadoCotizacion06AV.Desaprobada) nombre += " (" + t.Obtener("pcf_cot_descartada").ToLower() + ")";
+                else if (c.Estado == EstadoCotizacion06AV.Aprobado) nombre += " ✓";
+                int i = dgvComparar.Columns.Add("P" + c.Numero, nombre);
+                dgvComparar.Columns[i].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                dgvComparar.Columns[i].SortMode = DataGridViewColumnSortMode.NotSortable;
+            }
+            foreach (DataGridViewColumn col in dgvComparar.Columns) col.SortMode = DataGridViewColumnSortMode.NotSortable;
+
+            var vigentes = conPrecios.Select((c, i) => new { c, i })
+                                     .Where(x => x.c.Estado != EstadoCotizacion06AV.Desaprobada).ToList();
+            Font negrita = new Font("Segoe UI Semibold", 9f, FontStyle.Bold);
+
+            foreach (DetalleComponente06AV d in _sel.ComponentesFaltantes.Where(x => x.Componente != null))
+            {
+                var celdas = new List<object> { d.Componente.Descripcion, d.Cantidad };
+                celdas.AddRange(conPrecios.Select(c => (object)c.PrecioDe(d.Componente.Codigo).ToString("C0")));
+                int r = dgvComparar.Rows.Add(celdas.ToArray());
+                var precios = vigentes.Select(x => new { x.i, p = x.c.PrecioDe(d.Componente.Codigo) }).Where(x => x.p > 0).ToList();
+                if (precios.Count < 2) continue;
+                decimal min = precios.Min(x => x.p);
+                foreach (var x in precios.Where(x => x.p == min))
+                {
+                    var cell = dgvComparar.Rows[r].Cells[2 + x.i];
+                    cell.Style.BackColor = Tema.ExitoSuave;
+                    cell.Style.ForeColor = Tema.Exito;
+                    cell.Style.Font = negrita;
+                }
+            }
+
+            var totales = new List<object> { t.Obtener("pcf_cot_total"), UnidadesDe(_sel) };
+            totales.AddRange(conPrecios.Select(c => (object)c.Costo.ToString("C0")));
+            int rt = dgvComparar.Rows.Add(totales.ToArray());
+            dgvComparar.Rows[rt].DefaultCellStyle.Font = negrita;
+            if (vigentes.Count > 1)
+            {
+                decimal minTotal = vigentes.Min(x => x.c.Costo);
+                foreach (var x in vigentes.Where(x => x.c.Costo == minTotal))
+                {
+                    dgvComparar.Rows[rt].Cells[2 + x.i].Style.BackColor = Tema.ExitoSuave;
+                    dgvComparar.Rows[rt].Cells[2 + x.i].Style.ForeColor = Tema.Exito;
+                }
+            }
+            for (int i = 0; i < conPrecios.Count; i++)
+                if (conPrecios[i].Estado == EstadoCotizacion06AV.Desaprobada)
+                    foreach (DataGridViewRow row in dgvComparar.Rows) row.Cells[2 + i].Style.ForeColor = Tema.TextoSuave;
+
+            pnlComparar.Height = Math.Min(240, 26 + 30 + dgvComparar.Rows.Count * 26 + 12);
+            pnlComparar.Visible = true;
+            dgvComparar.ClearSelection();
         }
 
         private void AbrirCotizador()
         {
             if (_sel == null) return;
             List<Proveedor06AV> proveedores;
-            try { proveedores = _proveedoresBLL.ObtenerTodos(); }
+            try { proveedores = _proveedoresBLL.ObtenerActivos(); }
             catch (Exception ex) { MostrarError(ex.Message); return; }
 
             // Un proveedor con oferta abierta en esta orden se ve apagado: no puede ofertar dos veces.
@@ -454,7 +584,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
                 if (f.ShowDialog(FindForm()) != DialogResult.OK) return;
                 try
                 {
-                    var proveedores = _proveedoresBLL.ObtenerTodos();
+                    var proveedores = _proveedoresBLL.ObtenerActivos();
                     var creado = f.ProveedorCreado == null ? null
                         : proveedores.FirstOrDefault(p => p.Id == f.ProveedorCreado.Id || p.Cuit == f.ProveedorCreado.Cuit);
                     cotizador.RecargarProveedores(proveedores, creado?.Id);
@@ -481,6 +611,13 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
                 c.BackColor = Tema.FondoApp;
 
             pnlNueva.BackColor = Tema.FondoPanel;
+            pnlComparar.BackColor = Tema.FondoApp;
+            Tema.AplicarSubtitulo(lblCompararTit);
+            lblCompararTit.BackColor = Tema.FondoApp;
+            Tema.AplicarGrilla(dgvComparar);
+            dgvComparar.SelectionMode = DataGridViewSelectionMode.CellSelect;
+            dgvComparar.DefaultCellStyle.SelectionBackColor = dgvComparar.DefaultCellStyle.BackColor;
+            dgvComparar.DefaultCellStyle.SelectionForeColor = dgvComparar.DefaultCellStyle.ForeColor;
 
             Tema.AplicarSubtitulo(lblListaTit);
             lblListaTit.BackColor = Tema.FondoApp;
@@ -510,6 +647,7 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             cotizador.AplicarTema();
 
             AplicarTemaMesa();
+            if (_sel != null) ArmarComparacion(OfertasDe(_sel));
             Invalidate(true);
         }
 

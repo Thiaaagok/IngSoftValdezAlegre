@@ -37,6 +37,13 @@ namespace BLL.Armado
                     "La computadora está incompleta. Falta: " +
                     string.Join(", ", faltantes.Select(NombreBahia)) + ".");
 
+            InferenciaEspecificacion06AV.Completar(piezas);
+            ResultadoCompatibilidad06AV compatibilidad = ReglasCompatibilidad06AV.EvaluarEquipo(piezas);
+            if (compatibilidad.EsIncompatible)
+                throw new ValidacionException06AV("compatibilidad",
+                    "Los componentes no son compatibles: " +
+                    compatibilidad.Texto(NivelCompatibilidad06AV.Incompatible, " · "));
+
             var pc = new Computadora06AV
             {
                 TipoConfiguracion = TipoDeConfiguracion,

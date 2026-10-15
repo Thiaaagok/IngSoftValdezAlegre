@@ -45,6 +45,7 @@
     <Compile Include="BitacoraMPP06AV.cs" />
     <Compile Include="ClientesMPP06AV.cs" />
     <Compile Include="ComponentesMPP06AV.cs" />
+    <Compile Include="ReglasCompatibilidadMPP06AV.cs" />
     <Compile Include="ProveedoresMPP06AV.cs" />
     <Compile Include="LineasEnsamblajeMPP06AV.cs" />
     <Compile Include="VentasMPP06AV.cs" />

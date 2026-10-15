@@ -135,6 +135,50 @@ namespace DAL
             });
         }
 
+        public DataTable ObtenerEspecificaciones()
+        {
+            return EjecutarSP("sp_Especificaciones_ObtenerTodas", null);
+        }
+
+        public DataTable ObtenerEspecificacion(string codigo)
+        {
+            return EjecutarSP("sp_Especificaciones_ObtenerPorCodigo", new Dictionary<string, object>
+            {
+                { "@Codigo", codigo }
+            });
+        }
+
+        public void GuardarEspecificacion(string codigo, string plataforma, string socket, string tipoMemoria,
+            int? frecuenciaMemoriaMhz, int? capacidadGb, int? slotsMemoria, int? memoriaMaximaGb, string formato,
+            int? consumoW, int? potenciaW, int? tdpSoportadoW, bool? graficosIntegrados, bool? desbloqueado,
+            bool? permiteOverclock)
+        {
+            EjecutarSPNonQuery("sp_Especificaciones_Guardar", new Dictionary<string, object>
+            {
+                { "@Codigo",               codigo                         },
+                { "@Plataforma",           Nulo(plataforma)               },
+                { "@Socket",               Nulo(socket)                   },
+                { "@TipoMemoria",          Nulo(tipoMemoria)              },
+                { "@FrecuenciaMemoriaMhz", Nulo(frecuenciaMemoriaMhz)     },
+                { "@CapacidadGb",          Nulo(capacidadGb)              },
+                { "@SlotsMemoria",         Nulo(slotsMemoria)             },
+                { "@MemoriaMaximaGb",      Nulo(memoriaMaximaGb)          },
+                { "@Formato",              Nulo(formato)                  },
+                { "@ConsumoW",             Nulo(consumoW)                 },
+                { "@PotenciaW",            Nulo(potenciaW)                },
+                { "@TdpSoportadoW",        Nulo(tdpSoportadoW)            },
+                { "@GraficosIntegrados",   Nulo(graficosIntegrados)       },
+                { "@Desbloqueado",         Nulo(desbloqueado)             },
+                { "@PermiteOverclock",     Nulo(permiteOverclock)         }
+            });
+        }
+
+        private static object Nulo(string valor) =>
+            string.IsNullOrWhiteSpace(valor) ? (object)DBNull.Value : valor.Trim();
+
+        private static object Nulo<T>(T? valor) where T : struct =>
+            valor.HasValue ? (object)valor.Value : DBNull.Value;
+
         private static Dictionary<string, object> Parametros(string codigo, string descripcion,
             int tipo, string marca, string modelo, decimal precioUnitario, int stock, int stockMinimo)
         {

@@ -31,15 +31,50 @@ namespace MPP
 
         public void Agregar(Proveedor06AV p)
         {
-            p.Id = _dal.Agregar(p.Nombre, p.Cuit, p.Email, p.Telefono, p.Direccion);
+            p.Id = _dal.Agregar(p.Nombre, p.Cuit, p.Email, p.Telefono, p.Direccion, p.Activo);
         }
 
         public void Modificar(Proveedor06AV p)
         {
-            _dal.Modificar(p.Id, p.Nombre, p.Cuit, p.Email, p.Telefono, p.Direccion);
+            _dal.Modificar(p.Id, p.Nombre, p.Cuit, p.Email, p.Telefono, p.Direccion, p.Activo);
         }
 
-        public void Eliminar(int id) => _dal.Eliminar(id);
+        public bool Eliminar(int id) => _dal.Eliminar(id);
+
+        public List<FilaReporteProveedores06AV> ObtenerReporte(Func<int, string> nombreTipo)
+        {
+            var tipos = new Dictionary<int, List<int>>();
+            foreach (DataRow r in _dal.ObtenerReporteTipos().Rows)
+            {
+                int id = Convert.ToInt32(r["IdProveedor"]);
+                if (!tipos.ContainsKey(id)) tipos[id] = new List<int>();
+                tipos[id].Add(Convert.ToInt32(r["Tipo"]));
+            }
+
+            var lista = new List<FilaReporteProveedores06AV>();
+            foreach (DataRow r in _dal.ObtenerReporte().Rows)
+            {
+                int id = Convert.ToInt32(r["Id"]);
+                List<int> deEste = tipos.ContainsKey(id) ? tipos[id] : new List<int>();
+                deEste.Sort();
+                lista.Add(new FilaReporteProveedores06AV
+                {
+                    Id = id,
+                    Nombre = r["Nombre"].ToString(),
+                    Cuit = r["Cuit"].ToString(),
+                    Email = r["Email"] == DBNull.Value ? "" : r["Email"].ToString(),
+                    Telefono = r["Telefono"] == DBNull.Value ? "" : r["Telefono"].ToString(),
+                    Direccion = r["Direccion"] == DBNull.Value ? "" : r["Direccion"].ToString(),
+                    Activo = Convert.ToBoolean(r["Activo"]),
+                    Cotizaciones = Convert.ToInt32(r["Cotizaciones"]),
+                    OrdenesCompra = Convert.ToInt32(r["OrdenesCompra"]),
+                    TotalComprado = r["TotalComprado"] == DBNull.Value ? 0m : Convert.ToDecimal(r["TotalComprado"]),
+                    UltimaCompra = r["UltimaCompra"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(r["UltimaCompra"]),
+                    Tipos = string.Join(", ", deEste.ConvertAll(t => nombreTipo(t)))
+                });
+            }
+            return lista;
+        }
 
         private Proveedor06AV Mapear(DataRow row)
         {
@@ -50,7 +85,8 @@ namespace MPP
                 Cuit      = row["Cuit"].ToString(),
                 Email     = row["Email"]     == DBNull.Value ? "" : row["Email"].ToString(),
                 Telefono  = row["Telefono"]  == DBNull.Value ? "" : row["Telefono"].ToString(),
-                Direccion = row["Direccion"] == DBNull.Value ? "" : row["Direccion"].ToString()
+                Direccion = row["Direccion"] == DBNull.Value ? "" : row["Direccion"].ToString(),
+                Activo    = !row.Table.Columns.Contains("Activo") || row["Activo"] == DBNull.Value || Convert.ToBoolean(row["Activo"])
             };
         }
     }

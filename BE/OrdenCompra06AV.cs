@@ -14,6 +14,13 @@ namespace BE
         public Usuario06AV RepositorSolicitante { get; set; }
         public EstadoOrdenCompra06AV Estado { get; set; } = EstadoOrdenCompra06AV.Pendiente;
         public DateTime? FechaCierre { get; set; }
+        public string MotivoCierre { get; set; }
+
+        public bool EnCurso =>
+            Estado == EstadoOrdenCompra06AV.Pendiente || Estado == EstadoOrdenCompra06AV.Enviada ||
+            Estado == EstadoOrdenCompra06AV.RecibidaParcial;
+
+        public bool Cerrada => !EnCurso;
 
         public override string ToString() => $"OC #{NumeroCompra} - {Estado}";
     }

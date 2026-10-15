@@ -28,34 +28,39 @@ namespace DAL
             });
         }
 
-        public int Agregar(string nombre, string cuit, string email, string telefono, string direccion)
+        public int Agregar(string nombre, string cuit, string email, string telefono, string direccion, bool activo)
         {
             object id = EjecutarSPEscalar("sp_Proveedores_Agregar", new Dictionary<string, object>
             {
                 { "@Nombre", nombre }, { "@Cuit", cuit },
                 { "@Email", (object)email ?? "" }, { "@Telefono", (object)telefono ?? "" },
-                { "@Direccion", (object)direccion ?? "" }
+                { "@Direccion", (object)direccion ?? "" }, { "@Activo", activo }
             });
             return id == null || id == DBNull.Value ? 0 : Convert.ToInt32(id);
         }
 
-        public void Modificar(int id, string nombre, string cuit, string email, string telefono, string direccion)
+        public void Modificar(int id, string nombre, string cuit, string email, string telefono, string direccion, bool activo)
         {
             EjecutarSPNonQuery("sp_Proveedores_Modificar", new Dictionary<string, object>
             {
                 { "@Id", id }, { "@Nombre", nombre }, { "@Cuit", cuit },
                 { "@Email", (object)email ?? "" }, { "@Telefono", (object)telefono ?? "" },
-                { "@Direccion", (object)direccion ?? "" }
+                { "@Direccion", (object)direccion ?? "" }, { "@Activo", activo }
             });
         }
 
-        public void Eliminar(int id)
+        public bool Eliminar(int id)
         {
-            EjecutarSPNonQuery("sp_Proveedores_Eliminar", new Dictionary<string, object>
+            object r = EjecutarSPEscalar("sp_Proveedores_Eliminar", new Dictionary<string, object>
             {
                 { "@Id", id }
             });
+            return !(r is string s && s == "B");
         }
+
+        public DataTable ObtenerReporte() => EjecutarSP("sp_ReporteProveedores", null);
+
+        public DataTable ObtenerReporteTipos() => EjecutarSP("sp_ReporteProveedores_Tipos", null);
 
         #region Helpers
 

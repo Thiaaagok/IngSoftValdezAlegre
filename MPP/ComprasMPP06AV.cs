@@ -52,6 +52,37 @@ namespace MPP
         public void CambiarEstadoOrdenCompra(string id, EstadoOrdenCompra06AV estado) =>
             _dal.CambiarEstadoOrdenCompra(id, (int)estado);
 
+        public void TerminarOrdenCompra(string id, EstadoOrdenCompra06AV estado, DateTime fechaCierre, string motivo) =>
+            _dal.TerminarOrdenCompra(id, (int)estado, fechaCierre, motivo);
+
+        public void AgregarPagoProveedor(PagoProveedor06AV p)
+        {
+            if (string.IsNullOrEmpty(p.Numero)) p.Numero = _gen.Generar("PP");
+            _dal.AgregarPagoProveedor(p.Numero, p.IdOrdenCompra, p.Monto, p.FechaPago, (int)p.FormaPago,
+                                      p.Referencia, p.DniUsuario);
+        }
+
+        public List<PagoProveedor06AV> ObtenerPagosProveedor()
+        {
+            var lista = new List<PagoProveedor06AV>();
+            DataTable tabla;
+            try { tabla = _dal.ObtenerPagosProveedor(); }
+            catch (SqlException ex) when (EsProcedimientoInexistente(ex)) { return lista; }
+            foreach (DataRow r in tabla.Rows)
+                lista.Add(new PagoProveedor06AV
+                {
+                    Numero = r["Numero"].ToString(),
+                    IdOrdenCompra = r["IdOrdenCompra"].ToString(),
+                    Monto = Convert.ToDecimal(r["Monto"]),
+                    FechaPago = Convert.ToDateTime(r["FechaPago"]),
+                    FormaPago = (FormaPago06AV)Convert.ToInt32(r["FormaPago"]),
+                    Referencia = r["Referencia"] == DBNull.Value ? "" : r["Referencia"].ToString(),
+                    DniUsuario = r["DniUsuario"] == DBNull.Value ? null : r["DniUsuario"].ToString(),
+                    FechaRegistro = Convert.ToDateTime(r["FechaRegistro"])
+                });
+            return lista;
+        }
+
         public void AgregarCotizacion(PedidoCotizacion06AV cot)
         {
             if (string.IsNullOrEmpty(cot.Numero)) cot.Numero = _gen.Generar("CO");
@@ -123,7 +154,8 @@ namespace MPP
         {
             if (string.IsNullOrEmpty(f.NumeroFactura)) f.NumeroFactura = _gen.Generar("FC");
             _dal.AgregarFacturaCompra(f.NumeroFactura, f.NumeroCompra, f.FechaEmision,
-                                      f.FechaEntrega, f.Total, f.Observaciones);
+                                      f.FechaEntrega, f.Total, f.Observaciones,
+                                      f.NumeroFacturaProveedor, f.TotalFacturado);
             foreach (DetalleComponente06AV d in f.ComponentesRecibidos)
                 _dal.AgregarFacturaCompraDetalle(f.NumeroFactura, d.Componente.Codigo, d.Cantidad);
         }
@@ -151,6 +183,11 @@ namespace MPP
                     FechaEntrega = Convert.ToDateTime(row["FechaEntrega"]),
                     Total = row["Total"] == DBNull.Value ? 0m : Convert.ToDecimal(row["Total"]),
                     Observaciones = row["Observaciones"] == DBNull.Value ? "" : row["Observaciones"].ToString(),
+                    NumeroFacturaProveedor = row.Table.Columns.Contains("NumeroFacturaProveedor") &&
+                                             row["NumeroFacturaProveedor"] != DBNull.Value
+                                             ? row["NumeroFacturaProveedor"].ToString() : null,
+                    TotalFacturado = row.Table.Columns.Contains("TotalFacturado") && row["TotalFacturado"] != DBNull.Value
+                                     ? Convert.ToDecimal(row["TotalFacturado"]) : (decimal?)null,
                     ComponentesRecibidos = ObtenerDetalleFactura(numero)
                 };
                 lista.Add(f);
@@ -192,6 +229,8 @@ namespace MPP
                 oc.RepositorSolicitante = _usuarios.ObtenerPorDni(row["DniRepositor"].ToString());
             if (row["FechaCierre"] != DBNull.Value)
                 oc.FechaCierre = Convert.ToDateTime(row["FechaCierre"]);
+            if (row.Table.Columns.Contains("MotivoCierre") && row["MotivoCierre"] != DBNull.Value)
+                oc.MotivoCierre = row["MotivoCierre"].ToString();
             return oc;
         }
 

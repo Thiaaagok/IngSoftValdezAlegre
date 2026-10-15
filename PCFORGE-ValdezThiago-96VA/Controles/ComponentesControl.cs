@@ -17,6 +17,10 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
         private Label lblCodigo, lblDesc, lblTipo, lblMarca, lblModelo, lblPrecio, lblStock, lblStockMin;
         private TextBox txtCodigo, txtDesc, txtMarca, txtModelo, txtPrecio, txtStock, txtStockMin;
         private ComboBox cboTipo;
+        private Label lblEspecificacion, lblEspResumen;
+        private Button btnEspecificacion;
+        private FlowLayoutPanel pnlEspecificacion;
+        private EspecificacionComponente06AV _especificacion;
 
         public ComponentesControl()
         {
@@ -32,6 +36,15 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
                 .ToList();
             cboTipo.ValueMember = "Key";
             cboTipo.DisplayMember = "Value";
+            cboTipo.SelectedIndexChanged += (s, e) => CambioTipo();
+
+            lblEspecificacion = new Label();
+            lblEspResumen = new Label { AutoSize = true, Margin = new Padding(10, 8, 0, 0) };
+            btnEspecificacion = new Button { AutoSize = true, Height = 30, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            btnEspecificacion.Click += (s, e) => EditarEspecificacion();
+            pnlEspecificacion = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Margin = new Padding(0) };
+            pnlEspecificacion.Controls.Add(btnEspecificacion);
+            pnlEspecificacion.Controls.Add(lblEspResumen);
             InicializarAbm();
         }
 
@@ -47,6 +60,43 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             AgregarCampo(lblPrecio, txtPrecio);
             AgregarCampo(lblStock, txtStock);
             AgregarCampo(lblStockMin, txtStockMin);
+            AgregarCampo(lblEspecificacion, pnlEspecificacion);
+        }
+
+        private Componente06AV ComponenteDeCampos() => new Componente06AV
+        {
+            Codigo = txtCodigo.Text.Trim(),
+            Descripcion = txtDesc.Text.Trim(),
+            Tipo = cboTipo.SelectedValue is TipoComponente06AV tp ? tp : TipoComponente06AV.Otro,
+            Marca = txtMarca.Text.Trim(),
+            Modelo = txtModelo.Text.Trim()
+        };
+
+        private void EditarEspecificacion()
+        {
+            Componente06AV c = ComponenteDeCampos();
+            using (var dlg = new FRMEspecificacion06AV(c, _especificacion))
+            {
+                if (dlg.ShowDialog(FindForm()) != DialogResult.OK) return;
+                _especificacion = dlg.Especificacion;
+                MostrarResumenEspecificacion();
+            }
+        }
+
+        private void CambioTipo()
+        {
+            if (_especificacion != null && !_especificacion.Estimada) return;
+            _especificacion = null;
+            MostrarResumenEspecificacion();
+        }
+
+        private void MostrarResumenEspecificacion()
+        {
+            Componente06AV c = ComponenteDeCampos();
+            EspecificacionComponente06AV e = _especificacion ?? _bll.SugerirEspecificacion(c);
+            if (_especificacion == null) e.Estimada = true;
+            lblEspResumen.Text = FRMEspecificacion06AV.Resumen(c, e);
+            lblEspResumen.ForeColor = e.Estimada ? Tema.TextoSuave : Tema.Texto;
         }
 
         protected override void CargarDatosEnGrilla(DataGridView grilla)
@@ -61,7 +111,9 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             txtCodigo.ReadOnly = false;
             txtCodigo.Clear(); txtDesc.Clear(); txtMarca.Clear(); txtModelo.Clear();
             txtPrecio.Text = "0"; txtStock.Text = "0"; txtStockMin.Text = "0";
+            _especificacion = null;
             if (cboTipo.Items.Count > 0) cboTipo.SelectedIndex = 0;
+            MostrarResumenEspecificacion();
         }
 
         protected override bool CargarSeleccionEnCampos()
@@ -75,6 +127,8 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             txtPrecio.Text = c.PrecioUnitario.ToString("0.00");
             txtStock.Text = c.Stock.ToString();
             txtStockMin.Text = c.StockMinimo.ToString();
+            _especificacion = c.Especificacion?.Copiar();
+            MostrarResumenEspecificacion();
             txtCodigo.ReadOnly = true;
             return true;
         }
@@ -97,7 +151,8 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
                 Modelo = txtModelo.Text.Trim(),
                 PrecioUnitario = precio,
                 Stock = stock,
-                StockMinimo = stockMin
+                StockMinimo = stockMin,
+                Especificacion = _especificacion
             };
             if (editando) _bll.Modificar(c); else _bll.Crear(c);
             return true;
@@ -127,6 +182,9 @@ namespace PCFORGE_ValdezThiago_96VA.Controles
             lblPrecio.Text = t.Obtener("precio") + ":";
             lblStock.Text = t.Obtener("stock") + ":";
             lblStockMin.Text = t.Obtener("pcf_col_minimo") + ":";
+            lblEspecificacion.Text = t.Obtener("pcf_esp_campo");
+            btnEspecificacion.Text = t.Obtener("pcf_esp_boton");
+            Tema.AplicarBotonSecundario(btnEspecificacion);
         }
 
         private static string NombreTipo(TipoComponente06AV t)

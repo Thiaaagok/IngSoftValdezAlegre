@@ -44,6 +44,7 @@ namespace PCFORGE_ValdezThiago_96VA
             MostrarControl(new UsuariosControl());
 
             ConfigurarGestionBackups();
+            IniciarAvisos();
 
             Microsoft.Win32.SystemEvents.DisplaySettingsChanged += PantallaCambiada;
             FormClosed += (s, e) => Microsoft.Win32.SystemEvents.DisplaySettingsChanged -= PantallaCambiada;
@@ -116,6 +117,7 @@ namespace PCFORGE_ValdezThiago_96VA
         private void ConstruirMenuAgrupado()
         {
             flpModulos.Controls.Clear();
+            _navegacion.Clear();
 
             AgregarGrupo("menu_grp_admin", "\uE713", new List<ItemMenu>
             {
@@ -135,6 +137,7 @@ namespace PCFORGE_ValdezThiago_96VA
                 Item("pcf_menu_componentes", "\uE950", PatenteEnum06AV.GestionarComponentes, false, () => new Controles.ComponentesControl()),
                 Item("pcf_menu_bitacora_comp", "\uE81C", PatenteEnum06AV.GestionarComponentes, false, () => new Controles.BitacoraComponentesControl()),
                 Item("pcf_menu_modelos", "\uE8A4", PatenteEnum06AV.GestionarModelosEstandar, false, () => new Controles.ModelosEstandarControl()),
+                Item("cmp_menu_reglas", "\uE71C", PatenteEnum06AV.GestionarCompatibilidad, false, () => new Controles.ReglasCompatibilidadControl06AV()),
             });
 
             AgregarGrupo("menu_grp_compra", "\uE7BF", new List<ItemMenu>
@@ -161,6 +164,7 @@ namespace PCFORGE_ValdezThiago_96VA
             AgregarGrupo("menu_grp_reportes", "\uE9D2", new List<ItemMenu>
             {
                 Item("menu_rep_ventas", "\uE9D2", PatenteEnum06AV.VerReporteVentas, false, () => new Controles.ReporteVentasControl()),
+                Item("menu_rep_proveedores", "\uE8F1", PatenteEnum06AV.VerReporteProveedores, false, () => new Controles.ReporteProveedoresControl06AV()),
             });
 
             AgregarGrupo("menu_grp_ayuda", "\uE897", new List<ItemMenu>
@@ -199,6 +203,8 @@ namespace PCFORGE_ValdezThiago_96VA
                 var btn = new Button { Visible = grupo.Expandido };
                 ConfigurarBotonModulo(btn, GestorIdioma06AV.Instancia.Obtener(it.Clave), it.Icono);
                 var itLocal = it;
+                if (itLocal.Crear != null)
+                    _navegacion[itLocal.Clave] = () => { SeleccionarModulo(btn); MostrarControl(itLocal.Crear()); };
                 btn.Click += (s, e) =>
                 {
                     if (itLocal.Crear != null) { SeleccionarModulo(btn); MostrarControl(itLocal.Crear()); }
@@ -292,6 +298,7 @@ namespace PCFORGE_ValdezThiago_96VA
                 btnTema.Font = new Font("Segoe UI Symbol", 12f);
                 ActualizarTextoBotonTema();
             }
+            TematizarBotonAvisos();
 
             ConfigurarPanelUsuario();
             ConfigurarMenuUsuario();
@@ -390,6 +397,7 @@ namespace PCFORGE_ValdezThiago_96VA
 
             toolTipMain.SetToolTip(btnIdioma, t.Obtener("cambiar_idioma"));
             toolTipMain.SetToolTip(btnCerrarSesion, t.Obtener("cerrar_sesion"));
+            ActualizarTooltipAvisos();
             toolTipMain.SetToolTip(opcionesUsuarioBTN, t.Obtener("usuario"));
         }
 
@@ -415,6 +423,7 @@ namespace PCFORGE_ValdezThiago_96VA
             ConfigurarBotonTopbar(btnCerrarSesion, Tema.FondoElevado, Tema.Peligro);
 
             CrearBotonTema();
+            CrearBotonAvisos();
 
             ConfigurarPanelUsuario();
             ConfigurarMenuUsuario();

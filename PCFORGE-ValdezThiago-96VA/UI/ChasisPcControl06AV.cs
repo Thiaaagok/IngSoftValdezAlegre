@@ -14,6 +14,8 @@ namespace PCFORGE_ValdezThiago_96VA.UI
         public IconoPcf06AV Icono { get; set; }
         public bool Opcional { get; set; }
         public Componente06AV Puesto { get; set; }
+        public int Cantidad { get; set; } = 1;
+        public decimal Subtotal => Puesto == null ? 0m : Puesto.PrecioUnitario * Math.Max(1, Cantidad);
     }
 
     internal class ChasisPcControl06AV : Control
@@ -46,10 +48,10 @@ namespace PCFORGE_ValdezThiago_96VA.UI
             Invalidate();
         }
 
-        public void Poner(TipoComponente06AV tipo, Componente06AV componente)
+        public void Poner(TipoComponente06AV tipo, Componente06AV componente, int cantidad = 1)
         {
             BahiaPc06AV b = _bahias.FirstOrDefault(x => x.Tipo == tipo);
-            if (b != null) { b.Puesto = componente; Invalidate(); }
+            if (b != null) { b.Puesto = componente; b.Cantidad = Math.Max(1, cantidad); Invalidate(); }
         }
 
         public int Actual
@@ -58,7 +60,7 @@ namespace PCFORGE_ValdezThiago_96VA.UI
             set { _actual = value; Invalidate(); }
         }
 
-        public decimal Total => _bahias.Where(b => b.Puesto != null).Sum(b => b.Puesto.PrecioUnitario);
+        public decimal Total => _bahias.Sum(b => b.Subtotal);
 
         private Rectangle CajaBahia(int i) =>
             new Rectangle(0, 4 + i * AltoBahia, Math.Max(10, Width - 1), AltoBahia - 6);
@@ -170,6 +172,7 @@ namespace PCFORGE_ValdezThiago_96VA.UI
                        ? b.Puesto.Descripcion
                        : (b.Puesto.Marca + " " + b.Puesto.Modelo).Trim())
                 : TextoVacio;
+            if (llena && b.Cantidad > 1) detalle = b.Cantidad + " × " + detalle;
 
             Pintura06AV.TextoIzquierda(g, detalle,
                                        llena ? Tema.FuenteBold : Tema.FuenteRegular,
@@ -177,7 +180,7 @@ namespace PCFORGE_ValdezThiago_96VA.UI
                                        new Rectangle(x, caja.Y + 19, ancho, 18));
 
             if (llena)
-                Pintura06AV.TextoDerecha(g, b.Puesto.PrecioUnitario.ToString("C0"), Tema.FuenteBold,
+                Pintura06AV.TextoDerecha(g, b.Subtotal.ToString("C0"), Tema.FuenteBold,
                                          Tema.Texto,
                                          new Rectangle(caja.Right - anchoPrecio - 10, caja.Y + 14, anchoPrecio, 20));
         }

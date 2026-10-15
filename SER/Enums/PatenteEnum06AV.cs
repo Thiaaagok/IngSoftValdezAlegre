@@ -35,7 +35,12 @@ namespace SER
 
         VerReporteVentas,
 
-        Serializar
+        Serializar,
+
+        GestionarCompatibilidad,
+
+        PagarProveedores,
+        VerReporteProveedores
     }
 }
 

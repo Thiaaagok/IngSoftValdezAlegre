@@ -135,6 +135,13 @@ namespace BLL
             if (fechaEntregaEstimada.Date < DateTime.Today)
                 throw new ValidacionException06AV("FechaEntregaEstimada", "La fecha estimada de entrega no puede ser anterior a hoy.");
 
+            InferenciaEspecificacion06AV.Completar(computadora.Componentes);
+            ResultadoCompatibilidad06AV compatibilidad = ReglasCompatibilidad06AV.EvaluarEquipo(computadora.Componentes);
+            if (compatibilidad.EsIncompatible)
+                throw new ValidacionException06AV("compatibilidad",
+                    "Los componentes de la computadora no son compatibles: " +
+                    compatibilidad.Texto(NivelCompatibilidad06AV.Incompatible, " · "));
+
             var requeridos = Requerimientos(computadora);
 
             foreach (var r in requeridos)

@@ -1,6 +1,7 @@
 using BE;
 using BLL;
 using PCFORGE_ValdezThiago_96VA.Common;
+using PCFORGE_ValdezThiago_96VA.UI;
 using SER;
 using System;
 using System.Drawing;
@@ -14,7 +15,7 @@ namespace PCFORGE_ValdezThiago_96VA
 
         public Proveedor06AV ProveedorCreado { get; private set; }
 
-        private Label lblNombre, lblCuit, lblEmail, lblTel, lblDir;
+        private Label lblNombre, lblCuit, lblEmail, lblTel, lblDir, lblCuitAyuda;
         private TextBox txtNombre, txtCuit, txtEmail, txtTel, txtDir;
         private Button btnGuardar, btnCancelar;
 
@@ -33,7 +34,7 @@ namespace PCFORGE_ValdezThiago_96VA
             StartPosition = FormStartPosition.CenterParent;
             MaximizeBox = false;
             MinimizeBox = false;
-            ClientSize = new Size(440, 280);
+            ClientSize = new Size(440, 304);
 
             lblNombre = new Label(); lblCuit = new Label(); lblEmail = new Label();
             lblTel = new Label(); lblDir = new Label();
@@ -61,6 +62,15 @@ namespace PCFORGE_ValdezThiago_96VA
             }
             Fila(lblNombre, txtNombre);
             Fila(lblCuit, txtCuit);
+            lblCuitAyuda = AyudaCuit06AV.NuevaEtiqueta();
+            {
+                int r = tabla.RowCount; tabla.RowCount = r + 1;
+                tabla.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                lblCuitAyuda.Anchor = AnchorStyles.Left;
+                tabla.Controls.Add(lblCuitAyuda, 1, r);
+            }
+            txtCuit.MaxLength = 13;
+            AyudaCuit06AV.Vincular(txtCuit, lblCuitAyuda);
             Fila(lblEmail, txtEmail);
             Fila(lblTel, txtTel);
             Fila(lblDir, txtDir);

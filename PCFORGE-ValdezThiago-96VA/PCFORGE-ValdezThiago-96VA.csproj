@@ -55,8 +55,12 @@
     <Compile Include="Common\PdfSimple06AV.cs" />
     <Compile Include="Common\ComprobantePcFactory06AV.cs" />
     <Compile Include="Common\ComprobantePdf06AV.cs" />
+    <Compile Include="Common\DocumentoPdf06AV.cs" />
+    <Compile Include="Common\OrdenCompraPdf06AV.cs" />
+    <Compile Include="Common\ComprobanteCompras06AV.cs" />
     <Compile Include="Common\PdfLienzo06AV.cs" />
     <Compile Include="Common\ReporteVentasPdf06AV.cs" />
+    <Compile Include="Common\ReporteProveedoresPdf06AV.cs" />
     <Compile Include="Common\ConfirmacionForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -110,6 +114,7 @@
     <Compile Include="UI\FichaDatos06AV.cs" />
     <Compile Include="UI\PedidoCotizacionControl06AV.cs" />
     <Compile Include="UI\RecepcionControl06AV.cs" />
+    <Compile Include="UI\AyudaCuit06AV.cs" />
     <Compile Include="UI\FilaRecepcion06AV.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -142,6 +147,7 @@
     <Compile Include="Controles\ConsultarStockControl.cs" />
     <Compile Include="Controles\FacturasControl.cs" />
     <Compile Include="Controles\ReporteVentasControl.cs" />
+    <Compile Include="Controles\ReporteProveedoresControl06AV.cs" />
     <Compile Include="Controles\SerializacionControl06AV.cs" />
     <Compile Include="Controles\ModelosEstandarControl.cs" />
     <Compile Include="Controles\AbmBaseControl06AV.Designer.cs">
@@ -189,6 +195,10 @@
     <Compile Include="FRMMain.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="FRMMain.Avisos.cs">
+      <DependentUpon>FRMMain.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="FRMMain.Designer.cs">
       <DependentUpon>FRMMain.cs</DependentUpon>
     </Compile>
@@ -204,8 +214,20 @@
     <Compile Include="FRMNuevoProveedor06AV.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="FRMMotivo06AV.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FRMPagoProveedor06AV.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="FRMNuevoCliente06AV.cs">
       <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FRMEspecificacion06AV.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Controles\ReglasCompatibilidadControl06AV.cs">
+      <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="FRMCotizacion06AV.cs">
       <SubType>Form</SubType>

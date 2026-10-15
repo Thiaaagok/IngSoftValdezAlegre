@@ -1,4 +1,5 @@
 using BE;
+using BLL.Armado;
 using BLL.Excepciones;
 using MPP;
 using SER;
@@ -13,8 +14,11 @@ namespace BLL
 
         public List<Componente06AV> ObtenerTodos()
         {
-            try { return _mpp.ObtenerTodos(); }
+            List<Componente06AV> lista;
+            try { lista = _mpp.ObtenerTodos(); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudieron obtener los componentes.", ex); }
+            InferenciaEspecificacion06AV.Completar(lista);
+            return lista;
         }
 
         public List<Componente06AV> ObtenerBajoStock()
@@ -35,9 +39,15 @@ namespace BLL
         public Componente06AV ObtenerPorCodigo(string codigo)
         {
             ValidarCodigo(codigo);
-            try { return _mpp.ObtenerPorCodigo(codigo); }
+            Componente06AV c;
+            try { c = _mpp.ObtenerPorCodigo(codigo); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo obtener el componente.", ex); }
+            if (c != null) InferenciaEspecificacion06AV.Completar(new[] { c });
+            return c;
         }
+
+        public EspecificacionComponente06AV SugerirEspecificacion(Componente06AV c) =>
+            InferenciaEspecificacion06AV.Sugerir(c);
 
         public void Crear(Componente06AV c)
         {
@@ -49,7 +59,12 @@ namespace BLL
                     "Restauralo desde la Bitácora de Cambios en lugar de crearlo de nuevo.");
             if (existente != null)
                 throw new DuplicadoException06AV($"Ya existe un componente con el código {c.Codigo}.");
-            try { _mpp.Agregar(c); }
+            ValidarEspecificacion(c);
+            try
+            {
+                _mpp.Agregar(c);
+                GuardarEspecificacion(c);
+            }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo crear el componente.", ex); }
 
             AuditoriaPcFactory06AV.Alta($"Componente: {c.Codigo}", ModuloBitacora.Componentes);
@@ -60,7 +75,12 @@ namespace BLL
             Validar(c);
             if (_mpp.ObtenerPorCodigo(c.Codigo) == null)
                 throw new NoEncontradoException06AV($"No existe un componente con el código {c.Codigo}.");
-            try { _mpp.Modificar(c); }
+            ValidarEspecificacion(c);
+            try
+            {
+                _mpp.Modificar(c);
+                GuardarEspecificacion(c);
+            }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudo modificar el componente.", ex); }
 
             AuditoriaPcFactory06AV.Modificacion($"Componente: {c.Codigo}", ModuloBitacora.Componentes);
@@ -155,5 +175,26 @@ namespace BLL
             if (string.IsNullOrWhiteSpace(codigo))
                 throw new ValidacionException06AV("Codigo", "El código es obligatorio.");
         }
+
+        private void GuardarEspecificacion(Componente06AV c)
+        {
+            if (c.Especificacion == null || c.Especificacion.Estimada) return;
+            _mpp.GuardarEspecificacion(c.Codigo, c.Especificacion);
+        }
+
+        private static void ValidarEspecificacion(Componente06AV c)
+        {
+            EspecificacionComponente06AV e = c.Especificacion;
+            if (e == null || e.Estimada) return;
+            if (Negativo(e.FrecuenciaMemoriaMhz) || Negativo(e.CapacidadGb) || Negativo(e.SlotsMemoria) ||
+                Negativo(e.MemoriaMaximaGb) || Negativo(e.ConsumoW) || Negativo(e.PotenciaW) || Negativo(e.TdpSoportadoW))
+                throw new ValidacionException06AV("Especificacion", "Los valores técnicos deben ser números positivos.");
+            if (c.Tipo == TipoComponente06AV.Fuente && !(e.PotenciaW > 0))
+                throw new ValidacionException06AV("PotenciaW", "Indicá la potencia de la fuente en watts.");
+            if (c.Tipo == TipoComponente06AV.PlacaMadre && e.SlotsMemoria.HasValue && e.SlotsMemoria.Value < 1)
+                throw new ValidacionException06AV("SlotsMemoria", "La placa madre debe tener al menos una ranura de memoria.");
+        }
+
+        private static bool Negativo(int? valor) => valor.HasValue && valor.Value < 0;
     }
 }

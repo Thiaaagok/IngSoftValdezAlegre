@@ -32,7 +32,10 @@ namespace DAL
             "PedidosCotizacion",
             "PedidoCotizacionDetalle",
             "ModelosEstandar",
-            "ModeloEstandarComponentes"
+            "ModeloEstandarComponentes",
+            "ComponenteEspecificaciones",
+            "ReglasCompatibilidad",
+            "PagosProveedor"
         };
 
         public void AsegurarEstructura()

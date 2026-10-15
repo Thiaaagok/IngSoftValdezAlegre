@@ -20,6 +20,12 @@ namespace BE
         public decimal Total { get; set; }
         public string Observaciones { get; set; }
 
+        public string NumeroFacturaProveedor { get; set; }
+        public decimal? TotalFacturado { get; set; }
+
+        public decimal TotalAPagar => TotalFacturado ?? Total;
+        public decimal Diferencia => (TotalFacturado ?? Total) - Total;
+
         public override string ToString() => $"Factura compra {NumeroFactura} (OC {NumeroCompra}) - ${Total:0.00}";
     }
 }

@@ -1,4 +1,5 @@
 using BE;
+using BLL.Armado;
 using System;
 using System.Drawing;
 using System.Windows.Forms;
@@ -29,8 +30,27 @@ namespace PCFORGE_ValdezThiago_96VA.UI
         public string TextoSinStock { get; set; } = "sin stock";
         public string TextoStock { get; set; } = "{0} libres";
 
+        public NivelCompatibilidad06AV? Compatibilidad { get; set; }
+        private string _motivo;
+
+        public string MotivoCompatibilidad
+        {
+            get { return _motivo; }
+            set
+            {
+                _motivo = value;
+                Height = string.IsNullOrWhiteSpace(value) ? 78 : 98;
+                Invalidate();
+            }
+        }
+        public string TextoCompatible { get; set; } = "Compatible";
+        public string TextoAdvertencia { get; set; } = "Con advertencia";
+        public string TextoIncompatible { get; set; } = "Incompatible";
+
+        public bool TieneStock => Componente != null && Componente.StockLibre > 0;
+
         public bool Disponible =>
-            Componente != null && Componente.StockLibre > 0;
+            TieneStock && Compatibilidad != NivelCompatibilidad06AV.Incompatible;
 
         public bool Seleccionada
         {
@@ -121,11 +141,37 @@ namespace PCFORGE_ValdezThiago_96VA.UI
                                        hay ? Tema.TextoSuave : Tema.Acero300,
                                        new Rectangle(x, 34, ancho, 18));
 
-            string stock = hay ? string.Format(TextoStock, c.StockLibre) : TextoSinStock;
-            Color cStock = !hay ? Tema.Peligro : (c.StockLibre <= 2 ? Tema.Advertencia : Tema.Exito);
+            bool conStock = TieneStock;
+            string stock = conStock ? string.Format(TextoStock, c.StockLibre) : TextoSinStock;
+            Color cStock = !conStock ? Tema.Peligro : (c.StockLibre <= 2 ? Tema.Advertencia : Tema.Exito);
             int anchoChip = Pintura06AV.AnchoChip(g, stock, Tema.FuenteMini, 18);
             var chip = new Rectangle(x, 54, Math.Min(anchoChip, ancho), 18);
             Pintura06AV.Chip(g, chip, stock, Tema.FuenteMini, Pintura06AV.Suave(cStock, 32), cStock);
+
+            if (Compatibilidad.HasValue)
+            {
+                string texto;
+                Color color;
+                switch (Compatibilidad.Value)
+                {
+                    case NivelCompatibilidad06AV.Incompatible: texto = TextoIncompatible; color = Tema.Peligro; break;
+                    case NivelCompatibilidad06AV.Advertencia: texto = TextoAdvertencia; color = Tema.Advertencia; break;
+                    default: texto = TextoCompatible; color = Tema.Exito; break;
+                }
+                int xc = chip.Right + 6;
+                int anchoCompat = Pintura06AV.AnchoChip(g, texto, Tema.FuenteMini, 18);
+                int libre = x + ancho - xc;
+                if (libre > 40)
+                {
+                    var rc = new Rectangle(xc, 54, Math.Min(anchoCompat, libre), 18);
+                    Pintura06AV.Chip(g, rc, texto, Tema.FuenteMini, Pintura06AV.Suave(color, 32), color);
+                    if (!string.IsNullOrWhiteSpace(MotivoCompatibilidad))
+                        Pintura06AV.TextoIzquierda(g, MotivoCompatibilidad, Tema.FuenteMini,
+                                                   Compatibilidad == NivelCompatibilidad06AV.Incompatible ? Tema.Peligro
+                                                   : Tema.EsOscuro ? Tema.Advertencia : Tema.Naranja600,
+                                                   new Rectangle(x, 76, caja.Right - x - 14, 16));
+                }
+            }
 
             var rPrecio = new Rectangle(caja.Right - anchoPrecio - 12, 16, anchoPrecio, 26);
             using (var fuente = new Font("Segoe UI Semibold", 14f, FontStyle.Bold))

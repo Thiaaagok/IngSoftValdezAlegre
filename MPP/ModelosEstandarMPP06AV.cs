@@ -3,6 +3,7 @@ using System;
 using DAL;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 
 namespace MPP
 {
@@ -34,7 +35,10 @@ namespace MPP
             foreach (DataRow row in _dal.ObtenerComponentes(idModelo).Rows)
             {
                 var c = _componentes.ObtenerPorCodigo(row["CodigoComponente"].ToString());
-                if (c != null) comps.Add(c);
+                if (c == null) continue;
+                int cantidad = row.Table.Columns.Contains("Cantidad") && row["Cantidad"] != System.DBNull.Value
+                    ? System.Math.Max(1, System.Convert.ToInt32(row["Cantidad"])) : 1;
+                for (int i = 0; i < cantidad; i++) comps.Add(c);
             }
             return comps;
         }
@@ -42,16 +46,16 @@ namespace MPP
         public void Agregar(ModeloEstandar06AV modelo)
         {
             modelo.Id = _dal.Agregar(modelo.Nombre, modelo.Descripcion);
-            foreach (var c in modelo.Componentes)
-                _dal.AgregarComponente(modelo.Id, c.Codigo);
+            foreach (var g in modelo.Componentes.GroupBy(c => c.Codigo))
+                _dal.AgregarComponente(modelo.Id, g.Key, g.Count());
         }
 
         public void Modificar(ModeloEstandar06AV modelo)
         {
             _dal.Modificar(modelo.Id, modelo.Nombre, modelo.Descripcion);
             _dal.QuitarComponentes(modelo.Id);
-            foreach (var c in modelo.Componentes)
-                _dal.AgregarComponente(modelo.Id, c.Codigo);
+            foreach (var g in modelo.Componentes.GroupBy(c => c.Codigo))
+                _dal.AgregarComponente(modelo.Id, g.Key, g.Count());
         }
 
         public void Eliminar(int id) => _dal.Eliminar(id);

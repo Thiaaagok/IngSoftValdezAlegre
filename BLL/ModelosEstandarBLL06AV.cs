@@ -14,8 +14,12 @@ namespace BLL
 
         public List<ModeloEstandar06AV> ObtenerTodos()
         {
-            try { return _mpp.ObtenerTodos(); }
+            List<ModeloEstandar06AV> modelos;
+            try { modelos = _mpp.ObtenerTodos(); }
             catch (Exception ex) { throw new AccesoDatosException06AV("No se pudieron obtener los modelos estándar.", ex); }
+            foreach (ModeloEstandar06AV m in modelos)
+                InferenciaEspecificacion06AV.Completar(m.Componentes);
+            return modelos;
         }
 
         public void Crear(ModeloEstandar06AV modelo)

@@ -64,6 +64,8 @@ namespace BE
     /// Enviada: cotización adjudicada, esperando la mercadería.
     /// Finalizada: llegó todo lo pedido.
     /// RecibidaParcial: llegó parte; el resto sigue pendiente en la misma orden.
+    /// Anulada: se canceló sin recibir nada (no se adjudicó o el proveedor no cumplió).
+    /// CerradaConFaltante: llegó una parte y el resto no va a llegar.
     ///
     /// El valor numérico se persiste: los existentes NO se reordenan, los nuevos
     /// se agregan al final.
@@ -73,7 +75,18 @@ namespace BE
         Pendiente,
         Enviada,
         Finalizada,
-        RecibidaParcial
+        RecibidaParcial,
+        Anulada,
+        CerradaConFaltante
+    }
+
+    public enum TipoAviso06AV
+    {
+        BajoStock,
+        CotizacionesPorAprobar,
+        CotizacionesRechazadas,
+        OrdenesAtrasadas,
+        PagosPendientes
     }
 
     /// <summary>

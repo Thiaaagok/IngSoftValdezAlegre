@@ -21,6 +21,10 @@ namespace BE
 
         public bool BajaLogica { get; set; }
 
+        [System.ComponentModel.Browsable(false)]
+        [System.Xml.Serialization.XmlIgnore]
+        public EspecificacionComponente06AV Especificacion { get; set; }
+
         public override string ToString() => $"{Descripcion} - {Marca} {Modelo}";
     }
 }
